@@ -46,7 +46,7 @@ void _login() {
   void _forgotPassword() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Aquí se abrirá la recuperación de contraseña'),
+        content: Text('Aquí se abrirá la rercuperación de contraseña'),
       ),
     );
   }

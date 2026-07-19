@@ -128,7 +128,7 @@ class AuthScreen extends StatelessWidget {
                     backgroundColor: Colors.white,
                     textColor: const Color(0xFF333333),
                     icon: const SocialIcon(
-                      assetPath: 'assets/icons/google.png',
+                      assetPath: 'assets/icons/google-logo.jpg',
                     ),
                     onPressed: () {},
                   ),
