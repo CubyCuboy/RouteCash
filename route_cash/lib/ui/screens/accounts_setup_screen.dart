@@ -148,7 +148,7 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
               const SizedBox(height: 36),
 
               RouteCashPrimaryButton(
-                text: 'Omitir por ahora',
+                text: 'hola guille cambiar',
                 onPressed: _skipForNow,
                 height: 55,
               ),
