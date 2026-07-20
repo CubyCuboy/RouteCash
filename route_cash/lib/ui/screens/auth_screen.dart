@@ -119,7 +119,7 @@ class AuthScreen extends StatelessWidget {
                     textColor: Colors.white,
                     border: true,
                     icon: const SocialIcon(
-                      assetPath: 'assets/icons/apple.png',
+                      assetPath: 'assets/icons/apple.jpg',
                       size: 23,
                     ),
                     onPressed: () {},
