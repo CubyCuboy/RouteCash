@@ -4,6 +4,82 @@ import '../components/route_cash_buttons.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 
+class SocialButton extends StatelessWidget {
+  final String text;
+  final Color backgroundColor;
+  final Color textColor;
+  final VoidCallback onPressed;
+  final Widget? icon;
+  final bool border;
+  final Color borderColor;
+  final double height;
+
+  const SocialButton({
+    super.key,
+    required this.text,
+    required this.backgroundColor,
+    required this.textColor,
+    required this.onPressed,
+    this.icon,
+    this.border = false,
+    this.borderColor = Colors.white,
+    this.height = 54,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: height,
+      child: Material(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: border
+                  ? Border.all(
+                      color: borderColor,
+                      width: 1,
+                    )
+                  : null,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 60),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (icon != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: icon!,
+                  ),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: icon != null ? 36 : 0,
+                  ),
+                  child: Text(
+                    text,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: textColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});
 
