@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
 import '../../viewmodels/register_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
@@ -93,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         child: Text(
-                          '1 / 3',
+                          AppLocalizations.of(context)!.registerProgress,
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 12,
@@ -107,7 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 42),
 
                   Text(
-                    'PRIMER PASO',
+                    AppLocalizations.of(context)!.firstStepLabel,
                     style: GoogleFonts.inter(
                       color: const Color(0xFF9D9D9D),
                       fontSize: 11,
@@ -119,7 +120,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 14),
 
                   Text(
-                    'Empezamos\ncontigo.',
+                    AppLocalizations.of(context)!.registerTitle,
                     style: GoogleFonts.playfairDisplay(
                       color: Colors.black,
                       fontSize: 48,
@@ -132,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
 
                   Text(
-                    'Crea tu espacio personal para guardar y\nentender cada movimiento.',
+                    AppLocalizations.of(context)!.registerDescription,
                     style: GoogleFonts.inter(
                       color: const Color(0xFF999999),
                       fontSize: 14,
@@ -144,7 +145,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 42),
 
                   RouteCashTextField(
-                    label: 'NOMBRE COMPLETO',
+                    label: AppLocalizations.of(context)!.fullNameLabel,
                     hintText: 'Andrea Moreno',
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
@@ -153,7 +154,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 26),
 
                   RouteCashTextField(
-                    label: 'CORREO ELECTRÓNICO',
+                    label: AppLocalizations.of(context)!.emailLabel,
                     hintText: 'andrea@correo.com',
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -165,7 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     listenable: _viewModel,
                     builder: (context, _) {
                       return RouteCashTextField(
-                        label: 'CONTRASEÑA',
+                        label: AppLocalizations.of(context)!.passwordLabel,
                         hintText: '••••••••••',
                         controller: _passwordController,
                         obscureText: _viewModel.obscurePassword,
@@ -188,7 +189,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 36),
 
                   RouteCashPrimaryButton(
-                    text: 'Continuar',
+                    text: AppLocalizations.of(context)!.continueButton,
                     onPressed: _continueRegister,
                   ),
 
@@ -196,7 +197,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   Center(
                     child: Text(
-                      'Al continuar aceptas nuestros términos y privacidad.',
+                      AppLocalizations.of(context)!.termsAndPrivacy,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         color: const Color(0xFFB0B0B0),
@@ -214,3 +215,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+

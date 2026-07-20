@@ -1,0 +1,128 @@
+{
+  "@@locale": "es",
+  "appName": "RouteCash",
+  "financialSpace": "Tu espacio financiero",
+  "moneyWithMeaning": "Dinero\ncon propósito.",
+  "signIn": "Iniciar sesión",
+  "signInWithOutlook": "Iniciar sesión con Outlook",
+  "signInWithGoogle": "Iniciar sesión con Google",
+  "signInWithApple": "Iniciar sesión con Apple",
+  "newUserCreateAccount": "¿Nuevo por aquí? Crea una cuenta",
+  "setupProgress": "3 / 3",
+  "yourAccountsLabel": "TUS CUENTAS",
+  "accountsSetupTitle": "Todo lo importante,\njunto.",
+  "accountsSetupDescription": "Conecta una cuenta o añade una manualmente.\nSiempre puedes hacerlo más tarde.",
+  "horizonBank": "Horizon Bank",
+  "connectSecurely": "Conectar de forma segura",
+  "addManually": "Añadir manualmente",
+  "manualAccountTypes": "Efectivo, tarjeta o inversión",
+  "skipForNow": "Omitir por ahora",
+  "bankConnectionMessage": "Iniciando conexión bancaria segura",
+  "manualAccountMessage": "Preparando configuración de cuenta manual",
+  "homeGreeting": "Hola, {name}",
+  "@homeGreeting": {
+    "description": "Saludo mostrado en la pantalla de inicio",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Benja"
+      }
+    }
+  },
+  "homeYourRoute": "Tu ruta",
+  "availableBalanceLabel": "SALDO DISPONIBLE",
+  "movementCountLabel": "{count} / TRANSACCIÓN",
+  "@movementCountLabel": {
+    "description": "Número de transacciones mostradas en la pantalla de inicio",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "balanceMoreThanMonth": "{percentage}% más que en {month}",
+  "@balanceMoreThanMonth": {
+    "description": "Comparación de saldo con otro mes",
+    "placeholders": {
+      "percentage": {
+        "type": "num",
+        "example": "18"
+      },
+      "month": {
+        "type": "String",
+        "example": "junio"
+      }
+    }
+  },
+  "viewAll": "Ver todo",
+  "activitySummary": "Resumen de actividad",
+  "navHome": "Inicio",
+  "navMovements": "Transacciones",
+  "navCards": "Tarjetas",
+  "navProfile": "Perfil",
+  "loginWelcomeLabel": "QUÉ BUENO VERTE",
+  "loginTitle": "Regresa a\ntu ruta.",
+  "emailLabel": "CORREO ELECTRÓNICO",
+  "passwordLabel": "CONTRASEÑA",
+  "forgotPassword": "Olvidé mi contraseña",
+  "passwordRecoveryMessage": "La recuperación de contraseña se abrirá aquí",
+  "noAccountRegister": "¿No tienes una cuenta? Regístrate",
+  "onboardingSubtitle": "Tus finanzas en\nun solo lugar",
+  "continueButton": "Continuar",
+  "registerProgress": "1 / 3",
+  "firstStepLabel": "PRIMER PASO",
+  "registerTitle": "Empieza\npor ti.",
+  "registerDescription": "Crea tu espacio personal para ahorrar y\nentender cada transacción.",
+  "fullNameLabel": "NOMBRE COMPLETO",
+  "termsAndPrivacy": "Al continuar, aceptas nuestros términos y política de privacidad.",
+  "selectMonth": "Seleccionar mes",
+  "reportTitle": "Reporte",
+  "monthInNumbers": "Tu mes en números.",
+  "monthlyBalanceLabel": "SALDO MENSUAL",
+  "weeklyFlow": "Flujo semanal",
+  "expensesAndIncome": "Gastos / Ingresos",
+  "mostSpent": "Mayor gasto",
+  "viewCategories": "Ver categorías",
+  "monthJanuary": "Enero",
+  "monthFebruary": "Febrero",
+  "monthMarch": "Marzo",
+  "monthApril": "Abril",
+  "monthMay": "Mayo",
+  "monthJune": "Junio",
+  "monthJuly": "Julio",
+  "monthAugust": "Agosto",
+  "monthSeptember": "Septiembre",
+  "monthOctober": "Octubre",
+  "monthNovember": "Noviembre",
+  "monthDecember": "Diciembre",
+  "expenseCategoryShopping": "Compras",
+  "expenseCategoryHousing": "Vivienda",
+  "expenseCategoryFood": "Comida",
+  "expenseCategoryTransport": "Transporte",
+  "expenseCategoryServices": "Servicios",
+  "expenseCategoryEntertainment": "Entretenimiento",
+  "movementElectricityPayment": "Pago de electricidad",
+  "movementWaterPayment": "Pago de agua",
+  "movementRentPayment": "Pago de alquiler",
+  "movementTodayAt": "Hoy · {time}",
+  "@movementTodayAt": {
+    "description": "Fecha de una transacción realizada hoy",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "5:10 PM"
+      }
+    }
+  },
+  "movementYesterdayAt": "Ayer · {time}",
+  "@movementYesterdayAt": {
+    "description": "Fecha de una transacción realizada ayer",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "5:10 PM"
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
 import '../../viewmodels/login_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
@@ -56,9 +57,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _forgotPassword() {
+    final strings = AppLocalizations.of(context)!;
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Aquí se abrirá la recuperación de contraseña'),
+      SnackBar(
+        content: Text(strings.passwordRecoveryMessage),
       ),
     );
   }
@@ -90,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 42),
 
                   Text(
-                    'QUÉ BUENO VERTE',
+                    AppLocalizations.of(context)!.loginWelcomeLabel,
                     style: GoogleFonts.inter(
                       color: const Color(0xFF9D9D9D),
                       fontSize: 11,
@@ -102,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 14),
 
                   Text(
-                    'Vuelve a\ntu ruta.',
+                    AppLocalizations.of(context)!.loginTitle,
                     style: GoogleFonts.playfairDisplay(
                       color: Colors.black,
                       fontSize: 48,
@@ -115,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 50),
 
                   RouteCashTextField(
-                    label: 'CORREO ELECTRÓNICO',
+                    label: AppLocalizations.of(context)!.emailLabel,
                     hintText: 'andrea@correo.com',
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -127,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     listenable: _viewModel,
                     builder: (context, _) {
                       return RouteCashTextField(
-                        label: 'CONTRASEÑA',
+                        label: AppLocalizations.of(context)!.passwordLabel,
                         hintText: '••••••••••',
                         controller: _passwordController,
                         obscureText: _viewModel.obscurePassword,
@@ -156,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       foregroundColor: Colors.black,
                     ),
                     child: Text(
-                      'Olvidé mi contraseña',
+                      AppLocalizations.of(context)!.forgotPassword,
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -169,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 50),
 
                   RouteCashPrimaryButton(
-                    text: 'Iniciar sesión',
+                    text: AppLocalizations.of(context)!.signIn,
                     onPressed: _login,
                   ),
 
@@ -186,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       },
                       child: Text(
-                        '¿No tienes cuenta? Regístrate',
+                        AppLocalizations.of(context)!.noAccountRegister,
                         style: GoogleFonts.inter(
                           color: Colors.black,
                           fontSize: 12,
@@ -206,3 +209,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

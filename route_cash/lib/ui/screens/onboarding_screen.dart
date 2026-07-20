@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
 import '../../viewmodels/onboarding_view_model.dart';
 import '../components/onboarding_background.dart';
 import 'auth_screen.dart';
@@ -59,7 +60,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'RouteCash',
+                          AppLocalizations.of(context)!.appName,
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 43,
                             height: 1,
@@ -69,7 +70,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Tus finanzas en un\nsolo lugar',
+                          AppLocalizations.of(context)!.onboardingSubtitle,
                           style: GoogleFonts.inter(
                             fontSize: 17,
                             height: 1.45,
@@ -104,7 +105,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         foregroundColor: Colors.black,
                       ),
                       child: Text(
-                        'Continuar',
+                        AppLocalizations.of(context)!.continueButton,
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -136,3 +137,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
+

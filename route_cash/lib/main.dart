@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
-import 'ui/screens/onboarding_screen.dart';
+import 'l10n/app_localizations.dart';
+import 'ui/screens/auth_screen.dart';
 
 void main() {
   runApp(const RouteCashApp());
@@ -12,17 +12,19 @@ class RouteCashApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'RouteCash',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.black,
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home: const OnboardingScreen(),
+
+      onGenerateTitle: (context) {
+      return AppLocalizations.of(context)!.appName;
+      },
+
+      localizationsDelegates:
+          AppLocalizations.localizationsDelegates,
+
+      supportedLocales:
+          AppLocalizations.supportedLocales,
+
+      home: const AuthScreen(),
     );
   }
 }

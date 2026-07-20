@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../l10n/app_localizations.dart';
 import '../../viewmodels/accounts_setup_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_painters.dart';
@@ -9,10 +11,12 @@ class AccountsSetupScreen extends StatefulWidget {
   const AccountsSetupScreen({super.key});
 
   @override
-  State<AccountsSetupScreen> createState() => _AccountsSetupScreenState();
+  State<AccountsSetupScreen> createState() =>
+      _AccountsSetupScreenState();
 }
 
-class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
+class _AccountsSetupScreenState
+    extends State<AccountsSetupScreen> {
   late final AccountsSetupViewModel _viewModel;
 
   @override
@@ -28,16 +32,26 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
   }
 
   void _connectBank() {
-    final message = _viewModel.connectBank();
+    final strings = AppLocalizations.of(context)!;
+
+    _viewModel.connectBank();
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(strings.bankConnectionMessage),
+      ),
     );
   }
 
   void _addManually() {
-    final message = _viewModel.addManually();
+    final strings = AppLocalizations.of(context)!;
+
+    _viewModel.addManually();
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(strings.manualAccountMessage),
+      ),
     );
   }
 
@@ -52,6 +66,8 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
@@ -61,11 +77,14 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
                 children: [
                   CircleIconButton(
                     icon: Icons.arrow_back,
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -77,7 +96,7 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Text(
-                      '3 / 3',
+                      strings.setupProgress,
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 12,
@@ -91,7 +110,7 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
               const SizedBox(height: 38),
 
               Text(
-                'TUS CUENTAS',
+                strings.yourAccountsLabel,
                 style: GoogleFonts.inter(
                   color: const Color(0xFF999999),
                   fontSize: 10,
@@ -103,7 +122,7 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
               const SizedBox(height: 14),
 
               Text(
-                'Lo importante,\nreunido.',
+                strings.accountsSetupTitle,
                 style: GoogleFonts.playfairDisplay(
                   color: Colors.black,
                   fontSize: 47,
@@ -116,8 +135,7 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
               const SizedBox(height: 22),
 
               Text(
-                'Conecta una cuenta o agrégala manualmente.\n'
-                'Siempre podrás hacerlo después.',
+                strings.accountsSetupDescription,
                 style: GoogleFonts.inter(
                   color: const Color(0xFF999999),
                   fontSize: 13,
@@ -130,8 +148,8 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
 
               _AccountOptionCard(
                 icon: Icons.account_balance,
-                title: 'Banco Horizonte',
-                subtitle: 'Conectar de forma segura',
+                title: strings.horizonBank,
+                subtitle: strings.connectSecurely,
                 onPressed: _connectBank,
               ),
 
@@ -139,8 +157,8 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
 
               _AccountOptionCard(
                 icon: Icons.add,
-                title: 'Agregar manualmente',
-                subtitle: 'Efectivo, tarjeta o inversión',
+                title: strings.addManually,
+                subtitle: strings.manualAccountTypes,
                 dashedBorder: true,
                 onPressed: _addManually,
               ),
@@ -148,7 +166,7 @@ class _AccountsSetupScreenState extends State<AccountsSetupScreen> {
               const SizedBox(height: 36),
 
               RouteCashPrimaryButton(
-                text: 'Omitir por ahora',
+                text: strings.skipForNow,
                 onPressed: _skipForNow,
                 height: 55,
               ),
@@ -218,7 +236,8 @@ class _AccountOptionCard extends StatelessWidget {
 
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,

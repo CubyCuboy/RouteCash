@@ -32,7 +32,9 @@ class RouteCashPrimaryButton extends StatelessWidget {
           ),
         ),
         child: Row(
-          mainAxisAlignment: showArrow ? MainAxisAlignment.start : MainAxisAlignment.center,
+          mainAxisAlignment: showArrow
+              ? MainAxisAlignment.start
+              : MainAxisAlignment.center,
           children: [
             Text(
               text,
@@ -56,13 +58,6 @@ class RouteCashPrimaryButton extends StatelessWidget {
 }
 
 class SocialButton extends StatelessWidget {
-  final String text;
-  final Color backgroundColor;
-  final Color textColor;
-  final Widget? icon;
-  final VoidCallback onPressed;
-  final bool border;
-
   const SocialButton({
     super.key,
     required this.text,
@@ -71,43 +66,69 @@ class SocialButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.border = false,
+    this.borderColor = Colors.white,
+    this.height = 47,
   });
+
+  final String text;
+  final Color backgroundColor;
+  final Color textColor;
+  final VoidCallback onPressed;
+  final Widget? icon;
+  final bool border;
+  final Color borderColor;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 47,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: backgroundColor,
-          foregroundColor: textColor,
-          side: border
-              ? const BorderSide(
-                  color: Colors.white,
-                )
-              : null,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              icon!,
-              const SizedBox(width: 12),
-            ],
-            Text(
-              text,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-              ),
+      height: height,
+      child: Material(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(5),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(5),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              border: border
+                  ? Border.all(
+                      color: borderColor,
+                      width: 1,
+                    )
+                  : null,
             ),
-          ],
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (icon != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: icon!,
+                  ),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: icon != null ? 36 : 8,
+                  ),
+                  child: Text(
+                    text,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: textColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -115,14 +136,14 @@ class SocialButton extends StatelessWidget {
 }
 
 class SocialIcon extends StatelessWidget {
-  final String assetPath;
-  final double size;
-
   const SocialIcon({
     super.key,
     required this.assetPath,
     this.size = 20,
   });
+
+  final String assetPath;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -131,45 +152,65 @@ class SocialIcon extends StatelessWidget {
       width: size,
       height: size,
       fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) {
+        return SizedBox(
+          width: size,
+          height: size,
+          child: Icon(
+            Icons.image_not_supported_outlined,
+            size: size,
+            color: Colors.grey,
+          ),
+        );
+      },
     );
   }
 }
-
 class CircleIconButton extends StatelessWidget {
   const CircleIconButton({
     super.key,
     required this.icon,
     required this.onPressed,
-    this.size = 42,
-    this.iconSize = 20,
-    this.backgroundColor = Colors.transparent,
-    this.borderColor = const Color(0xFFE2E2E2),
+    this.backgroundColor = Colors.white,
+    this.iconColor = Colors.black,
+    this.borderColor,
+    this.size = 48,
+    this.iconSize = 22,
   });
 
   final IconData icon;
   final VoidCallback onPressed;
+  final Color backgroundColor;
+  final Color iconColor;
+  final Color? borderColor;
   final double size;
   final double iconSize;
-  final Color backgroundColor;
-  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(size),
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          shape: BoxShape.circle,
-          border: Border.all(color: borderColor),
-        ),
-        child: Icon(
-          icon,
-          size: iconSize,
-          color: Colors.black,
+    return Material(
+      color: backgroundColor,
+      shape: CircleBorder(
+        side: borderColor != null
+            ? BorderSide(
+                color: borderColor!,
+                width: 1,
+              )
+            : BorderSide.none,
+      ),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Center(
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: iconSize,
+            ),
+          ),
         ),
       ),
     );

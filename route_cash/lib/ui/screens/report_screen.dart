@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
+import '../../l10n/app_localizations.dart';
 import '../../models/expense_category.dart';
-import '../../utils/currency_formatter.dart';
 import '../../viewmodels/report_view_model.dart';
 import '../components/route_cash_buttons.dart';
+import 'dart:ui' as ui;
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -35,50 +38,157 @@ class _ReportScreenState extends State<ReportScreen> {
     }
   }
 
+  bool _isSameMonth(DateTime first, DateTime second) {
+    return first.year == second.year &&
+        first.month == second.month;
+  }
+
+  String _formatMonth(
+    BuildContext context,
+    DateTime date, {
+    bool includeYear = true,
+  }) {
+    final locale =
+        Localizations.localeOf(context).toLanguageTag();
+
+    final formatter = includeYear
+        ? DateFormat.yMMMM(locale)
+        : DateFormat.MMMM(locale);
+
+    return formatter.format(date);
+  }
+
+  String _formatCurrency(
+    BuildContext context,
+    double amount, {
+    bool showSign = false,
+  }) {
+    final locale =
+        Localizations.localeOf(context).toLanguageTag();
+
+    final formatter = NumberFormat.currency(
+      locale: locale,
+      symbol: '\$',
+      decimalDigits: 0,
+    );
+
+    final formattedAmount = formatter.format(amount.abs());
+
+    if (!showSign) {
+      return formattedAmount;
+    }
+
+    if (amount > 0) {
+      return '+$formattedAmount';
+    }
+
+    if (amount < 0) {
+      return '-$formattedAmount';
+    }
+
+    return formattedAmount;
+  }
+
+  String _getCategoryName(
+    AppLocalizations strings,
+    ExpenseCategoryType type,
+  ) {
+    switch (type) {
+      case ExpenseCategoryType.shopping:
+        return strings.expenseCategoryShopping;
+
+      case ExpenseCategoryType.housing:
+        return strings.expenseCategoryHousing;
+
+      case ExpenseCategoryType.food:
+        return strings.expenseCategoryFood;
+
+      case ExpenseCategoryType.transport:
+        return strings.expenseCategoryTransport;
+
+      case ExpenseCategoryType.services:
+        return strings.expenseCategoryServices;
+
+      case ExpenseCategoryType.entertainment:
+        return strings.expenseCategoryEntertainment;
+    }
+  }
+
+  String _getBalanceComparisonText(
+    BuildContext context,
+    AppLocalizations strings,
+  ) {
+    final comparisonMonth = _formatMonth(
+      context,
+      _viewModel.comparisonMonth,
+      includeYear: false,
+    );
+
+    return strings.balanceMoreThanMonth(
+      _viewModel.balanceComparisonPercentage,
+      comparisonMonth,
+    );
+  }
+
   void _showMonthSelector() {
-    showModalBottomSheet(
+    final strings = AppLocalizations.of(context)!;
+
+    showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(26),
+        ),
       ),
-      builder: (context) {
+      builder: (bottomSheetContext) {
         return ListenableBuilder(
           listenable: _viewModel,
           builder: (context, _) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(24, 18, 24, 30),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD8D8D8),
-                      borderRadius: BorderRadius.circular(10),
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  24,
+                  18,
+                  24,
+                  30,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD8D8D8),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Seleccionar mes',
-                    style: GoogleFonts.inter(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(height: 24),
+                    Text(
+                      strings.selectMonth,
+                      style: GoogleFonts.inter(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  ..._viewModel.months.map((month) {
-                    return _MonthOption(
-                      month: month,
-                      selected: _viewModel.selectedMonth == month,
-                      onTap: () {
-                        _viewModel.selectMonth(month);
-                        Navigator.pop(context);
-                      },
-                    );
-                  }),
-                ],
+                    const SizedBox(height: 16),
+                    ..._viewModel.months.map((month) {
+                      return _MonthOption(
+                        month: _formatMonth(context, month),
+                        selected: _isSameMonth(
+                          _viewModel.selectedMonth,
+                          month,
+                        ),
+                        onTap: () {
+                          _viewModel.selectMonth(month);
+                          Navigator.pop(bottomSheetContext);
+                        },
+                      );
+                    }),
+                  ],
+                ),
               ),
             );
           },
@@ -99,7 +209,12 @@ class _ReportScreenState extends State<ReportScreen> {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 22),
+                    padding: const EdgeInsets.fromLTRB(
+                      20,
+                      8,
+                      20,
+                      22,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -126,6 +241,8 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildTopBar() {
+    final strings = AppLocalizations.of(context)!;
+
     return SizedBox(
       height: 48,
       child: Stack(
@@ -143,7 +260,7 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
           ),
           Text(
-            'Reporte',
+            strings.reportTitle,
             style: GoogleFonts.dmSerifDisplay(
               color: Colors.black,
               fontSize: 30,
@@ -168,13 +285,18 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildHeading() {
+    final strings = AppLocalizations.of(context)!;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 1),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _viewModel.selectedMonth.toUpperCase(),
+            _formatMonth(
+              context,
+              _viewModel.selectedMonth,
+            ).toUpperCase(),
             style: GoogleFonts.inter(
               color: const Color(0xFF9A9A9A),
               fontSize: 10,
@@ -184,7 +306,7 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
           const SizedBox(height: 13),
           Text(
-            'Tu mes en cifras.',
+            strings.monthInNumbers,
             style: GoogleFonts.dmSerifDisplay(
               color: Colors.black,
               fontSize: 38,
@@ -199,10 +321,17 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildBalanceCard() {
+    final strings = AppLocalizations.of(context)!;
+
     return Container(
       width: double.infinity,
       height: 132,
-      padding: const EdgeInsets.fromLTRB(19, 20, 19, 18),
+      padding: const EdgeInsets.fromLTRB(
+        19,
+        20,
+        19,
+        18,
+      ),
       decoration: BoxDecoration(
         color: Colors.black,
         borderRadius: BorderRadius.circular(21),
@@ -211,7 +340,7 @@ class _ReportScreenState extends State<ReportScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'BALANCE MENSUAL',
+            strings.monthlyBalanceLabel,
             style: GoogleFonts.inter(
               color: const Color(0xFF909090),
               fontSize: 9,
@@ -221,7 +350,11 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
           const SizedBox(height: 19),
           Text(
-            CurrencyFormatter.format(_viewModel.monthlyBalance, showSign: true),
+            _formatCurrency(
+              context,
+              _viewModel.monthlyBalance,
+              showSign: true,
+            ),
             style: GoogleFonts.roboto(
               color: Colors.white,
               fontSize: 36,
@@ -232,7 +365,10 @@ class _ReportScreenState extends State<ReportScreen> {
           ),
           const Spacer(),
           Text(
-            _viewModel.balanceComparison,
+            _getBalanceComparisonText(
+              context,
+              strings,
+            ),
             style: GoogleFonts.inter(
               color: const Color(0xFF8E8E8E),
               fontSize: 11,
@@ -245,13 +381,15 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildChartSection() {
+    final strings = AppLocalizations.of(context)!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              'Flujo semanal',
+              strings.weeklyFlow,
               style: GoogleFonts.inter(
                 color: Colors.black,
                 fontSize: 14,
@@ -260,7 +398,7 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
             const Spacer(),
             Text(
-              'Gastos / Ingresos',
+              strings.expensesAndIncome,
               style: GoogleFonts.inter(
                 color: const Color(0xFF999999),
                 fontSize: 8,
@@ -285,13 +423,15 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildMostSpentSection() {
+    final strings = AppLocalizations.of(context)!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              'Más gastado',
+              strings.mostSpent,
               style: GoogleFonts.inter(
                 color: Colors.black,
                 fontSize: 16,
@@ -304,11 +444,12 @@ class _ReportScreenState extends State<ReportScreen> {
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                tapTargetSize:
+                    MaterialTapTargetSize.shrinkWrap,
                 foregroundColor: Colors.black,
               ),
               child: Text(
-                'Ver categorías',
+                strings.viewCategories,
                 style: GoogleFonts.inter(
                   color: Colors.black,
                   fontSize: 11,
@@ -321,41 +462,56 @@ class _ReportScreenState extends State<ReportScreen> {
           ],
         ),
         const SizedBox(height: 20),
-        ..._viewModel.categories.map(
-          (category) => Padding(
+        ..._viewModel.categories.map((category) {
+          return Padding(
             padding: const EdgeInsets.only(bottom: 21),
-            child: _ExpenseCategoryItem(category: category),
-          ),
-        ),
+            child: _ExpenseCategoryItem(
+              name: _getCategoryName(
+                strings,
+                category.type,
+              ),
+              percentage: category.percentage,
+              amount: _formatCurrency(
+                context,
+                category.amount,
+              ),
+            ),
+          );
+        }),
       ],
     );
   }
 
   Widget _buildBottomNavigation() {
+    final strings = AppLocalizations.of(context)!;
+
     return Container(
-      height: 62,
-      margin: const EdgeInsets.fromLTRB(5, 0, 5, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+      height: 72,
+      margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 7,
+        vertical: 7,
+      ),
       decoration: BoxDecoration(
         color: Colors.black,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
         children: [
           Expanded(
             child: _BottomNavItem(
               icon: Icons.home_outlined,
-              activeIcon: Icons.home,
-              label: 'Inicio',
+              activeIcon: Icons.home_rounded,
+              label: strings.navHome,
               selected: _viewModel.selectedIndex == 0,
               onTap: () => _onNavigationTap(0),
             ),
           ),
           Expanded(
             child: _BottomNavItem(
-              icon: Icons.north_east,
-              activeIcon: Icons.north_east,
-              label: 'Movimientos',
+              icon: Icons.north_east_rounded,
+              activeIcon: Icons.north_east_rounded,
+              label: strings.navMovements,
               selected: _viewModel.selectedIndex == 1,
               onTap: () => _onNavigationTap(1),
             ),
@@ -363,17 +519,17 @@ class _ReportScreenState extends State<ReportScreen> {
           Expanded(
             child: _BottomNavItem(
               icon: Icons.credit_card_outlined,
-              activeIcon: Icons.credit_card,
-              label: 'Tarjetas',
+              activeIcon: Icons.credit_card_rounded,
+              label: strings.navCards,
               selected: _viewModel.selectedIndex == 2,
               onTap: () => _onNavigationTap(2),
             ),
           ),
           Expanded(
             child: _BottomNavItem(
-              icon: Icons.tune,
-              activeIcon: Icons.tune,
-              label: 'Perfil',
+              icon: Icons.tune_rounded,
+              activeIcon: Icons.tune_rounded,
+              label: strings.navProfile,
               selected: _viewModel.selectedIndex == 3,
               onTap: () => _onNavigationTap(3),
             ),
@@ -407,12 +563,15 @@ class WeeklyFlowChartPainter extends CustomPainter {
       ..color = const Color(0xFFE5E5E5)
       ..strokeWidth = 1;
 
-    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+    final textPainter = TextPainter(
+      textDirection: ui.TextDirection.ltr,
+    );
 
     const chartTop = 2.0;
     final chartBottom = size.height - 20;
     final chartHeight = chartBottom - chartTop;
     final groupWidth = size.width / 7;
+
     const barWidth = 17.0;
     const barGap = 0.0;
 
@@ -425,8 +584,11 @@ class WeeklyFlowChartPainter extends CustomPainter {
     for (int i = 0; i < 7; i++) {
       final centerX = groupWidth * i + groupWidth / 2;
 
-      final expenseHeight = chartHeight * expenses[i];
-      final incomeHeight = chartHeight * incomes[i];
+      final expenseHeight =
+          chartHeight * expenses[i];
+
+      final incomeHeight =
+          chartHeight * incomes[i];
 
       final expenseRect = Rect.fromLTWH(
         centerX - barWidth,
@@ -458,7 +620,10 @@ class WeeklyFlowChartPainter extends CustomPainter {
 
       textPainter.paint(
         canvas,
-        Offset(centerX - textPainter.width / 2, chartBottom + 6),
+        Offset(
+          centerX - textPainter.width / 2,
+          chartBottom + 6,
+        ),
       );
     }
 
@@ -468,11 +633,18 @@ class WeeklyFlowChartPainter extends CustomPainter {
 
     for (int i = 0; i < 7; i++) {
       final centerX = groupWidth * i + groupWidth / 2;
-      final incomeHeight = chartHeight * incomes[i];
+
+      final incomeHeight =
+          chartHeight * incomes[i];
+
       final left = centerX + barGap;
       final top = chartBottom - incomeHeight;
 
-      for (double y = top + 6; y < chartBottom; y += 8) {
+      for (
+        double y = top + 6;
+        y < chartBottom;
+        y += 8
+      ) {
         canvas.drawLine(
           Offset(left + 5, y),
           Offset(left + 8, y + 3),
@@ -483,19 +655,29 @@ class WeeklyFlowChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+  bool shouldRepaint(
+    covariant WeeklyFlowChartPainter oldDelegate,
+  ) {
+    return oldDelegate.expenses != expenses ||
+        oldDelegate.incomes != incomes;
   }
 }
 
 class _ExpenseCategoryItem extends StatelessWidget {
-  const _ExpenseCategoryItem({required this.category});
+  const _ExpenseCategoryItem({
+    required this.name,
+    required this.percentage,
+    required this.amount,
+  });
 
-  final ExpenseCategory category;
+  final String name;
+  final double percentage;
+  final String amount;
 
   @override
   Widget build(BuildContext context) {
-    final percentageText = '${(category.percentage * 100).round()}%';
+    final percentageText =
+        '${(percentage * 100).round()}%';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,7 +686,7 @@ class _ExpenseCategoryItem extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                category.name,
+                name,
                 style: GoogleFonts.inter(
                   color: Colors.black,
                   fontSize: 13,
@@ -513,7 +695,7 @@ class _ExpenseCategoryItem extends StatelessWidget {
               ),
             ),
             Text(
-              category.amount,
+              amount,
               style: GoogleFonts.inter(
                 color: const Color(0xFF777777),
                 fontSize: 11,
@@ -535,16 +717,18 @@ class _ExpenseCategoryItem extends StatelessWidget {
             ),
           ],
         ),
-
         const SizedBox(height: 9),
-
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: LinearProgressIndicator(
-            value: category.percentage,
+            value: percentage,
             minHeight: 6,
-            backgroundColor: const Color(0xFFE2E2E2),
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.black),
+            backgroundColor:
+                const Color(0xFFE2E2E2),
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(
+              Colors.black,
+            ),
           ),
         ),
       ],
@@ -577,7 +761,9 @@ class _BottomNavItem extends StatelessWidget {
         height: 52,
         margin: const EdgeInsets.symmetric(horizontal: 2),
         decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
+          color: selected
+              ? Colors.white
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(28),
         ),
         child: Column(
@@ -586,7 +772,9 @@ class _BottomNavItem extends StatelessWidget {
             Icon(
               selected ? activeIcon : icon,
               size: 18,
-              color: selected ? Colors.black : const Color(0xFFA7A7A7),
+              color: selected
+                  ? Colors.black
+                  : const Color(0xFFA7A7A7),
             ),
             const SizedBox(height: 3),
             Text(
@@ -594,9 +782,13 @@ class _BottomNavItem extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                color: selected ? Colors.black : const Color(0xFFA7A7A7),
+                color: selected
+                    ? Colors.black
+                    : const Color(0xFFA7A7A7),
                 fontSize: 7,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: selected
+                    ? FontWeight.w600
+                    : FontWeight.w400,
               ),
             ),
           ],
@@ -627,10 +819,17 @@ class _MonthOption extends StatelessWidget {
         style: GoogleFonts.inter(
           color: Colors.black,
           fontSize: 14,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+          fontWeight: selected
+              ? FontWeight.w600
+              : FontWeight.w400,
         ),
       ),
-      trailing: selected ? const Icon(Icons.check, color: Colors.black) : null,
+      trailing: selected
+          ? const Icon(
+              Icons.check,
+              color: Colors.black,
+            )
+          : null,
     );
   }
 }

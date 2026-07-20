@@ -1,11 +1,20 @@
+enum ExpenseCategoryType {
+  shopping,
+  housing,
+  food,
+  transport,
+  services,
+  entertainment,
+}
+
 class ExpenseCategory {
   const ExpenseCategory({
-    required this.name,
+    required this.type,
     required this.percentage,
     required this.amount,
   });
 
-  final String name;
+  final ExpenseCategoryType type;
   final double percentage;
-  final String amount;
+  final double amount;
 }

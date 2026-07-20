@@ -1,0 +1,585 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('es')
+  ];
+
+  /// No description provided for @appName.
+  ///
+  /// In en, this message translates to:
+  /// **'RouteCash'**
+  String get appName;
+
+  /// No description provided for @financialSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Your financial space'**
+  String get financialSpace;
+
+  /// No description provided for @moneyWithMeaning.
+  ///
+  /// In en, this message translates to:
+  /// **'Money\nwith purpose.'**
+  String get moneyWithMeaning;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signIn;
+
+  /// No description provided for @signInWithOutlook.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Outlook'**
+  String get signInWithOutlook;
+
+  /// No description provided for @signInWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Google'**
+  String get signInWithGoogle;
+
+  /// No description provided for @signInWithApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Apple'**
+  String get signInWithApple;
+
+  /// No description provided for @newUserCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'New here? Create an account'**
+  String get newUserCreateAccount;
+
+  /// No description provided for @setupProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'3 / 3'**
+  String get setupProgress;
+
+  /// No description provided for @yourAccountsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR ACCOUNTS'**
+  String get yourAccountsLabel;
+
+  /// No description provided for @accountsSetupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything important,\ntogether.'**
+  String get accountsSetupTitle;
+
+  /// No description provided for @accountsSetupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect an account or add one manually.\nYou can always do it later.'**
+  String get accountsSetupDescription;
+
+  /// No description provided for @horizonBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizon Bank'**
+  String get horizonBank;
+
+  /// No description provided for @connectSecurely.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect securely'**
+  String get connectSecurely;
+
+  /// No description provided for @addManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Add manually'**
+  String get addManually;
+
+  /// No description provided for @manualAccountTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash, card or investment'**
+  String get manualAccountTypes;
+
+  /// No description provided for @skipForNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get skipForNow;
+
+  /// No description provided for @bankConnectionMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting secure bank connection'**
+  String get bankConnectionMessage;
+
+  /// No description provided for @manualAccountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing manual account setup'**
+  String get manualAccountMessage;
+
+  /// Greeting displayed on the home screen
+  ///
+  /// In en, this message translates to:
+  /// **'Hello, {name}'**
+  String homeGreeting(String name);
+
+  /// No description provided for @homeYourRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Your route'**
+  String get homeYourRoute;
+
+  /// No description provided for @availableBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AVAILABLE BALANCE'**
+  String get availableBalanceLabel;
+
+  /// Number of transactions displayed on the home screen
+  ///
+  /// In en, this message translates to:
+  /// **'{count} / TRANSACTION'**
+  String movementCountLabel(int count);
+
+  /// Balance comparison with another month
+  ///
+  /// In en, this message translates to:
+  /// **'{percentage}% more than {month}'**
+  String balanceMoreThanMonth(num percentage, String month);
+
+  /// No description provided for @viewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get viewAll;
+
+  /// No description provided for @activitySummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity summary'**
+  String get activitySummary;
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navMovements.
+  ///
+  /// In en, this message translates to:
+  /// **'Transactions'**
+  String get navMovements;
+
+  /// No description provided for @navCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get navCards;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get navProfile;
+
+  /// No description provided for @loginWelcomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'GOOD TO SEE YOU'**
+  String get loginWelcomeLabel;
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Return to\nyour route.'**
+  String get loginTitle;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'EMAIL ADDRESS'**
+  String get emailLabel;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PASSWORD'**
+  String get passwordLabel;
+
+  /// No description provided for @forgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'I forgot my password'**
+  String get forgotPassword;
+
+  /// No description provided for @passwordRecoveryMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Password recovery will open here'**
+  String get passwordRecoveryMessage;
+
+  /// No description provided for @noAccountRegister.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? Sign up'**
+  String get noAccountRegister;
+
+  /// No description provided for @onboardingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your finances in\none place'**
+  String get onboardingSubtitle;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueButton;
+
+  /// No description provided for @registerProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'1 / 3'**
+  String get registerProgress;
+
+  /// No description provided for @firstStepLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'FIRST STEP'**
+  String get firstStepLabel;
+
+  /// No description provided for @registerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'It starts\nwith you.'**
+  String get registerTitle;
+
+  /// No description provided for @registerDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your personal space to save and\nunderstand every transaction.'**
+  String get registerDescription;
+
+  /// No description provided for @fullNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'FULL NAME'**
+  String get fullNameLabel;
+
+  /// No description provided for @termsAndPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'By continuing, you accept our terms and privacy policy.'**
+  String get termsAndPrivacy;
+
+  /// No description provided for @selectMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Select month'**
+  String get selectMonth;
+
+  /// No description provided for @reportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get reportTitle;
+
+  /// No description provided for @monthInNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Your month in numbers.'**
+  String get monthInNumbers;
+
+  /// No description provided for @monthlyBalanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTHLY BALANCE'**
+  String get monthlyBalanceLabel;
+
+  /// No description provided for @weeklyFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly flow'**
+  String get weeklyFlow;
+
+  /// No description provided for @expensesAndIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses / Income'**
+  String get expensesAndIncome;
+
+  /// No description provided for @mostSpent.
+  ///
+  /// In en, this message translates to:
+  /// **'Top spending'**
+  String get mostSpent;
+
+  /// No description provided for @viewCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'View categories'**
+  String get viewCategories;
+
+  /// No description provided for @monthJanuary.
+  ///
+  /// In en, this message translates to:
+  /// **'January'**
+  String get monthJanuary;
+
+  /// No description provided for @monthFebruary.
+  ///
+  /// In en, this message translates to:
+  /// **'February'**
+  String get monthFebruary;
+
+  /// No description provided for @monthMarch.
+  ///
+  /// In en, this message translates to:
+  /// **'March'**
+  String get monthMarch;
+
+  /// No description provided for @monthApril.
+  ///
+  /// In en, this message translates to:
+  /// **'April'**
+  String get monthApril;
+
+  /// No description provided for @monthMay.
+  ///
+  /// In en, this message translates to:
+  /// **'May'**
+  String get monthMay;
+
+  /// No description provided for @monthJune.
+  ///
+  /// In en, this message translates to:
+  /// **'June'**
+  String get monthJune;
+
+  /// No description provided for @monthJuly.
+  ///
+  /// In en, this message translates to:
+  /// **'July'**
+  String get monthJuly;
+
+  /// No description provided for @monthAugust.
+  ///
+  /// In en, this message translates to:
+  /// **'August'**
+  String get monthAugust;
+
+  /// No description provided for @monthSeptember.
+  ///
+  /// In en, this message translates to:
+  /// **'September'**
+  String get monthSeptember;
+
+  /// No description provided for @monthOctober.
+  ///
+  /// In en, this message translates to:
+  /// **'October'**
+  String get monthOctober;
+
+  /// No description provided for @monthNovember.
+  ///
+  /// In en, this message translates to:
+  /// **'November'**
+  String get monthNovember;
+
+  /// No description provided for @monthDecember.
+  ///
+  /// In en, this message translates to:
+  /// **'December'**
+  String get monthDecember;
+
+  /// No description provided for @expenseCategoryShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shopping'**
+  String get expenseCategoryShopping;
+
+  /// No description provided for @expenseCategoryHousing.
+  ///
+  /// In en, this message translates to:
+  /// **'Housing'**
+  String get expenseCategoryHousing;
+
+  /// No description provided for @expenseCategoryFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food'**
+  String get expenseCategoryFood;
+
+  /// No description provided for @expenseCategoryTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport'**
+  String get expenseCategoryTransport;
+
+  /// No description provided for @expenseCategoryServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get expenseCategoryServices;
+
+  /// No description provided for @expenseCategoryEntertainment.
+  ///
+  /// In en, this message translates to:
+  /// **'Entertainment'**
+  String get expenseCategoryEntertainment;
+
+  /// No description provided for @movementElectricityPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Electricity payment'**
+  String get movementElectricityPayment;
+
+  /// No description provided for @movementWaterPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Water payment'**
+  String get movementWaterPayment;
+
+  /// No description provided for @movementRentPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent payment'**
+  String get movementRentPayment;
+
+  /// Date of a transaction made today
+  ///
+  /// In en, this message translates to:
+  /// **'Today · {time}'**
+  String movementTodayAt(String time);
+
+  /// Date of a transaction made yesterday
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday · {time}'**
+  String movementYesterdayAt(String time);
+}
+
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) => <String>['en', 'es'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+
+
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en': return AppLocalizationsEn();
+    case 'es': return AppLocalizationsEs();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.'
+  );
+}
