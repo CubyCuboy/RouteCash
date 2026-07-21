@@ -8,12 +8,14 @@ class RouteCashPrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.height = 56,
     this.showArrow = true,
+    this.isLoading = false,
   });
 
   final String text;
   final VoidCallback onPressed;
   final double height;
   final bool showArrow;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +23,7 @@ class RouteCashPrimaryButton extends StatelessWidget {
       width: double.infinity,
       height: height,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: Colors.black,
@@ -30,28 +32,38 @@ class RouteCashPrimaryButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
+          disabledBackgroundColor: Colors.black.withOpacity(0.6),
         ),
-        child: Row(
-          mainAxisAlignment: showArrow
-              ? MainAxisAlignment.start
-              : MainAxisAlignment.center,
-          children: [
-            Text(
-              text,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+        child: isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: showArrow
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  Text(
+                    text,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (showArrow) ...[
+                    const Spacer(),
+                    const Icon(
+                      Icons.arrow_forward,
+                      size: 20,
+                    ),
+                  ],
+                ],
               ),
-            ),
-            if (showArrow) ...[
-              const Spacer(),
-              const Icon(
-                Icons.arrow_forward,
-                size: 20,
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }

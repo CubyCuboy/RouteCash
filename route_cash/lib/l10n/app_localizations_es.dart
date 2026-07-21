@@ -9,7 +9,7 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get appName => 'RouteCash';
+  String get appName => 'Route Cash';
 
   @override
   String get financialSpace => 'Tu espacio financiero';
@@ -64,6 +64,30 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manualAccountMessage => 'Preparando configuración de cuenta manual';
+
+  @override
+  String get invalidEmail => 'Email inválido o dominio no permitido';
+
+  @override
+  String get weakPassword => 'La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial';
+
+  @override
+  String get passwordsDoNotMatch => 'Las contraseñas no coinciden';
+
+  @override
+  String get errorInvalidCredentials => 'Email o contraseña incorrectos';
+
+  @override
+  String get errorUserExists => 'Este correo ya está registrado';
+
+  @override
+  String get errorUnexpected => 'Ocurrió un error inesperado';
+
+  @override
+  String get confirmPasswordLabel => 'Confirmar Contraseña';
+
+  @override
+  String get confirmPasswordHint => '••••••••••';
 
   @override
   String homeGreeting(String name) {

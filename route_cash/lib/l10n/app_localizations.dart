@@ -98,7 +98,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'RouteCash'**
+  /// **'Route Cash'**
   String get appName;
 
   /// No description provided for @financialSpace.
@@ -208,6 +208,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preparing manual account setup'**
   String get manualAccountMessage;
+
+  /// No description provided for @invalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email or domain not allowed'**
+  String get invalidEmail;
+
+  /// No description provided for @weakPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must have at least 8 characters, one uppercase, one number and one special character'**
+  String get weakPassword;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// No description provided for @errorInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email or password'**
+  String get errorInvalidCredentials;
+
+  /// No description provided for @errorUserExists.
+  ///
+  /// In en, this message translates to:
+  /// **'User already exists'**
+  String get errorUserExists;
+
+  /// No description provided for @errorUnexpected.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred'**
+  String get errorUnexpected;
+
+  /// No description provided for @confirmPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get confirmPasswordLabel;
+
+  /// No description provided for @confirmPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'••••••••••'**
+  String get confirmPasswordHint;
 
   /// Greeting displayed on the home screen
   ///

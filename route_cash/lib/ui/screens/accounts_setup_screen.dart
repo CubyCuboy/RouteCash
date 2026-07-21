@@ -5,7 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../../viewmodels/accounts_setup_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_painters.dart';
-import 'home_screen.dart';
+import 'main_navigation_screen.dart';
 
 class AccountsSetupScreen extends StatefulWidget {
   const AccountsSetupScreen({super.key});
@@ -23,6 +23,7 @@ class _AccountsSetupScreenState
   void initState() {
     super.initState();
     _viewModel = AccountsSetupViewModel();
+    _viewModel.loadWelcomeMessage();
   }
 
   @override
@@ -58,7 +59,7 @@ class _AccountsSetupScreenState
   void _skipForNow() {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) => const HomeScreen(),
+        builder: (_) => const MainNavigationScreen(),
       ),
       (route) => false,
     );
@@ -83,7 +84,10 @@ class _AccountsSetupScreenState
                   CircleIconButton(
                     icon: Icons.arrow_back,
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+                        (route) => false,
+                      );
                     },
                   ),
                   Container(
@@ -108,6 +112,26 @@ class _AccountsSetupScreenState
               ),
 
               const SizedBox(height: 38),
+
+              ListenableBuilder(
+                listenable: _viewModel,
+                builder: (context, _) {
+                  if (_viewModel.welcomeMessage == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      _viewModel.welcomeMessage!,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF1473E6),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  );
+                },
+              ),
 
               Text(
                 strings.yourAccountsLabel,

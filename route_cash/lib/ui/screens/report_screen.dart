@@ -30,14 +30,6 @@ class _ReportScreenState extends State<ReportScreen> {
     super.dispose();
   }
 
-  void _onNavigationTap(int index) {
-    _viewModel.setSelectedIndex(index);
-
-    if (index == 0) {
-      Navigator.pop(context);
-    }
-  }
-
   bool _isSameMonth(DateTime first, DateTime second) {
     return first.year == second.year &&
         first.month == second.month;
@@ -205,34 +197,22 @@ class _ReportScreenState extends State<ReportScreen> {
         child: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, _) {
-            return Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      20,
-                      8,
-                      20,
-                      22,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildTopBar(),
-                        const SizedBox(height: 28),
-                        _buildHeading(),
-                        const SizedBox(height: 24),
-                        _buildBalanceCard(),
-                        const SizedBox(height: 30),
-                        _buildChartSection(),
-                        const SizedBox(height: 32),
-                        _buildMostSpentSection(),
-                      ],
-                    ),
-                  ),
-                ),
-                _buildBottomNavigation(),
-              ],
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTopBar(),
+                  const SizedBox(height: 28),
+                  _buildHeading(),
+                  const SizedBox(height: 24),
+                  _buildBalanceCard(),
+                  const SizedBox(height: 30),
+                  _buildChartSection(),
+                  const SizedBox(height: 32),
+                  _buildMostSpentSection(),
+                ],
+              ),
             );
           },
         ),
@@ -252,7 +232,7 @@ class _ReportScreenState extends State<ReportScreen> {
             alignment: Alignment.centerLeft,
             child: CircleIconButton(
               icon: Icons.arrow_back,
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {}, // Not needed as it's part of tab navigation
               size: 38,
               iconSize: 19,
               backgroundColor: Colors.white,
@@ -481,63 +461,6 @@ class _ReportScreenState extends State<ReportScreen> {
       ],
     );
   }
-
-  Widget _buildBottomNavigation() {
-    final strings = AppLocalizations.of(context)!;
-
-    return Container(
-      height: 72,
-      margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 7,
-        vertical: 7,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _BottomNavItem(
-              icon: Icons.home_outlined,
-              activeIcon: Icons.home_rounded,
-              label: strings.navHome,
-              selected: _viewModel.selectedIndex == 0,
-              onTap: () => _onNavigationTap(0),
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              icon: Icons.north_east_rounded,
-              activeIcon: Icons.north_east_rounded,
-              label: strings.navMovements,
-              selected: _viewModel.selectedIndex == 1,
-              onTap: () => _onNavigationTap(1),
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              icon: Icons.credit_card_outlined,
-              activeIcon: Icons.credit_card_rounded,
-              label: strings.navCards,
-              selected: _viewModel.selectedIndex == 2,
-              onTap: () => _onNavigationTap(2),
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              icon: Icons.tune_rounded,
-              activeIcon: Icons.tune_rounded,
-              label: strings.navProfile,
-              selected: _viewModel.selectedIndex == 3,
-              onTap: () => _onNavigationTap(3),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class WeeklyFlowChartPainter extends CustomPainter {
@@ -732,68 +655,6 @@ class _ExpenseCategoryItem extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  const _BottomNavItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 52,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        decoration: BoxDecoration(
-          color: selected
-              ? Colors.white
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              selected ? activeIcon : icon,
-              size: 18,
-              color: selected
-                  ? Colors.black
-                  : const Color(0xFFA7A7A7),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: selected
-                    ? Colors.black
-                    : const Color(0xFFA7A7A7),
-                fontSize: 7,
-                fontWeight: selected
-                    ? FontWeight.w600
-                    : FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

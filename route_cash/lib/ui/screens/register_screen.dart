@@ -5,6 +5,8 @@ import '../../viewmodels/register_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
 import 'accounts_setup_screen.dart';
+import 'login_screen.dart';
+import 'main_navigation_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -18,11 +20,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _viewModel = RegisterViewModel();
+    
+    _passwordController.addListener(_updatePasswordValidation);
+    _confirmPasswordController.addListener(_updatePasswordValidation);
+  }
+
+  void _updatePasswordValidation() {
+    _viewModel.validatePassword(
+      _passwordController.text,
+      _confirmPasswordController.text,
+    );
   }
 
   @override
@@ -30,30 +43,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _viewModel.dispose();
     super.dispose();
   }
 
-  void _continueRegister() {
+  void _continueRegister() async {
     final name = _nameController.text;
     final email = _emailController.text;
     final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
 
-    final errorMessage = _viewModel.validateAndRegister(name, email, password);
+    final result = await _viewModel.register(name, email, password, confirmPassword);
 
-    if (errorMessage != null) {
+    if (result != null) {
+      if (!mounted) return;
+      
+      String message = result;
+      final strings = AppLocalizations.of(context)!;
+      
+      if (result == 'all_fields_required') {
+        message = 'Completa todos los campos';
+      } else if (result == 'invalidEmail') {
+        message = strings.invalidEmail;
+      } else if (result == 'weakPassword') {
+        message = strings.weakPassword;
+      } else if (result == 'passwordsDoNotMatch') {
+        message = strings.passwordsDoNotMatch;
+      } else if (result.contains('already registered') || result.contains('already been registered')) {
+        message = strings.errorUserExists;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-        ),
+        SnackBar(content: Text(message)),
       );
       return;
     }
 
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => const AccountsSetupScreen(),
+        builder: (_) => const LoginScreen(),
       ),
     );
   }
@@ -165,21 +196,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ListenableBuilder(
                     listenable: _viewModel,
                     builder: (context, _) {
-                      return RouteCashTextField(
-                        label: AppLocalizations.of(context)!.passwordLabel,
-                        hintText: '••••••••••',
-                        controller: _passwordController,
-                        obscureText: _viewModel.obscurePassword,
-                        suffixIcon: IconButton(
-                          onPressed: _viewModel.togglePasswordVisibility,
-                          icon: Icon(
-                            _viewModel.obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            size: 20,
-                            color: const Color(0xFF999999),
+                      return Column(
+                        children: [
+                          _PasswordRequirements(viewModel: _viewModel),
+                          const SizedBox(height: 12),
+                          RouteCashTextField(
+                            label: AppLocalizations.of(context)!.passwordLabel,
+                            hintText: '••••••••••',
+                            controller: _passwordController,
+                            obscureText: _viewModel.obscurePassword,
+                            suffixIcon: IconButton(
+                              onPressed: _viewModel.togglePasswordVisibility,
+                              icon: Icon(
+                                _viewModel.obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 20,
+                                color: const Color(0xFF999999),
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 26),
+                          RouteCashTextField(
+                            label: AppLocalizations.of(context)!.confirmPasswordLabel,
+                            hintText: AppLocalizations.of(context)!.confirmPasswordHint,
+                            controller: _confirmPasswordController,
+                            obscureText: _viewModel.obscureConfirmPassword,
+                            suffixIcon: IconButton(
+                              onPressed: _viewModel.toggleConfirmPasswordVisibility,
+                              icon: Icon(
+                                _viewModel.obscureConfirmPassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 20,
+                                color: const Color(0xFF999999),
+                              ),
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -188,9 +242,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   const SizedBox(height: 36),
 
-                  RouteCashPrimaryButton(
-                    text: AppLocalizations.of(context)!.continueButton,
-                    onPressed: _continueRegister,
+                  ListenableBuilder(
+                    listenable: _viewModel,
+                    builder: (context, _) {
+                      return RouteCashPrimaryButton(
+                        text: AppLocalizations.of(context)!.continueButton,
+                        onPressed: _continueRegister,
+                        isLoading: _viewModel.isLoading,
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 17),
@@ -216,3 +276,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
+class _PasswordRequirements extends StatelessWidget {
+  final RegisterViewModel viewModel;
+
+  const _PasswordRequirements({required this.viewModel});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _RequirementRow(
+          text: "8+ caracteres",
+          isMet: viewModel.hasMinLength,
+        ),
+        _RequirementRow(
+          text: "Una mayúscula",
+          isMet: viewModel.hasUppercase,
+        ),
+        _RequirementRow(
+          text: "Un número",
+          isMet: viewModel.hasNumber,
+        ),
+        _RequirementRow(
+          text: r"Carácter especial (!@#$)",
+          isMet: viewModel.hasSpecialChar,
+        ),
+        _RequirementRow(
+          text: "Las contraseñas coinciden",
+          isMet: viewModel.passwordsMatch,
+        ),
+      ],
+    );
+  }
+}
+
+class _RequirementRow extends StatelessWidget {
+  final String text;
+  final bool isMet;
+
+  const _RequirementRow({required this.text, required this.isMet});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(
+            isMet ? Icons.check_circle : Icons.circle_outlined,
+            size: 14,
+            color: isMet ? Colors.green : Colors.grey,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: isMet ? Colors.green : Colors.grey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
