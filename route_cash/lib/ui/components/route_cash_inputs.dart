@@ -11,6 +11,7 @@ class RouteCashTextField extends StatelessWidget {
     this.obscureText = false,
     this.suffixIcon,
     this.textCapitalization = TextCapitalization.none,
+    this.onChanged,
   });
 
   final String label;
@@ -20,6 +21,7 @@ class RouteCashTextField extends StatelessWidget {
   final bool obscureText;
   final Widget? suffixIcon;
   final TextCapitalization textCapitalization;
+  final void Function(String)? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +39,7 @@ class RouteCashTextField extends StatelessWidget {
         ),
         TextField(
           controller: controller,
+          onChanged: onChanged,
           keyboardType: keyboardType,
           obscureText: obscureText,
           textCapitalization: textCapitalization,

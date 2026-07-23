@@ -6,12 +6,12 @@ class AuthService {
   static const String _welcomeMessageKey = 'welcome_message';
 
   // Registrar un nuevo usuario
-  Future<AuthResponse> signUp(String email, String password, String name) async {
+  Future<AuthResponse> signUp(String email, String password, Map<String, dynamic> data) async {
     try {
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
-        data: {'full_name': name},
+        data: data,
       );
       return response;
     } on AuthException catch (e) {
@@ -30,6 +30,7 @@ class AuthService {
       );
       return response;
     } on AuthException catch (e) {
+      // Re-lanzar el mensaje para que el ViewModel lo procese
       throw e.message;
     } catch (e) {
       throw 'Ocurrió un error inesperado al iniciar sesión';

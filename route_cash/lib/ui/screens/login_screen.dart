@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/app_localizations.dart';
 import '../../viewmodels/login_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
 import 'accounts_setup_screen.dart';
+import 'confirm_verification_screen.dart';
 import 'main_navigation_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? initialEmail;
+  final String? initialPassword;
+
+  const LoginScreen({
+    super.key,
+    this.initialEmail,
+    this.initialPassword,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -17,13 +26,15 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   late final LoginViewModel _viewModel;
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
 
   @override
   void initState() {
     super.initState();
     _viewModel = LoginViewModel();
+    _emailController = TextEditingController(text: widget.initialEmail);
+    _passwordController = TextEditingController(text: widget.initialPassword);
   }
 
   @override
@@ -43,6 +54,25 @@ class _LoginScreenState extends State<LoginScreen> {
     if (result != null) {
       if (!mounted) return;
       
+      // Manejar caso de email no verificado
+      if (result.contains('Email not confirmed') || result.contains('unverified')) {
+        final user = Supabase.instance.client.auth.currentUser;
+        if (user != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ConfirmVerificationScreen(
+                userId: user.id,
+                email: email,
+                purpose: 'email_verification',
+                password: password,
+              ),
+            ),
+          );
+          return;
+        }
+      }
+
       String message = result;
       final strings = AppLocalizations.of(context)!;
       

@@ -9,6 +9,8 @@ class RouteCashPrimaryButton extends StatelessWidget {
     this.height = 56,
     this.showArrow = true,
     this.isLoading = false,
+    this.backgroundColor = Colors.black,
+    this.textColor = Colors.white,
   });
 
   final String text;
@@ -16,6 +18,8 @@ class RouteCashPrimaryButton extends StatelessWidget {
   final double height;
   final bool showArrow;
   final bool isLoading;
+  final Color backgroundColor;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -26,21 +30,21 @@ class RouteCashPrimaryButton extends StatelessWidget {
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
           padding: const EdgeInsets.symmetric(horizontal: 20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          disabledBackgroundColor: Colors.black.withOpacity(0.6),
+          disabledBackgroundColor: backgroundColor.withOpacity(0.6),
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: textColor,
                 ),
               )
             : Row(
@@ -57,9 +61,10 @@ class RouteCashPrimaryButton extends StatelessWidget {
                   ),
                   if (showArrow) ...[
                     const Spacer(),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward,
                       size: 20,
+                      color: textColor,
                     ),
                   ],
                 ],
