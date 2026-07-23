@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'l10n/app_localizations.dart';
-import 'ui/screens/auth_screen.dart';
+import 'ui/screens/pincode_screen.dart';
 
 void main() {
   runApp(const RouteCashApp());
@@ -24,7 +24,7 @@ class RouteCashApp extends StatelessWidget {
       supportedLocales:
           AppLocalizations.supportedLocales,
 
-      home: const AuthScreen(),
+      home: const PinCodeScreen(),
     );
   }
 }
