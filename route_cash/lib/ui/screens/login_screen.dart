@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/app_localizations.dart';
 import '../../viewmodels/login_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
 import 'accounts_setup_screen.dart';
+import 'confirm_verification_screen.dart';
+import 'main_navigation_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? initialEmail;
+  final String? initialPassword;
+
+  const LoginScreen({
+    super.key,
+    this.initialEmail,
+    this.initialPassword,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -16,13 +26,15 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   late final LoginViewModel _viewModel;
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
 
   @override
   void initState() {
     super.initState();
     _viewModel = LoginViewModel();
+    _emailController = TextEditingController(text: widget.initialEmail);
+    _passwordController = TextEditingController(text: widget.initialPassword);
   }
 
   @override
@@ -33,25 +45,56 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     final email = _emailController.text;
     final password = _passwordController.text;
     
-    final errorMessage = _viewModel.validateAndLogin(email, password);
+    final result = await _viewModel.login(email, password);
 
-    if (errorMessage != null) {
+    if (result != null) {
+      if (!mounted) return;
+      
+      // Manejar caso de email no verificado
+      if (result.contains('Email not confirmed') || result.contains('unverified')) {
+        final user = Supabase.instance.client.auth.currentUser;
+        if (user != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ConfirmVerificationScreen(
+                userId: user.id,
+                email: email,
+                purpose: 'email_verification',
+                password: password,
+              ),
+            ),
+          );
+          return;
+        }
+      }
+
+      String message = result;
+      final strings = AppLocalizations.of(context)!;
+      
+      if (result == 'empty_fields') {
+        message = 'Ingresa tu correo y contraseña';
+      } else if (result == 'errorInvalidCredentials') {
+        message = strings.errorInvalidCredentials;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(errorMessage),
+          content: Text(message),
         ),
       );
       return;
     }
 
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => const AccountsSetupScreen(),
+        builder: (_) => const MainNavigationScreen(),
       ),
     );
   }
@@ -150,30 +193,64 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 17),
 
-                  TextButton(
-                    onPressed: _forgotPassword,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      foregroundColor: Colors.black,
-                    ),
-                    child: Text(
-                      AppLocalizations.of(context)!.forgotPassword,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        decoration: TextDecoration.underline,
-                        decorationThickness: 1.2,
-                      ),
-                    ),
+                  ListenableBuilder(
+                    listenable: _viewModel,
+                    builder: (context, _) {
+                      return Column(
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: Checkbox(
+                                  value: _viewModel.rememberMe,
+                                  onChanged: _viewModel.toggleRememberMe,
+                                  activeColor: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Mantener sesión',
+                                style: GoogleFonts.inter(fontSize: 12),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: _forgotPassword,
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  foregroundColor: Colors.black,
+                                ),
+                                child: Text(
+                                  AppLocalizations.of(context)!.forgotPassword,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                    decorationThickness: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 50),
 
-                  RouteCashPrimaryButton(
-                    text: AppLocalizations.of(context)!.signIn,
-                    onPressed: _login,
+                  ListenableBuilder(
+                    listenable: _viewModel,
+                    builder: (context, _) {
+                      return RouteCashPrimaryButton(
+                        text: AppLocalizations.of(context)!.signIn,
+                        onPressed: _login,
+                        isLoading: _viewModel.isLoading,
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 20),

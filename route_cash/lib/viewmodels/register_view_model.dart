@@ -1,18 +1,227 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import '../services/catalog_service.dart';
 
 class RegisterViewModel extends ChangeNotifier {
+  final AuthService _authService = AuthService();
+  final CatalogService _catalogService = CatalogService();
+
+  int _currentStep = 0;
+  int get currentStep => _currentStep;
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  // Catalog data
+  List<Map<String, dynamic>> countries = [];
+  List<Map<String, dynamic>> states = [];
+  List<Map<String, dynamic>> currencies = [];
+
+  // Form fields
+  String name = '';
+  String email = '';
+  String phone = '';
+  String password = '';
+  String confirmPassword = '';
+
+  // Selected values
+  Map<String, dynamic>? selectedCountry;
+  Map<String, dynamic>? selectedState;
+  Map<String, dynamic>? selectedCurrency;
+  String? selectedPhoneCode;
+
+  // Password visibility
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool get obscurePassword => _obscurePassword;
+  bool get obscureConfirmPassword => _obscureConfirmPassword;
+
+  // Password requirements
+  bool hasUppercase = false;
+  bool hasNumber = false;
+  bool hasSpecialChar = false;
+  bool hasMinLength = false;
+  bool passwordsMatch = false;
+
+  RegisterViewModel() {
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      debugPrint('DEBUG: Attempting to load catalogs...');
+      countries = await _catalogService.getCountries();
+      currencies = await _catalogService.getCurrencies();
+      
+      debugPrint('DEBUG: Success! Countries: ${countries.length}, Currencies: ${currencies.length}');
+      
+      if (countries.isNotEmpty) {
+        selectedCountry = null; // Let user select
+        selectedPhoneCode = countries.first['phone_code'];
+      }
+      
+      if (currencies.isNotEmpty) {
+        selectedCurrency = currencies.firstWhere(
+          (c) => c['code'] == 'USD',
+          orElse: () => currencies.first,
+        );
+      }
+    } catch (e) {
+      debugPrint('DEBUG ERROR: Failed to load catalogs: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadStates(String countryId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      states = await _catalogService.getStates(countryId);
+      selectedState = null;
+    } catch (e) {
+      debugPrint('Error loading states: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void setStep(int step) {
+    _currentStep = step;
+    notifyListeners();
+  }
+
+  void updateName(String val) { name = val; notifyListeners(); }
+  void updateEmail(String val) { email = val; notifyListeners(); }
+  void updatePhone(String val) { phone = val; notifyListeners(); }
+  
+  void updatePhoneCode(String? val) {
+    selectedPhoneCode = val;
+    notifyListeners();
+  }
+
+  void updateCountry(Map<String, dynamic>? val) {
+    selectedCountry = val;
+    if (val != null) {
+      selectedPhoneCode = val['phone_code'];
+      loadStates(val['country_id']);
+    } else {
+      states = [];
+      selectedState = null;
+      notifyListeners();
+    }
+  }
+
+  void updateState(Map<String, dynamic>? val) {
+    selectedState = val;
+    notifyListeners();
+  }
+
+  void updateCurrency(Map<String, dynamic>? val) {
+    selectedCurrency = val;
+    notifyListeners();
+  }
+
+  void updatePassword(String val) { 
+    password = val; 
+    _validatePassword(); 
+    notifyListeners(); 
+  }
+
+  void updateConfirmPassword(String val) { 
+    confirmPassword = val; 
+    _validatePassword(); 
+    notifyListeners(); 
+  }
+
+  void _validatePassword() {
+    hasUppercase = password.contains(RegExp(r'[A-Z]'));
+    hasNumber = password.contains(RegExp(r'[0-9]'));
+    hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    hasMinLength = password.length >= 8;
+    passwordsMatch = password.isNotEmpty && password == confirmPassword;
+  }
+
+  bool isValidEmail(String email) {
+    return RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  bool get isStep1Valid => 
+    name.trim().isNotEmpty && 
+    isValidEmail(email);
+
+  bool get isStep2Valid => 
+    selectedCountry != null && 
+    selectedState != null;
+
+  bool get isStep3Valid => 
+    selectedCurrency != null && 
+    hasMinLength && 
+    hasUppercase && 
+    hasNumber && 
+    hasSpecialChar && 
+    passwordsMatch;
+
+  bool get canContinue {
+    if (_currentStep == 0) return isStep1Valid;
+    if (_currentStep == 1) return isStep2Valid;
+    if (_currentStep == 2) return isStep3Valid;
+    return false;
+  }
 
   void togglePasswordVisibility() {
     _obscurePassword = !_obscurePassword;
     notifyListeners();
   }
 
-  String? validateAndRegister(String name, String email, String password) {
-    if (name.trim().isEmpty || email.trim().isEmpty || password.isEmpty) {
-      return 'Completa todos los campos';
+  void toggleConfirmPasswordVisibility() {
+    _obscureConfirmPassword = !_obscureConfirmPassword;
+    notifyListeners();
+  }
+
+  String formatName(String name) {
+    if (name.isEmpty) return name;
+    return name.split(' ').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
+  }
+
+  Future<String?> register() async {
+    final formattedName = formatName(name.trim());
+    final lowerEmail = email.trim().toLowerCase();
+    final fullPhone = '${selectedPhoneCode ?? ""}${phone.trim()}';
+    
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _authService.signUp(
+        lowerEmail, 
+        password, 
+        {
+          'full_name': formattedName,
+          'phone': fullPhone,
+          'state_id': selectedState!['state_id'],
+          'default_currency_id': selectedCurrency!['currency_id'],
+        },
+      );
+
+      await _authService.saveWelcomeMessage(formattedName);
+      
+      if (response.user != null) {
+        return 'verify:${response.user!.id}';
+      }
+      return null;
+    } catch (e) {
+      return e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-    return null; // Éxito, sin errores
   }
 }

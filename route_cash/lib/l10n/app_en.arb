@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appName": "RouteCash",
+  "appName": "Route Cash",
   "financialSpace": "Your financial space",
   "moneyWithMeaning": "Money\nwith purpose.",
   "signIn": "Sign in",
@@ -19,6 +19,14 @@
   "skipForNow": "Skip for now",
   "bankConnectionMessage": "Starting secure bank connection",
   "manualAccountMessage": "Preparing manual account setup",
+  "invalidEmail": "Invalid email or domain not allowed",
+  "weakPassword": "Password must have at least 8 characters, one uppercase, one number and one special character",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "errorInvalidCredentials": "Invalid email or password",
+  "errorUserExists": "User already exists",
+  "errorUnexpected": "An unexpected error occurred",
+  "confirmPasswordLabel": "Confirm Password",
+  "confirmPasswordHint": "••••••••••",
   "homeGreeting": "Hello, {name}",
   "@homeGreeting": {
     "description": "Greeting displayed on the home screen",

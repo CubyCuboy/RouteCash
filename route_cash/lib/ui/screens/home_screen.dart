@@ -5,8 +5,9 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../../l10n/app_localizations.dart';
 import '../../models/movement.dart';
 import '../../viewmodels/home_view_model.dart';
+import '../../services/auth_service.dart';
 import '../components/route_cash_buttons.dart';
-import 'report_screen.dart';
+import 'accounts_setup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,11 +18,23 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final HomeViewModel _viewModel;
+  final AuthService _authService = AuthService();
+  String _userName = '...';
 
   @override
   void initState() {
     super.initState();
     _viewModel = HomeViewModel();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final name = await _authService.getWelcomeMessage();
+    if (mounted && name != null) {
+      setState(() {
+        _userName = name;
+      });
+    }
   }
 
   @override
@@ -30,21 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  void _onNavigationTap(int index) {
-    if (index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const ReportScreen(),
-        ),
-      );
-
-      return;
-    }
-
-    _viewModel.setSelectedIndex(index);
-  }
-
+  // ... (keep _getMovementTitle, _formatMovementDate, _formatMovementAmount methods)
   String _getMovementTitle(
     AppLocalizations strings,
     MovementType type,
@@ -139,15 +138,9 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                      24,
-                      24,
-                      24,
-                      18,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 100), // More padding for nav
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeader(),
                         const SizedBox(height: 28),
@@ -160,7 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-                _buildBottomNavigation(),
               ],
             );
           },
@@ -177,11 +169,10 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Expanded(
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                strings.homeGreeting('Benja'),
+                strings.homeGreeting(_userName),
                 style: GoogleFonts.inter(
                   color: const Color(0xFF969696),
                   fontSize: 24,
@@ -214,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
-
+  // ... (keep _buildBalanceCard, _buildActivityHeader, _buildMovements)
   Widget _buildBalanceCard() {
     final strings = AppLocalizations.of(context)!;
 
@@ -306,7 +297,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const Spacer(),
             TextButton(
-              onPressed: () => _onNavigationTap(1),
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).push(
+                  MaterialPageRoute(builder: (_) => const AccountsSetupScreen()),
+                );
+              },
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 minimumSize: Size.zero,
@@ -315,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 foregroundColor: Colors.black,
               ),
               child: Text(
-                strings.viewAll,
+                'Añadir Banco',
                 style: GoogleFonts.roboto(
                   color: Colors.black,
                   fontSize: 15,
@@ -364,74 +359,6 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {},
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildBottomNavigation() {
-    final strings = AppLocalizations.of(context)!;
-
-    return Container(
-      height: 72,
-      margin: const EdgeInsets.fromLTRB(
-        8,
-        0,
-        8,
-        8,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 7,
-        vertical: 7,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _BottomNavItem(
-              icon: Icons.home_outlined,
-              activeIcon: Icons.home_rounded,
-              label: strings.navHome,
-              selected:
-                  _viewModel.selectedIndex == 0,
-              onTap: () => _onNavigationTap(0),
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              icon: Icons.north_east_rounded,
-              activeIcon:
-                  Icons.north_east_rounded,
-              label: strings.navMovements,
-              selected:
-                  _viewModel.selectedIndex == 1,
-              onTap: () => _onNavigationTap(1),
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              icon: Icons.credit_card_outlined,
-              activeIcon:
-                  Icons.credit_card_rounded,
-              label: strings.navCards,
-              selected:
-                  _viewModel.selectedIndex == 2,
-              onTap: () => _onNavigationTap(2),
-            ),
-          ),
-          Expanded(
-            child: _BottomNavItem(
-              icon: Icons.tune_rounded,
-              activeIcon: Icons.tune_rounded,
-              label: strings.navProfile,
-              selected:
-                  _viewModel.selectedIndex == 3,
-              onTap: () => _onNavigationTap(3),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -514,73 +441,6 @@ class _MovementTile extends StatelessWidget {
                 fontSize: 20,
                 fontWeight: FontWeight.w400,
                 letterSpacing: -0.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomNavItem extends StatelessWidget {
-  const _BottomNavItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
-      child: AnimatedContainer(
-        duration: const Duration(
-          milliseconds: 220,
-        ),
-        height: 58,
-        margin: const EdgeInsets.symmetric(
-          horizontal: 2,
-        ),
-        decoration: BoxDecoration(
-          color: selected
-              ? Colors.white
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(29),
-        ),
-        child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-          children: [
-            Icon(
-              selected ? activeIcon : icon,
-              color: selected
-                  ? Colors.black
-                  : const Color(0xFFA9A9A9),
-              size: 20,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: selected
-                    ? Colors.black
-                    : const Color(0xFFA9A9A9),
-                fontSize: 8,
-                fontWeight: selected
-                    ? FontWeight.w600
-                    : FontWeight.w400,
               ),
             ),
           ],

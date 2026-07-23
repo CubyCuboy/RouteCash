@@ -8,12 +8,18 @@ class RouteCashPrimaryButton extends StatelessWidget {
     required this.onPressed,
     this.height = 56,
     this.showArrow = true,
+    this.isLoading = false,
+    this.backgroundColor = Colors.black,
+    this.textColor = Colors.white,
   });
 
   final String text;
   final VoidCallback onPressed;
   final double height;
   final bool showArrow;
+  final bool isLoading;
+  final Color backgroundColor;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -21,37 +27,48 @@ class RouteCashPrimaryButton extends StatelessWidget {
       width: double.infinity,
       height: height,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           elevation: 0,
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
           padding: const EdgeInsets.symmetric(horizontal: 20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
+          disabledBackgroundColor: backgroundColor.withOpacity(0.6),
         ),
-        child: Row(
-          mainAxisAlignment: showArrow
-              ? MainAxisAlignment.start
-              : MainAxisAlignment.center,
-          children: [
-            Text(
-              text,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+        child: isLoading
+            ? SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: textColor,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: showArrow
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  Text(
+                    text,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (showArrow) ...[
+                    const Spacer(),
+                    Icon(
+                      Icons.arrow_forward,
+                      size: 20,
+                      color: textColor,
+                    ),
+                  ],
+                ],
               ),
-            ),
-            if (showArrow) ...[
-              const Spacer(),
-              const Icon(
-                Icons.arrow_forward,
-                size: 20,
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
