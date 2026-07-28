@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../accounts/presentation/screens/accounts_setup_screen.dart';
 import 'register_screen.dart';
+"se creo la carpeta de login_screen.dart y se creo la clase LoginScreen que es un StatefulWidget que contiene un formulario de inicio de sesión con campos de correo electrónico y contraseña, así como botones para iniciar sesión, recuperar contraseña y registrarse. También se implementa la funcionalidad de mostrar u ocultar la contraseña y navegar entre pantallas."
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
