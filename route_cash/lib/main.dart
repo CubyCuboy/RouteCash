@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+<<<<<<< Updated upstream
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'l10n/app_localizations.dart';
 import 'ui/screens/onboarding_screen.dart';
@@ -13,11 +14,23 @@ void main() async {
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']?.trim() ?? '',
     anonKey: dotenv.env['SUPABASE_ANON_KEY']?.trim() ?? '',
+=======
+
+import 'package:routecash/features/auth/presentation/screens/auth_screen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://gpufgmlpbpydojnvgwid.supabase.co',
+    publishableKey: 'sb_publishable_0UCUj_fWHU4-O8l6ZRAb3A_fEJECZsE',
+>>>>>>> Stashed changes
   );
 
   runApp(const RouteCashApp());
 }
 
+<<<<<<< Updated upstream
 class RouteCashApp extends StatefulWidget {
   const RouteCashApp({super.key});
 
@@ -55,4 +68,17 @@ class _RouteCashAppState extends State<RouteCashApp> {
       home: session != null ? MainNavigationScreen() : OnboardingScreen(),
     );
   }
+=======
+class RouteCashApp extends StatelessWidget {
+  const RouteCashApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'RouteCash',
+      debugShowCheckedModeBanner: false,
+      home: const AuthScreen(),
+    );
+  }
+>>>>>>> Stashed changes
 }
