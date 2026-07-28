@@ -26,3 +26,4 @@ class RouteCashApp extends StatelessWidget {
     );
   }
 }
+//'''se creo la carpeta de login_screen.dart y se creo la clase LoginScreen que es un StatefulWidget que contiene un formulario de inicio de sesión con campos de correo electrónico y contraseña, así como botones para iniciar sesión, recuperar contraseña y registrarse. También se implementa la funcionalidad de mostrar u ocultar la contraseña y navegar entre pantallas'''
