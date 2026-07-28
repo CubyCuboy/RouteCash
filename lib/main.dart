@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:routecash/features/auth/presentation/screens/auth_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://gpufgmlpbpydojnvgwid.supabase.co',
+    publishableKey: 'sb_publishable_0UCUj_fWHU4-O8l6ZRAb3A_fEJECZsE',
+  );
+
   runApp(const RouteCashApp());
 }
 
@@ -14,15 +22,7 @@ class RouteCashApp extends StatelessWidget {
     return MaterialApp(
       title: 'RouteCash',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.black,
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home: const OnboardingScreen(),
+      home: const AuthScreen(),
     );
   }
 }
