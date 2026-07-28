@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../reports/report_screen.dart';
+import '../../card/cards_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,20 +22,31 @@ class _HomeScreenState extends State<HomeScreen> {
       amount: '-\$500.000',
     ),
   ];
-
-  void _onNavigationTap(int index) {
-    if (index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ReportScreen()),
-      );
-      return;
-    }
-
-    setState(() {
-      _selectedIndex = index;
-    });
+void _onNavigationTap(int index) {
+  if (index == 1) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ReportScreen(),
+      ),
+    );
+    return;
   }
+
+  if (index == 2) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CardsScreen(),
+      ),
+    );
+    return;
+  }
+
+  setState(() {
+    _selectedIndex = index;
+  });
+}
 
   @override
   Widget build(BuildContext context) {
