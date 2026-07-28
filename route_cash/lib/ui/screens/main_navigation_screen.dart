@@ -4,6 +4,7 @@ import '../../l10n/app_localizations.dart';
 import 'home_screen.dart';
 import 'report_screen.dart';
 import 'settings_screen.dart';
+import 'cards_screens.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -18,7 +19,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const ReportScreen(),
-    const Center(child: Text('Cards')), // Placeholder
+    const AccountsScreen(), // Placeholder
     const SettingsScreen(),
   ];
 
