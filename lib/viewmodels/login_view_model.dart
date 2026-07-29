@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../utils/email_validator.dart';
 
 class LoginViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -23,19 +24,24 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   Future<String?> login(String email, String password) async {
-    final lowerEmail = email.trim().toLowerCase();
-    if (lowerEmail.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       return 'empty_fields';
     }
+
+    if (!EmailValidator.isValid(email)) {
+      return 'invalidEmail';
+    }
+
+    final cleanEmail = EmailValidator.normalize(email);
 
     _isLoading = true;
     notifyListeners();
 
     try {
-      await _authService.signIn(lowerEmail, password);
+      await _authService.signIn(cleanEmail, password);
       
       final user = _authService.currentUser;
-      final name = user?.userMetadata?['full_name'] ?? lowerEmail;
+      final name = user?.userMetadata?['full_name'] ?? cleanEmail;
       await _authService.saveWelcomeMessage(name);
 
       // Persistencia de sesión manejada por Supabase por defecto, 

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/app_localizations.dart';
+import '../../viewmodels/login_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
 import 'accounts_setup_screen.dart';
+import 'confirm_verification_screen.dart';
+import 'main_navigation_screen.dart';
 import 'register_screen.dart';
-
 
 class LoginScreen extends StatefulWidget {
   final String? initialEmail;
@@ -22,39 +25,83 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  late final _emailController = TextEditingController(text: widget.initialEmail);
-  late final _passwordController = TextEditingController(text: widget.initialPassword);
+  late final LoginViewModel _viewModel;
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
 
-  bool _obscurePassword = true;
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = LoginViewModel();
+    _emailController = TextEditingController(text: widget.initialEmail);
+    _passwordController = TextEditingController(text: widget.initialPassword);
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _viewModel.dispose();
     super.dispose();
   }
-void _login(AppLocalizations strings) {
-  final email = _emailController.text.trim();
-  final password = _passwordController.text;
 
-  if (email.isEmpty || password.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(strings.errorInvalidCredentials),
+  void _login() async {
+    final email = _emailController.text;
+    final password = _passwordController.text;
+
+    final result = await _viewModel.login(email, password);
+
+    if (result != null) {
+      if (!mounted) return;
+
+      // Manejar caso de email no verificado
+      if (result.contains('Email not confirmed') || result.contains('unverified')) {
+        final user = Supabase.instance.client.auth.currentUser;
+        if (user != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ConfirmVerificationScreen(
+                userId: user.id,
+                email: email,
+                purpose: 'email_verification',
+                password: password,
+              ),
+            ),
+          );
+          return;
+        }
+      }
+
+      String message = result;
+      final strings = AppLocalizations.of(context)!;
+
+      if (result == 'empty_fields') {
+        message = 'Ingresa tu correo y contraseña';
+      } else if (result == 'errorInvalidCredentials') {
+        message = strings.errorInvalidCredentials;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MainNavigationScreen(),
       ),
     );
-    return;
   }
 
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const AccountsSetupScreen(),
-    ),
-  );
-}
+  void _forgotPassword() {
+    final strings = AppLocalizations.of(context)!;
 
-  void _forgotPassword(AppLocalizations strings) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(strings.passwordRecoveryMessage),
@@ -64,8 +111,6 @@ void _login(AppLocalizations strings) {
 
   @override
   Widget build(BuildContext context) {
-    final strings = AppLocalizations.of(context)!;
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
@@ -74,7 +119,7 @@ void _login(AppLocalizations strings) {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight:
-                  MediaQuery.of(context).size.height -
+              MediaQuery.of(context).size.height -
                   MediaQuery.of(context).padding.top -
                   MediaQuery.of(context).padding.bottom -
                   44,
@@ -83,12 +128,15 @@ void _login(AppLocalizations strings) {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _LoginBackButton(onPressed: () => Navigator.pop(context)),
+                  CircleIconButton(
+                    icon: Icons.arrow_back,
+                    onPressed: () => Navigator.pop(context),
+                  ),
 
                   const SizedBox(height: 42),
 
                   Text(
-                    strings.loginWelcomeLabel,
+                    AppLocalizations.of(context)!.loginWelcomeLabel,
                     style: GoogleFonts.inter(
                       color: const Color(0xFF9D9D9D),
                       fontSize: 11,
@@ -100,7 +148,7 @@ void _login(AppLocalizations strings) {
                   const SizedBox(height: 14),
 
                   Text(
-                    strings.loginTitle,
+                    AppLocalizations.of(context)!.loginTitle,
                     style: GoogleFonts.playfairDisplay(
                       color: Colors.black,
                       fontSize: 48,
@@ -113,7 +161,7 @@ void _login(AppLocalizations strings) {
                   const SizedBox(height: 50),
 
                   RouteCashTextField(
-                    label: strings.emailLabel,
+                    label: AppLocalizations.of(context)!.emailLabel,
                     hintText: 'andrea@correo.com',
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -121,53 +169,88 @@ void _login(AppLocalizations strings) {
 
                   const SizedBox(height: 26),
 
-                  RouteCashTextField(
-                    label: strings.passwordLabel,
-                    hintText: '••••••••••',
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        size: 20,
-                        color: const Color(0xFF999999),
-                      ),
-                    ),
+                  ListenableBuilder(
+                    listenable: _viewModel,
+                    builder: (context, _) {
+                      return RouteCashTextField(
+                        label: AppLocalizations.of(context)!.passwordLabel,
+                        hintText: '••••••••••',
+                        controller: _passwordController,
+                        obscureText: _viewModel.obscurePassword,
+                        suffixIcon: IconButton(
+                          onPressed: _viewModel.togglePasswordVisibility,
+                          icon: Icon(
+                            _viewModel.obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            size: 20,
+                            color: const Color(0xFF999999),
+                          ),
+                        ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 17),
 
-                  TextButton(
-                    onPressed: () => _forgotPassword(strings),
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      foregroundColor: Colors.black,
-                    ),
-                    child: Text(
-                      strings.forgotPassword,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        decoration: TextDecoration.underline,
-                        decorationThickness: 1.2,
-                      ),
-                    ),
+                  ListenableBuilder(
+                    listenable: _viewModel,
+                    builder: (context, _) {
+                      return Column(
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: Checkbox(
+                                  value: _viewModel.rememberMe,
+                                  onChanged: _viewModel.toggleRememberMe,
+                                  activeColor: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Mantener sesión',
+                                style: GoogleFonts.inter(fontSize: 12),
+                              ),
+                              const Spacer(),
+                              TextButton(
+                                onPressed: _forgotPassword,
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  foregroundColor: Colors.black,
+                                ),
+                                child: Text(
+                                  AppLocalizations.of(context)!.forgotPassword,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                    decorationThickness: 1.2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 50),
 
-                  RouteCashPrimaryButton(
-                    text: strings.signIn,
-                    onPressed: () => _login(strings),
+                  ListenableBuilder(
+                    listenable: _viewModel,
+                    builder: (context, _) {
+                      return RouteCashPrimaryButton(
+                        text: AppLocalizations.of(context)!.signIn,
+                        onPressed: _login,
+                        isLoading: _viewModel.isLoading,
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 20),
@@ -183,7 +266,7 @@ void _login(AppLocalizations strings) {
                         );
                       },
                       child: Text(
-                        strings.noAccountRegister,
+                        AppLocalizations.of(context)!.noAccountRegister,
                         style: GoogleFonts.inter(
                           color: Colors.black,
                           fontSize: 12,
@@ -199,29 +282,6 @@ void _login(AppLocalizations strings) {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _LoginBackButton extends StatelessWidget {
-  const _LoginBackButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFE2E2E2)),
-        ),
-        child: const Icon(Icons.arrow_back, size: 20, color: Colors.black),
       ),
     );
   }
