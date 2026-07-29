@@ -1,0 +1,136 @@
+{
+  "@@locale": "en",
+  "appName": "Route Cash",
+  "financialSpace": "Your financial space",
+  "moneyWithMeaning": "Money\nwith purpose.",
+  "signIn": "Sign in",
+  "signInWithOutlook": "Sign in with Outlook",
+  "signInWithGoogle": "Sign in with Google",
+  "signInWithApple": "Sign in with Apple",
+  "newUserCreateAccount": "New here? Create an account",
+  "setupProgress": "3 / 3",
+  "yourAccountsLabel": "YOUR ACCOUNTS",
+  "accountsSetupTitle": "Everything important,\ntogether.",
+  "accountsSetupDescription": "Connect an account or add one manually.\nYou can always do it later.",
+  "horizonBank": "Horizon Bank",
+  "connectSecurely": "Connect securely",
+  "addManually": "Add manually",
+  "manualAccountTypes": "Cash, card or investment",
+  "skipForNow": "Skip for now",
+  "bankConnectionMessage": "Starting secure bank connection",
+  "manualAccountMessage": "Preparing manual account setup",
+  "invalidEmail": "Invalid email or domain not allowed",
+  "weakPassword": "Password must have at least 8 characters, one uppercase, one number and one special character",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "errorInvalidCredentials": "Invalid email or password",
+  "errorUserExists": "User already exists",
+  "errorUnexpected": "An unexpected error occurred",
+  "confirmPasswordLabel": "Confirm Password",
+  "confirmPasswordHint": "••••••••••",
+  "homeGreeting": "Hello, {name}",
+  "@homeGreeting": {
+    "description": "Greeting displayed on the home screen",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Benja"
+      }
+    }
+  },
+  "homeYourRoute": "Your route",
+  "availableBalanceLabel": "AVAILABLE BALANCE",
+  "movementCountLabel": "{count} / TRANSACTION",
+  "@movementCountLabel": {
+    "description": "Number of transactions displayed on the home screen",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "balanceMoreThanMonth": "{percentage}% more than {month}",
+  "@balanceMoreThanMonth": {
+    "description": "Balance comparison with another month",
+    "placeholders": {
+      "percentage": {
+        "type": "num",
+        "example": "18"
+      },
+      "month": {
+        "type": "String",
+        "example": "June"
+      }
+    }
+  },
+  "viewAll": "View all",
+  "activitySummary": "Activity summary",
+  "navHome": "Home",
+  "navMovements": "Transactions",
+  "navCards": "Cards",
+  "navProfile": "Profile",
+  "loginWelcomeLabel": "GOOD TO SEE YOU",
+  "loginTitle": "Return to\nyour route.",
+  "emailLabel": "EMAIL ADDRESS",
+  "passwordLabel": "PASSWORD",
+  "forgotPassword": "I forgot my password",
+  "passwordRecoveryMessage": "Password recovery will open here",
+  "noAccountRegister": "Don't have an account? Sign up",
+  "onboardingSubtitle": "Your finances in\none place",
+  "continueButton": "Continue",
+  "registerProgress": "1 / 3",
+  "firstStepLabel": "FIRST STEP",
+  "registerTitle": "It starts\nwith you.",
+  "registerDescription": "Create your personal space to save and\nunderstand every transaction.",
+  "fullNameLabel": "FULL NAME",
+  "termsAndPrivacy": "By continuing, you accept our terms and privacy policy.",
+  "selectMonth": "Select month",
+  "reportTitle": "Report",
+  "monthInNumbers": "Your month in numbers.",
+  "monthlyBalanceLabel": "MONTHLY BALANCE",
+  "weeklyFlow": "Weekly flow",
+  "expensesAndIncome": "Expenses / Income",
+  "mostSpent": "Top spending",
+  "viewCategories": "View categories",
+  "monthJanuary": "January",
+  "monthFebruary": "February",
+  "monthMarch": "March",
+  "monthApril": "April",
+  "monthMay": "May",
+  "monthJune": "June",
+  "monthJuly": "July",
+  "monthAugust": "August",
+  "monthSeptember": "September",
+  "monthOctober": "October",
+  "monthNovember": "November",
+  "monthDecember": "December",
+  "expenseCategoryShopping": "Shopping",
+  "expenseCategoryHousing": "Housing",
+  "expenseCategoryFood": "Food",
+  "expenseCategoryTransport": "Transport",
+  "expenseCategoryServices": "Services",
+  "expenseCategoryEntertainment": "Entertainment",
+  "movementElectricityPayment": "Electricity payment",
+  "movementWaterPayment": "Water payment",
+  "movementRentPayment": "Rent payment",
+  "movementTodayAt": "Today · {time}",
+  "@movementTodayAt": {
+    "description": "Date of a transaction made today",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "5:10 PM"
+      }
+    }
+  },
+  "movementYesterdayAt": "Yesterday · {time}",
+  "@movementYesterdayAt": {
+    "description": "Date of a transaction made yesterday",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "5:10 PM"
+      }
+    }
+  }
+}

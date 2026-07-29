@@ -1,29 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'l10n/app_localizations.dart';
+import 'ui/screens/onboarding_screen.dart';
+import 'ui/screens/main_navigation_screen.dart';
 
-import 'package:routecash/features/auth/presentation/screens/auth_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load(fileName: '.env');
+
   await Supabase.initialize(
-    url: 'https://gpufgmlpbpydojnvgwid.supabase.co',
-    publishableKey: 'sb_publishable_0UCUj_fWHU4-O8l6ZRAb3A_fEJECZsE',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   runApp(const RouteCashApp());
 }
 
-class RouteCashApp extends StatelessWidget {
+class RouteCashApp extends StatefulWidget {
   const RouteCashApp({super.key});
+
+  static void setLocale(BuildContext context, Locale newLocale) {
+    _RouteCashAppState? state = context.findAncestorStateOfType<_RouteCashAppState>();
+    state?.setLocale(newLocale);
+  }
+
+  @override
+  State<RouteCashApp> createState() => _RouteCashAppState();
+}
+
+class _RouteCashAppState extends State<RouteCashApp> {
+  Locale? _locale;
+
+  void setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final session = Supabase.instance.client.auth.currentSession;
+
     return MaterialApp(
-      title: 'RouteCash',
       debugShowCheckedModeBanner: false,
-      home: const AuthScreen(),
+      locale: _locale,
+      onGenerateTitle: (context) {
+        return AppLocalizations.of(context)!.appName;
+      },
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: session != null ? const MainNavigationScreen() : const OnboardingScreen(),
     );
   }
 }
-//'''se creo la carpeta de login_screen.dart y se creo la clase LoginScreen que es un StatefulWidget que contiene un formulario de inicio de sesión con campos de correo electrónico y contraseña, así como botones para iniciar sesión, recuperar contraseña y registrarse. También se implementa la funcionalidad de mostrar u ocultar la contraseña y navegar entre pantallas'''git fetch origingit a

@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,8 +11,7 @@ class GoogleAuthService {
 
   bool _initialized = false;
 
-  static const String _webClientId =
-      '436408629446-0legi763v59hojjsk0epu2vpkbrc48tb.apps.googleusercontent.com';
+  static final String _webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
 
   Future<void> _initialize() async {
     if (_initialized) {
@@ -27,9 +27,12 @@ class GoogleAuthService {
 
   Future<AuthResponse> signIn() async {
     await _initialize();
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
 
     final GoogleSignInAccount googleUser =
-        await _googleSignIn.authenticate();
+    await _googleSignIn.authenticate();
 
     const scopes = <String>[
       'email',
@@ -38,7 +41,7 @@ class GoogleAuthService {
 
     final authorization =
         await googleUser.authorizationClient.authorizationForScopes(scopes) ??
-        await googleUser.authorizationClient.authorizeScopes(scopes);
+            await googleUser.authorizationClient.authorizeScopes(scopes);
 
     final idToken = googleUser.authentication.idToken;
 
