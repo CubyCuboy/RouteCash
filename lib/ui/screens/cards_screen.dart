@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/card_model.dart';
 import '../components/route_cash_buttons.dart';
 
@@ -18,44 +19,63 @@ class _CardsScreenState extends State<CardsScreen> {
     decimalDigits: 0,
   );
 
-  final List<RouteCashCardModel> _cards = [
-    const RouteCashCardModel(
+  late final List<RouteCashCardModel> _cards = [
+    RouteCashCardModel(
       id: '1',
       bankName: 'Banco Estado',
       productName: 'Cuenta Corriente',
       lastFourDigits: '7841',
       availableAmount: 485230,
       type: RouteCashCardType.debit,
-      assetPath: 'assets/images/cards/banco_estado.png',
+      assetPath:
+          'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/bancoestadoazul.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvYmFuY29lc3RhZG9henVsLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODU0NzcwNjMsImV4cCI6MTc4NjA4MTg2M30.2bKmJv6IvuT1mLXe7ZYEAoQ8CucSMcFeYCW64FJfFaw',
     ),
-    const RouteCashCardModel(
+    RouteCashCardModel(
       id: '2',
       bankName: 'Scotiabank',
       productName: 'Cuenta Corriente',
       lastFourDigits: '3192',
       availableAmount: 128760,
       type: RouteCashCardType.debit,
-      assetPath: 'assets/images/cards/scotiabank.png',
+      assetPath:
+          'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/skotia.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvc2tvdGlhLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODU0Nzc1MDMsImV4cCI6MTc4NjA4MjMwM30.EL0D8KXRngTjRNahjcWc1z-zZ04tcklYQXTpmb9YgMM',
     ),
-    const RouteCashCardModel(
+    RouteCashCardModel(
       id: '3',
       bankName: 'Banco Santander',
       productName: 'WorldMember',
       lastFourDigits: '8901',
       availableAmount: 680000,
       type: RouteCashCardType.credit,
-      assetPath: 'assets/images/cards/santander_worldmember.png',
+      assetPath:
+          'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/worldmember.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvd29ybGRtZW1iZXIucG5nIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NTQ3Nzg4NiwiZXhwIjoxNzg2MDgyNjg2fQ.IKX63CPLqq920SnnQQ1dAwGyqjJBXPP8fx_DANCB1Wk',
     ),
-    const RouteCashCardModel(
+    RouteCashCardModel(
       id: '4',
       bankName: 'Banco Falabella',
       productName: 'CMR Falabella',
       lastFourDigits: '5521',
       availableAmount: 1240000,
       type: RouteCashCardType.credit,
-      assetPath: 'assets/images/cards/cmr_falabella.png',
+      assetPath: 'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/cmr.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvY21yLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODU0Nzg1MjMsImV4cCI6MTc4NjA4MzMyM30.kDdgVe1Il9f9H7mU_3pFibb-TovF-m0Y49OEZqKrGJ0',
     ),
   ];
+
+  static String _getCardImageUrl(String fileName, String fallbackAsset) {
+    try {
+      final url = Supabase.instance.client.storage
+          .from('cards')
+          .getPublicUrl(fileName);
+      if (url.isNotEmpty &&
+          !url.contains('your-supabase-project') &&
+          !url.contains('example.com')) {
+        return url;
+      }
+      return fallbackAsset;
+    } catch (_) {
+      return fallbackAsset;
+    }
+  }
 
   List<RouteCashCardModel> get _debitCards {
     return _cards
@@ -72,9 +92,7 @@ class _CardsScreenState extends State<CardsScreen> {
   void _openCard(RouteCashCardModel card) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => CardDetailScreen(card: card),
-      ),
+      MaterialPageRoute(builder: (_) => CardDetailScreen(card: card)),
     );
   }
 
@@ -226,9 +244,7 @@ class _CardsSection extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 18),
               child: RouteCashStoredCard(
                 card: card,
-                formattedAmount: currencyFormat.format(
-                  card.availableAmount,
-                ),
+                formattedAmount: currencyFormat.format(card.availableAmount),
                 onPressed: () => onCardPressed(card),
               ),
             ),
@@ -263,9 +279,7 @@ class RouteCashStoredCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: const Color(0xFFE6E6E6),
-            ),
+            border: Border.all(color: const Color(0xFFE6E6E6)),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0A000000),
@@ -286,13 +300,7 @@ class RouteCashStoredCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    card.assetPath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _FallbackCard(card: card);
-                    },
-                  ),
+                  child: CardImageWidget(card: card),
                 ),
               ),
               const SizedBox(width: 15),
@@ -375,65 +383,121 @@ class RouteCashStoredCard extends StatelessWidget {
 }
 
 class _FallbackCard extends StatelessWidget {
-  const _FallbackCard({
-    required this.card,
-  });
+  const _FallbackCard({required this.card});
 
   final RouteCashCardModel card;
 
+  List<Color> _getBankGradient() {
+    final name = card.bankName.toLowerCase();
+    if (name.contains('estado')) {
+      return const [Color(0xFF003057), Color(0xFF001B3A)];
+    } else if (name.contains('scotia')) {
+      return const [Color(0xFFCC0000), Color(0xFF7A0000)];
+    } else if (name.contains('santander')) {
+      return const [Color(0xFFEC0000), Color(0xFF8E0000)];
+    } else if (name.contains('falabella')) {
+      return const [Color(0xFF00875A), Color(0xFF004D34)];
+    }
+    return card.type == RouteCashCardType.credit
+        ? const [Color(0xFF1E1E1E), Color(0xFF383838)]
+        : const [Color(0xFF0168FF), Color(0xFF25A8F4)];
+  }
+
+  Color? _getAccentColor() {
+    final name = card.bankName.toLowerCase();
+    if (name.contains('estado')) {
+      return const Color(0xFFE57200);
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isCredit = card.type == RouteCashCardType.credit;
+    final accent = _getAccentColor();
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isCredit
-              ? const [
-                  Color(0xFF111111),
-                  Color(0xFF4A4A4A),
-                ]
-              : const [
-                  Color(0xFF0168FF),
-                  Color(0xFF25A8F4),
-                ],
+          colors: _getBankGradient(),
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
       child: DefaultTextStyle(
-        style: GoogleFonts.inter(
-          color: Colors.white,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        style: GoogleFonts.inter(color: Colors.white),
+        child: Stack(
           children: [
-            Text(
-              card.bankName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w600,
+            if (accent != null)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  width: 35,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-            ),
-            const Spacer(),
-            Text(
-              card.productName.toUpperCase(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              card.lastFourDigits,
-              style: const TextStyle(
-                fontSize: 8,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      card.bankName.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.nfc_rounded,
+                      color: Colors.white70,
+                      size: 10,
+                    ),
+                  ],
+                ),
+                Text(
+                  card.productName.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '•••• ${card.lastFourDigits}',
+                      style: const TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    Text(
+                      card.type == RouteCashCardType.credit ? 'VISA' : 'DEBIT',
+                      style: const TextStyle(
+                        fontSize: 7,
+                        fontWeight: FontWeight.w900,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
@@ -443,10 +507,7 @@ class _FallbackCard extends StatelessWidget {
 }
 
 class CardDetailScreen extends StatelessWidget {
-  const CardDetailScreen({
-    super.key,
-    required this.card,
-  });
+  const CardDetailScreen({super.key, required this.card});
 
   final RouteCashCardModel card;
 
@@ -507,25 +568,13 @@ class CardDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(24),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.asset(
-                    card.assetPath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _FallbackCard(card: card);
-                    },
-                  ),
+                  child: CardImageWidget(card: card),
                 ),
               ),
             ),
             const SizedBox(height: 36),
-            _CardInformationRow(
-              label: 'Banco',
-              value: card.bankName,
-            ),
-            _CardInformationRow(
-              label: 'Producto',
-              value: card.productName,
-            ),
+            _CardInformationRow(label: 'Banco', value: card.bankName),
+            _CardInformationRow(label: 'Producto', value: card.productName),
             _CardInformationRow(
               label: 'Terminación',
               value: '•••• ${card.lastFourDigits}',
@@ -544,10 +593,7 @@ class CardDetailScreen extends StatelessWidget {
 }
 
 class _CardInformationRow extends StatelessWidget {
-  const _CardInformationRow({
-    required this.label,
-    required this.value,
-  });
+  const _CardInformationRow({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -557,11 +603,7 @@ class _CardInformationRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 19),
       decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE2E2E2),
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E2E2))),
       ),
       child: Row(
         children: [
@@ -608,9 +650,7 @@ class _AddCardBottomSheet extends StatelessWidget {
       ),
       decoration: const BoxDecoration(
         color: Color(0xFFFAFAFA),
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(30),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -689,9 +729,7 @@ class _AddCardOption extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(
-              color: const Color(0xFFE5E5E5),
-            ),
+            border: Border.all(color: const Color(0xFFE5E5E5)),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
@@ -703,11 +741,7 @@ class _AddCardOption extends StatelessWidget {
                   color: Colors.black,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 21,
-                ),
+                child: Icon(icon, color: Colors.white, size: 21),
               ),
               const SizedBox(width: 15),
               Expanded(
@@ -757,9 +791,7 @@ class _EmptyCardState extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFE5E5E5),
-        ),
+        border: Border.all(color: const Color(0xFFE5E5E5)),
       ),
       child: Column(
         children: [
@@ -779,6 +811,53 @@ class _EmptyCardState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class CardImageWidget extends StatelessWidget {
+  const CardImageWidget({super.key, required this.card});
+
+  final RouteCashCardModel card;
+
+  @override
+  Widget build(BuildContext context) {
+    final String path = card.assetPath;
+    final bool isNetwork =
+        path.startsWith('http://') || path.startsWith('https://');
+
+    if (isNetwork) {
+      return Image.network(
+        path,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _FallbackCard(card: card);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: const Color(0xFFF1F1F1),
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    return Image.asset(
+      path,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return _FallbackCard(card: card);
+      },
     );
   }
 }

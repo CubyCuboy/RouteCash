@@ -40,28 +40,31 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget _buildBottomNavigation() {
     final strings = AppLocalizations.of(context)!;
 
-    return Container(
-      height: 72,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _navItem(0, Icons.home_outlined, Icons.home_rounded, strings.navHome),
-          _navItem(1, Icons.north_east_rounded, Icons.north_east_rounded, strings.navMovements),
-          _navItem(2, Icons.credit_card_outlined, Icons.credit_card_rounded, strings.navCards),
-          _navItem(3, Icons.tune_rounded, Icons.tune_rounded, strings.navProfile),
-        ],
+    return SafeArea(
+      bottom: true,
+      child: Container(
+        height: 72,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _navItem(0, Icons.home_outlined, Icons.home_rounded, strings.navHome),
+            _navItem(1, Icons.north_east_rounded, Icons.north_east_rounded, strings.navMovements),
+            _navItem(2, Icons.credit_card_outlined, Icons.credit_card_rounded, strings.navCards),
+            _navItem(3, Icons.tune_rounded, Icons.tune_rounded, strings.navProfile),
+          ],
+        ),
       ),
     );
   }
