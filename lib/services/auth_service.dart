@@ -1,11 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
   static const String _welcomeMessageKey = 'welcome_message';
 
-  // Registrar un nuevo usuario
   Future<AuthResponse> signUp(String email, String password, Map<String, dynamic> data) async {
     try {
       final response = await _supabase.auth.signUp(
@@ -91,6 +91,25 @@ class AuthService {
     } catch (e) {
       throw 'Error al actualizar ajustes: $e';
     }
+  }
+
+  static const String _userSettingsCacheKey = 'user_settings_cache';
+
+  Future<void> cacheUserSettings(Map<String, dynamic> settings) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userSettingsCacheKey, json.encode(settings));
+  }
+
+  Future<Map<String, dynamic>?> getCachedUserSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? encoded = prefs.getString(_userSettingsCacheKey);
+    if (encoded == null) return null;
+    return json.decode(encoded) as Map<String, dynamic>;
+  }
+
+  Future<void> clearSettingsCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userSettingsCacheKey);
   }
 
   Future<void> completeEmailChange(String newEmail) async {

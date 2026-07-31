@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:routecash/ui/screens/verification_success_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/app_localizations.dart';
 import '../../viewmodels/verification_view_model.dart';
 import '../components/route_cash_buttons.dart';
@@ -79,8 +80,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       }
 
       if (widget.purpose == 'change_email') {
-        // Al cambiar el email, la sesión actual se invalida.
-        // Cerramos sesión y mandamos al usuario al inicio para que entre con el nuevo correo.
         await Supabase.instance.client.auth.signOut();
         
         if (!mounted) return;
@@ -102,6 +101,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           builder: (_) => VerificationSuccessScreen(
             email: widget.email,
             password: widget.password,
+            returnToHome: Supabase.instance.client.auth.currentSession != null,
+            initialIndex: widget.purpose == 'verify_email' && Supabase.instance.client.auth.currentSession != null ? 3 : 0,
           ),
         ),
         (route) => false,

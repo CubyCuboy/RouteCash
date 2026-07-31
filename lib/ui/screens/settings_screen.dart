@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/verification_service.dart';
 import '../../viewmodels/settings_view_model.dart';
-import '../../main.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
 import '../components/route_cash_dropdown.dart';
@@ -12,6 +11,7 @@ import 'auth_screen.dart';
 import 'otp_verification_screen.dart';
 import 'language_selection_screen.dart';
 import 'change_email_screen.dart';
+import 'link_email_password_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -30,8 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _signOut() async {
-    final auth = Supabase.instance.client.auth;
-    await auth.signOut();
+    await _viewModel.syncAndSignOut();
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const AuthScreen()),
@@ -39,7 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _changeLanguage(String languageCode) {
+  void _changeLanguage() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const LanguageSelectionScreen()),
@@ -137,6 +136,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
       builder: (context) => _SecurityEditSheet(viewModel: _viewModel, type: type),
+    );
+  }
+
+  void _showAddPasswordSheet() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LinkEmailPasswordScreen(
+          initialEmail: _viewModel.userProfile?['email'],
+        ),
+      ),
     );
   }
 
@@ -329,17 +339,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         onTap: _viewModel.isPhoneVerified ? null : _verifyPhone,
                       ),
                       const Divider(height: 1, indent: 16),
-                      _SettingsTile(
-                        icon: Icons.lock_outline,
-                        title: strings.changePassword,
-                        onTap: () => _changeSecurity('password'),
-                      ),
-                      const Divider(height: 1, indent: 16),
-                      _SettingsTile(
-                        icon: Icons.alternate_email,
-                        title: strings.changeEmail,
-                        onTap: () => _changeSecurity('email'),
-                      ),
+                      if (_viewModel.hasEmailPasswordAuth) ...[
+                        _SettingsTile(
+                          icon: Icons.lock_outline,
+                          title: strings.changePassword,
+                          onTap: () => _changeSecurity('password'),
+                        ),
+                        const Divider(height: 1, indent: 16),
+                        _SettingsTile(
+                          icon: Icons.alternate_email,
+                          title: strings.changeEmail,
+                          onTap: () => _changeSecurity('email'),
+                        ),
+                      ] else ...[
+                        _SettingsTile(
+                          icon: Icons.add_moderator_outlined,
+                          title: 'Configurar acceso con correo',
+                          subtitle: 'Agrega una contraseña a tu cuenta',
+                          onTap: _showAddPasswordSheet,
+                        ),
+                      ],
                     ],
                   ),
 
@@ -362,7 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: Icons.language,
                         title: strings.language,
                         trailing: Text(currentLocale.languageCode == 'es' ? 'Español' : currentLocale.languageCode == 'pt' ? 'Português' : 'English', style: const TextStyle(fontSize: 12)),
-                        onTap: () => _changeLanguage(currentLocale.languageCode),
+                        onTap: _changeLanguage,
                       ),
                     ],
                   ),
@@ -390,8 +409,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
-  void _showLanguageDialog(BuildContext context, String current) {}
 }
 
 class _ProfileHeader extends StatelessWidget {
@@ -498,10 +515,11 @@ class _SettingsSection extends StatelessWidget {
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;
+  final String? subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
 
-  const _SettingsTile({required this.icon, required this.title, this.trailing, this.onTap});
+  const _SettingsTile({required this.icon, required this.title, this.subtitle, this.trailing, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -519,6 +537,9 @@ class _SettingsTile extends StatelessWidget {
         title,
         style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
       ),
+      subtitle: subtitle != null 
+        ? Text(subtitle!, style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)) 
+        : null,
       trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right, size: 20, color: Color(0xFFC7C7C7)) : null),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
@@ -551,7 +572,6 @@ class _Badge extends StatelessWidget {
     );
   }
 }
-
 
 class _ProfileEditSheet extends StatefulWidget {
   final SettingsViewModel viewModel;

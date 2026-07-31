@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
@@ -9,6 +10,9 @@ import '../utils/email_validator.dart';
 class SettingsViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final CatalogService _catalogService = CatalogService();
+
+  Timer? _debounceTimer;
+  final Map<String, dynamic> _pendingSettings = {};
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -30,11 +34,24 @@ class SettingsViewModel extends ChangeNotifier {
     debugPrint('SettingsViewModel: Start loading data...');
 
     try {
-      final user = _authService.currentUser;
+      // Usar getUser() para forzar una recarga completa del usuario desde el servidor
+      final response = await Supabase.instance.client.auth.getUser();
+      final user = response.user;
+
       if (user != null) {
         debugPrint('SettingsViewModel: Loading profile for ${user.id}');
         userProfile = await _authService.getUserProfile(user.id);
-        userSettings = await _authService.getUserSettings(user.id);
+        
+        // Cargar desde caché primero
+        final cached = await _authService.getCachedUserSettings();
+        if (cached != null) {
+          userSettings = cached;
+        } else {
+          userSettings = await _authService.getUserSettings(user.id);
+          if (userSettings != null) {
+            await _authService.cacheUserSettings(userSettings!);
+          }
+        }
         
         debugPrint('SettingsViewModel: Loading catalogs...');
         countries = await _catalogService.getCountries();
@@ -210,15 +227,43 @@ class SettingsViewModel extends ChangeNotifier {
     final user = _authService.currentUser;
     if (user == null) return;
 
-    try {
-      await _authService.updateUserSettings(user.id, {key: value});
-      if (userSettings != null) {
-        userSettings![key] = value;
-      }
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error updating setting: $e');
+    // Actualizar localmente inmediatamente
+    if (userSettings != null) {
+      userSettings![key] = value;
     }
+    _pendingSettings[key] = value;
+    notifyListeners();
+    
+    // Guardar en caché local
+    if (userSettings != null) {
+      await _authService.cacheUserSettings(userSettings!);
+    }
+
+    // Debounce para guardar en base de datos
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(minutes: 5), () {
+      syncSettings();
+    });
+  }
+
+  Future<void> syncSettings() async {
+    final user = _authService.currentUser;
+    if (user == null || _pendingSettings.isEmpty) return;
+
+    try {
+      await _authService.updateUserSettings(user.id, Map.from(_pendingSettings));
+      _pendingSettings.clear();
+      debugPrint('Settings synced to DB');
+    } catch (e) {
+      debugPrint('Error syncing settings: $e');
+    }
+  }
+
+  Future<void> syncAndSignOut() async {
+    await syncSettings();
+    // No borramos el caché aquí para que al volver a entrar se mantenga algo,
+    // o al menos que no se pierda si la red falla.
+    await _authService.signOut();
   }
 
   bool get isEmailVerified => _authService.currentUser?.emailConfirmedAt != null;
@@ -228,5 +273,36 @@ class SettingsViewModel extends ChangeNotifier {
   
   bool isProviderLinked(String provider) {
     return linkedIdentities.any((id) => id.provider == provider);
+  }
+
+  bool get hasEmailPasswordAuth {
+    // A veces Supabase no lista 'email' inmediatamente después de un refreshSession()
+    // si el usuario es principalmente OAuth. Verificamos identidades y también si hay email.
+    final providers = linkedIdentities.map((e) => e.provider).toList();
+    debugPrint('SettingsViewModel: User providers: $providers');
+    return providers.contains('email');
+  }
+
+  Future<String?> addEmailPasswordAuth(String email, String password) async {
+    try {
+      final user = _authService.currentUser;
+      if (user == null) return 'No hay sesión activa';
+
+      // Actualizar usuario con contraseña
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(email: email, password: password),
+      );
+
+      await loadData();
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
   }
 }
