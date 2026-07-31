@@ -836,10 +836,7 @@ class _EmptyCardState extends StatelessWidget {
 }
 
 class _CachedCardImageUrl {
-  const _CachedCardImageUrl({
-    required this.url,
-    required this.expiresAt,
-  });
+  const _CachedCardImageUrl({required this.url, required this.expiresAt});
 
   final String? url;
   final DateTime expiresAt;
@@ -898,6 +895,24 @@ class _CardImageService {
   }
 }
 
+String resolveCardImagePath(RouteCashCardModel card) {
+  final bankName = card.bankName.trim().toLowerCase();
+
+  // Cualquier tarjeta o cuenta de Banco Estado usa la misma imagen.
+  if (bankName.contains('banco estado') ||
+      bankName.contains('bancoestado')) {
+    return 'cards/bancoestadoazul.png';
+  }
+
+  // Cualquier tarjeta o cuenta de Banco Falabella usa la imagen CMR.
+  if (bankName.contains('falabella')) {
+    return 'cards/cmr.png';
+  }
+
+  // Para los demás bancos se mantiene la ruta definida en el modelo.
+  return card.assetPath;
+}
+
 class CardImageWidget extends StatefulWidget {
   const CardImageWidget({super.key, required this.card});
 
@@ -909,8 +924,9 @@ class CardImageWidget extends StatefulWidget {
 
 class _CardImageWidgetState extends State<CardImageWidget> {
   Future<String?>? _imageFuture;
+  late String _resolvedImagePath;
 
-  bool get _isLocalAsset => widget.card.assetPath.startsWith('assets/');
+  bool get _isLocalAsset => _resolvedImagePath.startsWith('assets/');
 
   @override
   void initState() {
@@ -921,22 +937,39 @@ class _CardImageWidgetState extends State<CardImageWidget> {
   @override
   void didUpdateWidget(covariant CardImageWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.card.assetPath != widget.card.assetPath) {
+
+    final oldPath = resolveCardImagePath(oldWidget.card);
+    final newPath = resolveCardImagePath(widget.card);
+
+    if (oldPath != newPath ||
+        oldWidget.card.bankName != widget.card.bankName ||
+        oldWidget.card.productName != widget.card.productName) {
       _prepareImage();
     }
   }
 
   void _prepareImage() {
-    _imageFuture = _isLocalAsset
-        ? null
-        : _CardImageService.instance.getImageUrl(widget.card.assetPath);
+    _resolvedImagePath = resolveCardImagePath(widget.card);
+
+    if (_resolvedImagePath.isEmpty || _isLocalAsset) {
+      _imageFuture = null;
+      return;
+    }
+
+    _imageFuture = _CardImageService.instance.getImageUrl(
+      _resolvedImagePath,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_resolvedImagePath.isEmpty) {
+      return _FallbackCard(card: widget.card);
+    }
+
     if (_isLocalAsset) {
       return Image.asset(
-        widget.card.assetPath,
+        _resolvedImagePath,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => _FallbackCard(card: widget.card),
       );
@@ -962,14 +995,19 @@ class _CardImageWidgetState extends State<CardImageWidget> {
         }
 
         final imageUrl = snapshot.data;
-        if (imageUrl == null) {
+        if (imageUrl == null || imageUrl.isEmpty) {
           return _FallbackCard(card: widget.card);
         }
 
         return Image.network(
           imageUrl,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _FallbackCard(card: widget.card),
+          errorBuilder: (_, error, ___) {
+            debugPrint(
+              'No se pudo mostrar $_resolvedImagePath: $error',
+            );
+            return _FallbackCard(card: widget.card);
+          },
         );
       },
     );
@@ -1113,33 +1151,56 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     }
   }
 
+  String _getSelectedCardImagePath() {
+    final bankName = _selectedBank.trim().toLowerCase();
+
+    if (bankName.contains('banco estado') ||
+        bankName.contains('bancoestado')) {
+      return 'cards/bancoestadoazul.png';
+    }
+
+    if (bankName.contains('falabella')) {
+      return 'cards/cmr.png';
+    }
+
+    if (bankName.contains('scotiabank') ||
+        bankName.contains('scotia')) {
+      return 'cards/skotia.png';
+    }
+
+    if (bankName.contains('santander') &&
+        _selectedProduct.toLowerCase().contains('worldmember')) {
+      return 'cards/worldmember.png';
+    }
+
+    // Los bancos sin imagen específica usan el diseño de respaldo.
+    return '';
+  }
+
   void _submit() {
-    final rawNumber =
-        _cardNumberController.text.replaceAll(RegExp(r'\D'), '');
+    final rawNumber = _cardNumberController.text.replaceAll(RegExp(r'\D'), '');
     final expiryDate = _expiryDateController.text.trim();
     final cvv = _cvvController.text.trim();
 
-    final expiryIsValid =
-        RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$').hasMatch(expiryDate);
+    final expiryIsValid = RegExp(
+      r'^(0[1-9]|1[0-2])\/\d{2}$',
+    ).hasMatch(expiryDate);
     final cvvIsValid = RegExp(r'^\d{3,4}$').hasMatch(cvv);
 
     setState(() {
-      _bankError = _selectedBank.trim().isEmpty
-          ? 'Selecciona un banco.'
-          : null;
+      _bankError = _selectedBank.trim().isEmpty ? 'Selecciona un banco.' : null;
 
       _productError = _selectedProduct.trim().isEmpty
           ? 'Selecciona un producto o tipo de cuenta.'
-          : (_selectedProduct == 'Cuenta RUT' &&
-                  _selectedBank != 'Banco Estado'
-              ? 'Cuenta RUT solo pertenece a Banco Estado.'
-              : null);
+          : (_selectedProduct == 'Cuenta RUT' && _selectedBank != 'Banco Estado'
+                ? 'Cuenta RUT solo pertenece a Banco Estado.'
+                : null);
 
       _cardNumberError = rawNumber.isEmpty
           ? 'Ingresa el número de la tarjeta.'
           : (rawNumber.length != 16
-              ? 'El número debe contener 16 dígitos.'
-              : null);
+                ? 'El número debe contener 16 dígitos.'
+                : null);
 
       _expiryDateError = expiryDate.isEmpty
           ? 'Ingresa la fecha de caducidad.'
@@ -1150,7 +1211,8 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
           : (!cvvIsValid ? 'El CVC debe tener 3 o 4 dígitos.' : null);
     });
 
-    final hasErrors = _bankError != null ||
+    final hasErrors =
+        _bankError != null ||
         _productError != null ||
         _cardNumberError != null ||
         _expiryDateError != null ||
@@ -1167,7 +1229,7 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
       lastFourDigits: lastFour,
       availableAmount: 0.0,
       type: _cardType,
-      assetPath: 'assets/images/cards/banco_estado.png',
+      assetPath: _getSelectedCardImagePath(),
       cardNumber: _cardNumberController.text,
       expiryDate: expiryDate,
       cvv: cvv,
@@ -1180,8 +1242,9 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final currentProducts =
-        _cardType == RouteCashCardType.debit ? _debitProducts : _creditProducts;
+    final currentProducts = _cardType == RouteCashCardType.debit
+        ? _debitProducts
+        : _creditProducts;
 
     return Container(
       padding: EdgeInsets.fromLTRB(28, 14, 28, 28 + bottomInset),
@@ -1352,10 +1415,7 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
             ),
             const SizedBox(height: 24),
 
-            RouteCashPrimaryButton(
-              text: 'Guardar Tarjeta',
-              onPressed: _submit,
-            ),
+            RouteCashPrimaryButton(text: 'Guardar Tarjeta', onPressed: _submit),
           ],
         ),
       ),
@@ -1384,57 +1444,58 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     String? errorText,
   }) {
     return DropdownButtonFormField<String>(
-        value: items.contains(value) ? value : items.first,
-        onChanged: onChanged,
-        isExpanded: true,
-        icon: const Icon(Icons.keyboard_arrow_down_rounded,
-            color: Color(0xFF888888)),
-        style: GoogleFonts.inter(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Colors.black,
+      value: items.contains(value) ? value : items.first,
+      onChanged: onChanged,
+      isExpanded: true,
+      icon: const Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: Color(0xFF888888),
+      ),
+      style: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: Colors.black,
+      ),
+      decoration: InputDecoration(
+        errorText: errorText,
+        errorMaxLines: 2,
+        prefixIcon: Icon(icon, color: const Color(0xFF888888), size: 19),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
         ),
-        decoration: InputDecoration(
-          errorText: errorText,
-          errorMaxLines: 2,
-          prefixIcon: Icon(icon, color: const Color(0xFF888888), size: 19),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: errorText == null
-                  ? const Color(0xFFE2E2E2)
-                  : const Color(0xFFB3261E),
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.black, width: 1.5),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFFB3261E)),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFFB3261E), width: 1.5),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(
+            color: errorText == null
+                ? const Color(0xFFE2E2E2)
+                : const Color(0xFFB3261E),
           ),
         ),
-        dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        items: items.map((item) {
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Text(
-              item,
-              overflow: TextOverflow.ellipsis,
-            ),
-          );
-        }).toList(),
-      );
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Colors.black, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFB3261E)),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFB3261E), width: 1.5),
+        ),
+      ),
+      dropdownColor: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      items: items.map((item) {
+        return DropdownMenuItem<String>(
+          value: item,
+          child: Text(item, overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+    );
   }
 
   Widget _buildTextField({
@@ -1471,8 +1532,10 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
         prefixIcon: Icon(icon, color: const Color(0xFF888888), size: 19),
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(

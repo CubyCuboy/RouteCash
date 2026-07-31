@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'l10n/app_localizations.dart';
 import 'ui/screens/onboarding_screen.dart';
 import 'ui/screens/main_navigation_screen.dart';
-
+import 'ui/screens/images.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
