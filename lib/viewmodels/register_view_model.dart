@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/catalog_service.dart';
+import '../utils/email_validator.dart';
 
 class RegisterViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -146,13 +147,9 @@ class RegisterViewModel extends ChangeNotifier {
     passwordsMatch = password.isNotEmpty && password == confirmPassword;
   }
 
-  bool isValidEmail(String email) {
-    return RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  }
-
   bool get isStep1Valid => 
     name.trim().isNotEmpty && 
-    isValidEmail(email);
+    EmailValidator.isValid(email);
 
   bool get isStep2Valid => 
     selectedCountry != null && 
@@ -193,21 +190,30 @@ class RegisterViewModel extends ChangeNotifier {
 
   Future<String?> register() async {
     final formattedName = formatName(name.trim());
-    final lowerEmail = email.trim().toLowerCase();
+    final cleanEmail = EmailValidator.normalize(email);
     final fullPhone = '${selectedPhoneCode ?? ""}${phone.trim()}';
+
+    // Detectar idioma del sistema
+    final systemLocale = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+    final supportedLanguages = ['es', 'en'];
+    final languageCode = supportedLanguages.contains(systemLocale) ? systemLocale : 'en';
     
     _isLoading = true;
     notifyListeners();
 
     try {
+      // Ahora enviamos todos los metadatos. 
+      // El Trigger en Supabase (SECURITY DEFINER) se encargará de insertar en las tablas públicas
+      // sin importar que el usuario aún no haya verificado su email.
       final response = await _authService.signUp(
-        lowerEmail, 
-        password, 
+        cleanEmail,
+        password,
         {
           'full_name': formattedName,
           'phone': fullPhone,
           'state_id': selectedState!['state_id'],
           'default_currency_id': selectedCurrency!['currency_id'],
+          'language_code': languageCode,
         },
       );
 
@@ -218,6 +224,7 @@ class RegisterViewModel extends ChangeNotifier {
       }
       return null;
     } catch (e) {
+      debugPrint('Error en registro: $e');
       return e.toString();
     } finally {
       _isLoading = false;

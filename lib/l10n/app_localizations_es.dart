@@ -269,4 +269,142 @@ class AppLocalizationsEs extends AppLocalizations {
   String movementYesterdayAt(String time) {
     return 'Ayer · $time';
   }
+
+  @override
+  String get settingsTitle => 'Ajustes';
+
+  @override
+  String get settingsLabel => 'AJUSTES';
+
+  @override
+  String get profileEditTitle => 'Editar Perfil';
+
+  @override
+  String get phoneLabel => 'TELÉFONO';
+
+  @override
+  String get countryLabel => 'PAÍS';
+
+  @override
+  String get stateLabel => 'ESTADO';
+
+  @override
+  String get mainCurrencyLabel => 'DIVISA PRINCIPAL';
+
+  @override
+  String get saveChanges => 'GUARDAR CAMBIOS';
+
+  @override
+  String get accountLinking => 'VINCULACIÓN DE CUENTAS';
+
+  @override
+  String get linked => 'Vinculado';
+
+  @override
+  String get link => 'Vincular';
+
+  @override
+  String get changeAccount => 'Cambiar cuenta';
+
+  @override
+  String get security => 'SEGURIDAD';
+
+  @override
+  String get verifyPhone => 'Verificar Teléfono';
+
+  @override
+  String get notVerified => 'No verificado';
+
+  @override
+  String get changePassword => 'Cambiar Contraseña';
+
+  @override
+  String get changeEmail => 'Cambiar Correo';
+
+  @override
+  String get preferences => 'PREFERENCIAS';
+
+  @override
+  String get darkMode => 'Modo Oscuro';
+
+  @override
+  String get language => 'Idioma';
+
+  @override
+  String get logout => 'CERRAR SESIÓN';
+
+  @override
+  String get verifyingEmailBadge => 'Verificar Correo';
+
+  @override
+  String get selectLanguage => 'Seleccionar Idioma';
+
+  @override
+  String get confirmLanguageChange => '¿Deseas cambiar el idioma de la aplicación?';
+
+  @override
+  String get cancel => 'Cancelar';
+
+  @override
+  String get confirm => 'Confirmar';
+
+  @override
+  String get currentEmail => 'CORREO ACTUAL';
+
+  @override
+  String get newEmail => 'NUEVO CORREO ELECTRÓNICO';
+
+  @override
+  String get newPassword => 'NUEVA CONTRASEÑA';
+
+  @override
+  String get update => 'ACTUALIZAR';
+
+  @override
+  String get successLinking => '¡Éxito!';
+
+  @override
+  String get successLinkingMessage => 'Tu cuenta de Google ha sido vinculada correctamente. Ahora puedes iniciar sesión con ella.';
+
+  @override
+  String get unlinkAccountTitle => 'Desvincular cuenta';
+
+  @override
+  String get unlinkAccountMessage => '¿Estás seguro de que deseas desvincular tu cuenta de Google? Podrás volver a vincularla en cualquier momento.';
+
+  @override
+  String get unlink => 'Desvincular';
+
+  @override
+  String get enterCode => 'INGRESA EL CÓDIGO';
+
+  @override
+  String get verifyYourAccount => 'Verifica\ntu cuenta.';
+
+  @override
+  String codeSentTo(String email) {
+    return 'Hemos enviado un código a $email';
+  }
+
+  @override
+  String get sixDigitCode => 'CÓDIGO DE 6 DÍGITOS';
+
+  @override
+  String timeRemaining(String time) {
+    return 'Tiempo restante: $time';
+  }
+
+  @override
+  String attemptsRemainingLabel(int count) {
+    return 'Intentos disponibles: $count';
+  }
+
+  @override
+  String get resendCode => 'REENVIAR CÓDIGO';
+
+  @override
+  String get resend => 'Reenviar';
+
+  @override
+  String get verify => 'Verificar';
 }
