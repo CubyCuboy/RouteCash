@@ -3,9 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:routecash/services/google_auth_service.dart';
+import 'package:routecash/services/auth_service.dart';
 import 'main_navigation_screen.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
+import 'social_registration_screen.dart';
 
 class SocialIcon extends StatelessWidget {
   final String assetPath;
@@ -89,13 +91,31 @@ class _AuthScreenState extends State<AuthScreen> {
         );
       }
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const MainNavigationScreen(),
-        ),
-        (route) => false,
-      );
+      // Verificar si el usuario ya tiene perfil
+      final authService = AuthService();
+      final profile = await authService.getUserProfile(response.user!.id);
+
+      if (!mounted) return;
+
+      if (profile == null) {
+        // Nuevo usuario social -> A completar perfil
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const SocialRegistrationScreen(),
+          ),
+          (route) => false,
+        );
+      } else {
+        // Usuario existente
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const MainNavigationScreen(),
+          ),
+          (route) => false,
+        );
+      }
     } on AuthException catch (error) {
       if (!mounted) {
         return;

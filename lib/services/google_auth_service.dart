@@ -1,6 +1,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 class GoogleAuthService {
   GoogleAuthService._();
@@ -31,8 +32,7 @@ class GoogleAuthService {
       await _googleSignIn.signOut();
     } catch (_) {}
 
-    final GoogleSignInAccount googleUser =
-    await _googleSignIn.authenticate();
+    final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
     const scopes = <String>[
       'email',
@@ -56,6 +56,59 @@ class GoogleAuthService {
       idToken: idToken,
       accessToken: authorization.accessToken,
     );
+  }
+
+  Future<void> linkAccount() async {
+    await _initialize();
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
+
+    final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
+
+    const scopes = <String>['email', 'profile'];
+    final authorization = await googleUser.authorizationClient.authorizationForScopes(scopes) ??
+        await googleUser.authorizationClient.authorizeScopes(scopes);
+    final idToken = googleUser.authentication.idToken;
+
+    if (idToken == null) {
+      throw const AuthException('Google no entregó un ID Token.');
+    }
+
+    try {
+      await Supabase.instance.client.auth.linkIdentityWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: authorization.accessToken,
+      );
+    } on AuthException catch (e) {
+      if (e.message.contains('identity already exists')) {
+        throw const AuthException('Esta cuenta de Google ya está vinculada a otro usuario.');
+      }
+      rethrow;
+    }
+  }
+
+  bool isGoogleLinked() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return false;
+    
+    return user.identities?.any((identity) => identity.provider == 'google') ?? false;
+  }
+
+  Future<void> unlinkAccount() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final googleIdentity = user.identities?.where(
+      (identity) => identity.provider == 'google',
+    ).firstOrNull;
+
+    if (googleIdentity != null) {
+      await Supabase.instance.client.auth.unlinkIdentity(googleIdentity);
+    }
+    
+    await _googleSignIn.signOut();
   }
 
   Future<void> signOut() async {

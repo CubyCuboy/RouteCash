@@ -1,98 +1,97 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
-import '../../viewmodels/register_view_model.dart';
+import '../../viewmodels/social_register_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
 import '../components/route_cash_dropdown.dart';
-import '../components/password_requirements.dart';
-import 'confirm_verification_screen.dart';
+import 'main_navigation_screen.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class SocialRegistrationScreen extends StatefulWidget {
+  const SocialRegistrationScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<SocialRegistrationScreen> createState() => _SocialRegistrationScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  late final RegisterViewModel _viewModel;
+class _SocialRegistrationScreenState extends State<SocialRegistrationScreen> {
+  late final SocialRegisterViewModel _viewModel;
   final PageController _pageController = PageController();
+  int _currentStep = 0;
 
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _viewModel = RegisterViewModel();
+    _viewModel = SocialRegisterViewModel();
+    // Pre-fill controllers when data is loaded
+    _viewModel.addListener(_onViewModelChange);
+  }
+
+  void _onViewModelChange() {
+    if (_nameController.text.isEmpty && _viewModel.name.isNotEmpty) {
+      _nameController.text = _viewModel.name;
+    }
+    if (_phoneController.text.isEmpty && _viewModel.phone.isNotEmpty) {
+      _phoneController.text = _viewModel.phone;
+    }
   }
 
   @override
   void dispose() {
+    _viewModel.removeListener(_onViewModelChange);
     _pageController.dispose();
     _nameController.dispose();
-    _emailController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
     _viewModel.dispose();
     super.dispose();
   }
 
   void _onNext() {
-    if (_viewModel.currentStep < 2) {
+    if (_currentStep < 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
-      _viewModel.setStep(_viewModel.currentStep + 1);
+      setState(() => _currentStep++);
     } else {
       _completeRegister();
     }
   }
 
   void _onBack() {
-    if (_viewModel.currentStep > 0) {
+    if (_currentStep > 0) {
       _pageController.previousPage(
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
-      _viewModel.setStep(_viewModel.currentStep - 1);
+      setState(() => _currentStep--);
     } else {
       Navigator.pop(context);
     }
   }
 
   void _completeRegister() async {
-    final result = await _viewModel.register();
+    final result = await _viewModel.completeRegistration();
 
-    if (result != null) {
+    if (result == null) {
       if (!mounted) return;
-      if (result.startsWith('verify:')) {
-        final userId = result.split(':')[1];
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ConfirmVerificationScreen(
-              userId: userId,
-              email: _viewModel.email,
-              purpose: 'verify_email',
-              password: _viewModel.password,
-            ),
-          ),
-        );
-        return;
-      }
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
+        (route) => false,
+      );
+    } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
@@ -115,7 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             onPressed: _onBack,
                           ),
                           Text(
-                            'PASO ${_viewModel.currentStep + 1} DE 3',
+                            'PASO ${_currentStep + 1} DE 2',
                             style: GoogleFonts.inter(
                               color: const Color(0xFF999999),
                               fontSize: 12,
@@ -126,13 +125,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: 32),
                       Row(
-                        children: List.generate(3, (index) {
+                        children: List.generate(2, (index) {
                           return Expanded(
                             child: Container(
                               height: 4,
-                              margin: EdgeInsets.only(right: index < 2 ? 8 : 0),
+                              margin: EdgeInsets.only(right: index < 1 ? 8 : 0),
                               decoration: BoxDecoration(
-                                color: index <= _viewModel.currentStep ? Colors.black : const Color(0xFFE0E0E0),
+                                color: index <= _currentStep ? Colors.black : const Color(0xFFE0E0E0),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -154,7 +153,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: [
                       _buildStep1(),
                       _buildStep2(),
-                      _buildStep3(),
                     ],
                   ),
                 ),
@@ -174,18 +172,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildStepTitle() {
     String title = '';
     String subtitle = '';
-    switch (_viewModel.currentStep) {
+    switch (_currentStep) {
       case 0:
-        title = 'Cuéntanos\nde ti.';
-        subtitle = 'Tu información básica para empezar.';
+        title = 'Completa tu\nperfil.';
+        subtitle = 'Solo unos detalles más para empezar.';
         break;
       case 1:
-        title = '¿Dónde te\nencuentras?';
-        subtitle = 'Personalizaremos tu experiencia según tu región.';
-        break;
-      case 2:
-        title = 'Seguridad y\npreferencias.';
-        subtitle = 'Crea una contraseña fuerte para tu cuenta.';
+        title = 'Preferencias\ny región.';
+        subtitle = 'Personalizaremos tu experiencia.';
         break;
     }
 
@@ -221,18 +215,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           RouteCashTextField(
             label: 'NOMBRE COMPLETO',
-            hintText: 'Andrea Moreno',
+            hintText: 'Tu nombre',
             controller: _nameController,
             textCapitalization: TextCapitalization.words,
             onChanged: _viewModel.updateName,
-          ),
-          const SizedBox(height: 24),
-          RouteCashTextField(
-            label: 'CORREO ELECTRÓNICO',
-            hintText: 'andrea@correo.com',
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            onChanged: _viewModel.updateEmail,
           ),
           const SizedBox(height: 24),
           Row(
@@ -288,16 +274,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             enabled: _viewModel.selectedCountry != null,
             onChanged: _viewModel.updateState,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStep3() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      child: Column(
-        children: [
+          const SizedBox(height: 24),
           RouteCashDropdown<Map<String, dynamic>>(
             label: 'MONEDA POR DEFECTO',
             value: _viewModel.selectedCurrency,
@@ -305,63 +282,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
             displayMember: 'code',
             onChanged: _viewModel.updateCurrency,
           ),
-          const SizedBox(height: 24),
-          PasswordRequirements(
-            hasMinLength: _viewModel.hasMinLength,
-            hasUppercase: _viewModel.hasUppercase,
-            hasNumber: _viewModel.hasNumber,
-            hasSpecialChar: _viewModel.hasSpecialChar,
-            passwordsMatch: _viewModel.passwordsMatch,
-          ),
-          const SizedBox(height: 12),
-          RouteCashTextField(
-            label: 'CONTRASEÑA',
-            hintText: '••••••••••',
-            controller: _passwordController,
-            obscureText: _viewModel.obscurePassword,
-            onChanged: _viewModel.updatePassword,
-            suffixIcon: IconButton(
-              onPressed: _viewModel.togglePasswordVisibility,
-              icon: Icon(_viewModel.obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
-            ),
-          ),
-          const SizedBox(height: 24),
-          RouteCashTextField(
-            label: 'CONFIRMAR CONTRASEÑA',
-            hintText: '••••••••••',
-            controller: _confirmPasswordController,
-            obscureText: _viewModel.obscureConfirmPassword,
-            onChanged: _viewModel.updateConfirmPassword,
-            suffixIcon: IconButton(
-              onPressed: _viewModel.toggleConfirmPasswordVisibility,
-              icon: Icon(_viewModel.obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
-            ),
-          ),
         ],
       ),
     );
   }
 
   Widget _buildFooterButtons() {
-    final isLastStep = _viewModel.currentStep == 2;
+    final isLastStep = _currentStep == 1;
+    final bool canProceed = _currentStep == 0 
+      ? _viewModel.name.isNotEmpty 
+      : _viewModel.canContinue;
+
     return Column(
       children: [
         RouteCashPrimaryButton(
-          text: isLastStep ? 'CREAR CUENTA' : 'CONTINUAR',
-          onPressed: _viewModel.canContinue ? _onNext : () {},
+          text: isLastStep ? 'COMENZAR' : 'CONTINUAR',
+          onPressed: canProceed ? _onNext : () {},
           isLoading: _viewModel.isLoading,
-          backgroundColor: _viewModel.canContinue ? Colors.black : Colors.grey.shade400,
+          backgroundColor: canProceed ? Colors.black : Colors.grey.shade400,
         ),
-        if (!isLastStep) ...[
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              'Al continuar, aceptas nuestros términos y privacidad.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: const Color(0xFFB0B0B0), fontSize: 10),
-            ),
-          ),
-        ],
       ],
     );
   }

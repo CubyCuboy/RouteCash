@@ -38,6 +38,18 @@ class VerificationViewModel extends ChangeNotifier {
     });
   }
 
+  void setTimerDuration(String purpose) {
+    // Tiempos según propósito
+    if (purpose == 'reset_password' || purpose == 'recovery') {
+      _secondsRemaining = 5 * 60;
+    } else if (purpose == 'change_email') {
+      _secondsRemaining = 10 * 60; // 10 minutos para cambio de email
+    } else {
+      _secondsRemaining = 30 * 60;
+    }
+    notifyListeners();
+  }
+
   Future<void> fetchOtpStatus(String userId, String purpose) async {
     final status = await _service.getLatestOtpStatus(userId, purpose);
     if (status != null) {
@@ -90,7 +102,7 @@ class VerificationViewModel extends ChangeNotifier {
     }
   }
 
-  Future<String?> verifyCode(String userId, String code, String purpose, String lang) async {
+  Future<String?> verifyCode(String userId, String code, String purpose, String lang, {String? email}) async {
     _isLoading = true;
     notifyListeners();
     
@@ -99,6 +111,7 @@ class VerificationViewModel extends ChangeNotifier {
       code: code,
       purpose: purpose,
       lang: lang,
+      email: email,
     );
     
     _isLoading = false;

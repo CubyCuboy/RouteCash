@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -55,6 +56,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeader(AppLocalizations strings) {
+    final user = Supabase.instance.client.auth.currentUser;
+    final fullName = user?.userMetadata?['full_name']?.toString() ?? 'USUARIO';
+    
+    // Recoger las primeras dos palabras del nombre
+    final nameParts = fullName.trim().split(RegExp(r'\s+'));
+    final displayName = nameParts.length >= 2 
+        ? '${nameParts[0]} ${nameParts[1]}'.toUpperCase()
+        : nameParts[0].toUpperCase();
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -63,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                strings.homeGreeting('BENJA').toUpperCase(),
+                strings.homeGreeting(displayName).toUpperCase(),
                 style: GoogleFonts.inter(
                   color: const Color(0xFF969696),
                   fontSize: 24,

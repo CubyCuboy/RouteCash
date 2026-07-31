@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
+import 'app_localizations_pt.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,7 +93,8 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
-    Locale('es')
+    Locale('es'),
+    Locale('pt')
   ];
 
   /// No description provided for @appName.
@@ -598,6 +600,270 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Yesterday · {time}'**
   String movementYesterdayAt(String time);
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SETTINGS'**
+  String get settingsLabel;
+
+  /// No description provided for @profileEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get profileEditTitle;
+
+  /// No description provided for @phoneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PHONE'**
+  String get phoneLabel;
+
+  /// No description provided for @countryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'COUNTRY'**
+  String get countryLabel;
+
+  /// No description provided for @stateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'STATE'**
+  String get stateLabel;
+
+  /// No description provided for @mainCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'MAIN CURRENCY'**
+  String get mainCurrencyLabel;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE CHANGES'**
+  String get saveChanges;
+
+  /// No description provided for @accountLinking.
+  ///
+  /// In en, this message translates to:
+  /// **'ACCOUNT LINKING'**
+  String get accountLinking;
+
+  /// No description provided for @linked.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked'**
+  String get linked;
+
+  /// No description provided for @link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get link;
+
+  /// No description provided for @changeAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Change account'**
+  String get changeAccount;
+
+  /// No description provided for @security.
+  ///
+  /// In en, this message translates to:
+  /// **'SECURITY'**
+  String get security;
+
+  /// No description provided for @verifyPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Phone'**
+  String get verifyPhone;
+
+  /// No description provided for @notVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Not verified'**
+  String get notVerified;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get changePassword;
+
+  /// No description provided for @changeEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Email'**
+  String get changeEmail;
+
+  /// No description provided for @preferences.
+  ///
+  /// In en, this message translates to:
+  /// **'PREFERENCES'**
+  String get preferences;
+
+  /// No description provided for @darkMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Mode'**
+  String get darkMode;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'LOG OUT'**
+  String get logout;
+
+  /// No description provided for @verifyingEmailBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Email'**
+  String get verifyingEmailBadge;
+
+  /// No description provided for @selectLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Language'**
+  String get selectLanguage;
+
+  /// No description provided for @confirmLanguageChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to change the application language?'**
+  String get confirmLanguageChange;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @currentEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'CURRENT EMAIL'**
+  String get currentEmail;
+
+  /// No description provided for @newEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW EMAIL'**
+  String get newEmail;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW PASSWORD'**
+  String get newPassword;
+
+  /// No description provided for @update.
+  ///
+  /// In en, this message translates to:
+  /// **'UPDATE'**
+  String get update;
+
+  /// No description provided for @successLinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Success!'**
+  String get successLinking;
+
+  /// No description provided for @successLinkingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Google account has been successfully linked. You can now sign in with it.'**
+  String get successLinkingMessage;
+
+  /// No description provided for @unlinkAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink account'**
+  String get unlinkAccountTitle;
+
+  /// No description provided for @unlinkAccountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to unlink your Google account? You can relink it at any time.'**
+  String get unlinkAccountMessage;
+
+  /// No description provided for @unlink.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink'**
+  String get unlink;
+
+  /// No description provided for @enterCode.
+  ///
+  /// In en, this message translates to:
+  /// **'ENTER THE CODE'**
+  String get enterCode;
+
+  /// No description provided for @verifyYourAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify\nyour account.'**
+  String get verifyYourAccount;
+
+  /// No description provided for @codeSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'We have sent a code to {email}'**
+  String codeSentTo(String email);
+
+  /// No description provided for @sixDigitCode.
+  ///
+  /// In en, this message translates to:
+  /// **'6-DIGIT CODE'**
+  String get sixDigitCode;
+
+  /// No description provided for @timeRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Time remaining: {time}'**
+  String timeRemaining(String time);
+
+  /// No description provided for @attemptsRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Attempts remaining: {count}'**
+  String attemptsRemainingLabel(int count);
+
+  /// No description provided for @resendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'RESEND CODE'**
+  String get resendCode;
+
+  /// No description provided for @resend.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend'**
+  String get resend;
+
+  /// No description provided for @verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verify;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -609,7 +875,7 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'es'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['en', 'es', 'pt'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -622,6 +888,7 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en': return AppLocalizationsEn();
     case 'es': return AppLocalizationsEs();
+    case 'pt': return AppLocalizationsPt();
   }
 
   throw FlutterError(

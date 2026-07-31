@@ -269,4 +269,142 @@ class AppLocalizationsEn extends AppLocalizations {
   String movementYesterdayAt(String time) {
     return 'Yesterday · $time';
   }
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsLabel => 'SETTINGS';
+
+  @override
+  String get profileEditTitle => 'Edit Profile';
+
+  @override
+  String get phoneLabel => 'PHONE';
+
+  @override
+  String get countryLabel => 'COUNTRY';
+
+  @override
+  String get stateLabel => 'STATE';
+
+  @override
+  String get mainCurrencyLabel => 'MAIN CURRENCY';
+
+  @override
+  String get saveChanges => 'SAVE CHANGES';
+
+  @override
+  String get accountLinking => 'ACCOUNT LINKING';
+
+  @override
+  String get linked => 'Linked';
+
+  @override
+  String get link => 'Link';
+
+  @override
+  String get changeAccount => 'Change account';
+
+  @override
+  String get security => 'SECURITY';
+
+  @override
+  String get verifyPhone => 'Verify Phone';
+
+  @override
+  String get notVerified => 'Not verified';
+
+  @override
+  String get changePassword => 'Change Password';
+
+  @override
+  String get changeEmail => 'Change Email';
+
+  @override
+  String get preferences => 'PREFERENCES';
+
+  @override
+  String get darkMode => 'Dark Mode';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get logout => 'LOG OUT';
+
+  @override
+  String get verifyingEmailBadge => 'Verify Email';
+
+  @override
+  String get selectLanguage => 'Select Language';
+
+  @override
+  String get confirmLanguageChange => 'Do you want to change the application language?';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get currentEmail => 'CURRENT EMAIL';
+
+  @override
+  String get newEmail => 'NEW EMAIL';
+
+  @override
+  String get newPassword => 'NEW PASSWORD';
+
+  @override
+  String get update => 'UPDATE';
+
+  @override
+  String get successLinking => 'Success!';
+
+  @override
+  String get successLinkingMessage => 'Your Google account has been successfully linked. You can now sign in with it.';
+
+  @override
+  String get unlinkAccountTitle => 'Unlink account';
+
+  @override
+  String get unlinkAccountMessage => 'Are you sure you want to unlink your Google account? You can relink it at any time.';
+
+  @override
+  String get unlink => 'Unlink';
+
+  @override
+  String get enterCode => 'ENTER THE CODE';
+
+  @override
+  String get verifyYourAccount => 'Verify\nyour account.';
+
+  @override
+  String codeSentTo(String email) {
+    return 'We have sent a code to $email';
+  }
+
+  @override
+  String get sixDigitCode => '6-DIGIT CODE';
+
+  @override
+  String timeRemaining(String time) {
+    return 'Time remaining: $time';
+  }
+
+  @override
+  String attemptsRemainingLabel(int count) {
+    return 'Attempts remaining: $count';
+  }
+
+  @override
+  String get resendCode => 'RESEND CODE';
+
+  @override
+  String get resend => 'Resend';
+
+  @override
+  String get verify => 'Verify';
 }
