@@ -7,14 +7,27 @@ import 'cards_screen.dart';
 import 'settings_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final int initialIndex;
+  const MainNavigationScreen({super.key, this.initialIndex = 0});
+
+  static bool popTabHistory(BuildContext context) {
+    final state = context.findAncestorStateOfType<_MainNavigationScreenState>();
+    return state?.popTab() ?? false;
+  }
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+  final List<int> _navigationHistory = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -24,16 +37,39 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   ];
 
   void _onNavigationTap(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index != _selectedIndex) {
+      setState(() {
+        _navigationHistory.add(_selectedIndex);
+        _selectedIndex = index;
+      });
+    }
+  }
+
+  bool popTab() {
+    if (_navigationHistory.isNotEmpty) {
+      setState(() {
+        _selectedIndex = _navigationHistory.removeLast();
+      });
+      return true;
+    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: _buildBottomNavigation(),
+    return PopScope(
+      canPop: _navigationHistory.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        popTab();
+      },
+      child: Scaffold(
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: _screens,
+        ),
+        bottomNavigationBar: _buildBottomNavigation(),
+      ),
     );
   }
 

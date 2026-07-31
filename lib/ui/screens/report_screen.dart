@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
+import 'main_navigation_screen.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -100,7 +101,12 @@ class _ReportScreenState extends State<ReportScreen> {
             alignment: Alignment.centerLeft,
             child: _CircleButton(
               icon: Icons.arrow_back,
-              onPressed: () => Navigator.maybePop(context),
+              onPressed: () async {
+                final popped = await Navigator.maybePop(context);
+                if (!popped && context.mounted) {
+                  MainNavigationScreen.popTabHistory(context);
+                }
+              },
             ),
           ),
           Text(

@@ -12,6 +12,9 @@ class RouteCashCardModel {
     required this.availableAmount,
     required this.type,
     required this.assetPath,
+    this.cardNumber,
+    this.expiryDate,
+    this.cvv,
   });
 
   final String id;
@@ -21,4 +24,7 @@ class RouteCashCardModel {
   final double availableAmount;
   final RouteCashCardType type;
   final String assetPath;
+  final String? cardNumber;
+  final String? expiryDate;
+  final String? cvv;
 }
