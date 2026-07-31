@@ -53,11 +53,12 @@ class _CardsScreenState extends State<CardsScreen> {
     RouteCashCardModel(
       id: '4',
       bankName: 'Banco Falabella',
-      productName: 'CMR Falabella',
+      productName: 'CMR Debito Falabella',
       lastFourDigits: '5521',
       availableAmount: 1240000,
       type: RouteCashCardType.credit,
-      assetPath: 'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/cmr.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvY21yLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODU0Nzg1MjMsImV4cCI6MTc4NjA4MzMyM30.kDdgVe1Il9f9H7mU_3pFibb-TovF-m0Y49OEZqKrGJ0',
+      assetPath:
+          'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/cmr.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvY21yLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODU0Nzg1MjMsImV4cCI6MTc4NjA4MzMyM30.kDdgVe1Il9f9H7mU_3pFibb-TovF-m0Y49OEZqKrGJ0',
     ),
   ];
 
