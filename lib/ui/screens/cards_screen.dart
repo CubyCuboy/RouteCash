@@ -28,8 +28,7 @@ class _CardsScreenState extends State<CardsScreen> {
       lastFourDigits: '7841',
       availableAmount: 485230,
       type: RouteCashCardType.debit,
-      assetPath:
-          'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/bancoestadoazul.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvYmFuY29lc3RhZG9henVsLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODU0NzcwNjMsImV4cCI6MTc4NjA4MTg2M30.2bKmJv6IvuT1mLXe7ZYEAoQ8CucSMcFeYCW64FJfFaw',
+      assetPath: 'cards/bancoestadoazul.png',
     ),
     RouteCashCardModel(
       id: '2',
@@ -38,8 +37,7 @@ class _CardsScreenState extends State<CardsScreen> {
       lastFourDigits: '3192',
       availableAmount: 128760,
       type: RouteCashCardType.debit,
-      assetPath:
-          'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/skotia.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvc2tvdGlhLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODU0Nzc1MDMsImV4cCI6MTc4NjA4MjMwM30.EL0D8KXRngTjRNahjcWc1z-zZ04tcklYQXTpmb9YgMM',
+      assetPath: 'cards/skotia.png',
     ),
     RouteCashCardModel(
       id: '3',
@@ -48,8 +46,7 @@ class _CardsScreenState extends State<CardsScreen> {
       lastFourDigits: '8901',
       availableAmount: 680000,
       type: RouteCashCardType.credit,
-      assetPath:
-          'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/worldmember.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvd29ybGRtZW1iZXIucG5nIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc4NTQ3Nzg4NiwiZXhwIjoxNzg2MDgyNjg2fQ.IKX63CPLqq920SnnQQ1dAwGyqjJBXPP8fx_DANCB1Wk',
+      assetPath: 'cards/worldmember.png',
     ),
     RouteCashCardModel(
       id: '4',
@@ -58,26 +55,9 @@ class _CardsScreenState extends State<CardsScreen> {
       lastFourDigits: '5521',
       availableAmount: 1240000,
       type: RouteCashCardType.credit,
-      assetPath:
-          'https://gpufgmlpbpydojnvgwid.supabase.co/storage/v1/object/sign/images/cards/cmr.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8zZWFhOGE4Zi00ZjA1LTQxMWUtODE2My0wNmJlYzEzMjkwZjgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZXMvY2FyZHMvY21yLnBuZyIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODU0Nzg1MjMsImV4cCI6MTc4NjA4MzMyM30.kDdgVe1Il9f9H7mU_3pFibb-TovF-m0Y49OEZqKrGJ0',
+      assetPath: 'cards/cmr.png',
     ),
   ];
-
-  static String _getCardImageUrl(String fileName, String fallbackAsset) {
-    try {
-      final url = Supabase.instance.client.storage
-          .from('cards')
-          .getPublicUrl(fileName);
-      if (url.isNotEmpty &&
-          !url.contains('your-supabase-project') &&
-          !url.contains('example.com')) {
-        return url;
-      }
-      return fallbackAsset;
-    } catch (_) {
-      return fallbackAsset;
-    }
-  }
 
   List<RouteCashCardModel> get _debitCards {
     return _cards
@@ -855,26 +835,117 @@ class _EmptyCardState extends StatelessWidget {
   }
 }
 
-class CardImageWidget extends StatelessWidget {
+class _CachedCardImageUrl {
+  const _CachedCardImageUrl({
+    required this.url,
+    required this.expiresAt,
+  });
+
+  final String? url;
+  final DateTime expiresAt;
+
+  bool get isValid => DateTime.now().isBefore(expiresAt);
+}
+
+class _CardImageService {
+  _CardImageService._();
+
+  static final _CardImageService instance = _CardImageService._();
+
+  static const String _bucketName = 'images';
+  static const Duration _signedUrlDuration = Duration(days: 7);
+  static const Duration _refreshBeforeExpiry = Duration(minutes: 10);
+  static const Duration _missingImageCacheDuration = Duration(minutes: 10);
+
+  final Map<String, _CachedCardImageUrl> _cache = {};
+  final Map<String, Future<String?>> _pendingRequests = {};
+
+  Future<String?> getImageUrl(String storagePath) {
+    final cached = _cache[storagePath];
+    if (cached != null && cached.isValid) {
+      return Future.value(cached.url);
+    }
+
+    return _pendingRequests.putIfAbsent(
+      storagePath,
+      () => _loadImageUrl(storagePath),
+    );
+  }
+
+  Future<String?> _loadImageUrl(String storagePath) async {
+    try {
+      final url = await Supabase.instance.client.storage
+          .from(_bucketName)
+          .createSignedUrl(storagePath, _signedUrlDuration.inSeconds);
+
+      _cache[storagePath] = _CachedCardImageUrl(
+        url: url,
+        expiresAt: DateTime.now().add(
+          _signedUrlDuration - _refreshBeforeExpiry,
+        ),
+      );
+      return url;
+    } catch (error) {
+      debugPrint('Imagen no disponible en Supabase: $storagePath ($error)');
+      _cache[storagePath] = _CachedCardImageUrl(
+        url: null,
+        expiresAt: DateTime.now().add(_missingImageCacheDuration),
+      );
+      return null;
+    } finally {
+      _pendingRequests.remove(storagePath);
+    }
+  }
+}
+
+class CardImageWidget extends StatefulWidget {
   const CardImageWidget({super.key, required this.card});
 
   final RouteCashCardModel card;
 
   @override
-  Widget build(BuildContext context) {
-    final String path = card.assetPath;
-    final bool isNetwork =
-        path.startsWith('http://') || path.startsWith('https://');
+  State<CardImageWidget> createState() => _CardImageWidgetState();
+}
 
-    if (isNetwork) {
-      return Image.network(
-        path,
+class _CardImageWidgetState extends State<CardImageWidget> {
+  Future<String?>? _imageFuture;
+
+  bool get _isLocalAsset => widget.card.assetPath.startsWith('assets/');
+
+  @override
+  void initState() {
+    super.initState();
+    _prepareImage();
+  }
+
+  @override
+  void didUpdateWidget(covariant CardImageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.card.assetPath != widget.card.assetPath) {
+      _prepareImage();
+    }
+  }
+
+  void _prepareImage() {
+    _imageFuture = _isLocalAsset
+        ? null
+        : _CardImageService.instance.getImageUrl(widget.card.assetPath);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLocalAsset) {
+      return Image.asset(
+        widget.card.assetPath,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _FallbackCard(card: card);
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
+        errorBuilder: (_, __, ___) => _FallbackCard(card: widget.card),
+      );
+    }
+
+    return FutureBuilder<String?>(
+      future: _imageFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return Container(
             color: const Color(0xFFF1F1F1),
             child: const Center(
@@ -888,15 +959,18 @@ class CardImageWidget extends StatelessWidget {
               ),
             ),
           );
-        },
-      );
-    }
+        }
 
-    return Image.asset(
-      path,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        return _FallbackCard(card: card);
+        final imageUrl = snapshot.data;
+        if (imageUrl == null) {
+          return _FallbackCard(card: widget.card);
+        }
+
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _FallbackCard(card: widget.card),
+        );
       },
     );
   }
