@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/card_model.dart';
 import '../components/route_cash_buttons.dart';
 import 'main_navigation_screen.dart';
+import 'dart:math';
 
 class CardsScreen extends StatefulWidget {
   const CardsScreen({super.key});
@@ -28,7 +29,7 @@ class _CardsScreenState extends State<CardsScreen> {
       lastFourDigits: '7841',
       availableAmount: 485230,
       type: RouteCashCardType.debit,
-      assetPath: 'cards/bancoestadoazul.png',
+      assetPath: 'cards/cuentarutll.png',
     ),
     RouteCashCardModel(
       id: '2',
@@ -896,20 +897,8 @@ class _CardImageService {
 }
 
 String resolveCardImagePath(RouteCashCardModel card) {
-  final bankName = card.bankName.trim().toLowerCase();
-
-  // Cualquier tarjeta o cuenta de Banco Estado usa la misma imagen.
-  if (bankName.contains('banco estado') ||
-      bankName.contains('bancoestado')) {
-    return 'cards/bancoestadoazul.png';
-  }
-
-  // Cualquier tarjeta o cuenta de Banco Falabella usa la imagen CMR.
-  if (bankName.contains('falabella')) {
-    return 'cards/cmr.png';
-  }
-
-  // Para los demás bancos se mantiene la ruta definida en el modelo.
+  // La imagen ya fue seleccionada y guardada cuando se creó la tarjeta.
+  // No se vuelve a aleatorizar durante los rebuilds de Flutter.
   return card.assetPath;
 }
 
@@ -956,9 +945,7 @@ class _CardImageWidgetState extends State<CardImageWidget> {
       return;
     }
 
-    _imageFuture = _CardImageService.instance.getImageUrl(
-      _resolvedImagePath,
-    );
+    _imageFuture = _CardImageService.instance.getImageUrl(_resolvedImagePath);
   }
 
   @override
@@ -1003,9 +990,7 @@ class _CardImageWidgetState extends State<CardImageWidget> {
           imageUrl,
           fit: BoxFit.cover,
           errorBuilder: (_, error, ___) {
-            debugPrint(
-              'No se pudo mostrar $_resolvedImagePath: $error',
-            );
+            debugPrint('No se pudo mostrar $_resolvedImagePath: $error');
             return _FallbackCard(card: widget.card);
           },
         );
@@ -1029,6 +1014,14 @@ class _AddCardFormBottomSheet extends StatefulWidget {
 }
 
 class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
+  static const List<String> _bancoEstadoCardImages = [
+    'cards/cuentarutgray.png',
+    'cards/cuentarutll.png',
+    'cards/cuentarutorange.png',
+  ];
+
+  final Random _random = Random();
+
   late RouteCashCardType _cardType;
   late String _selectedBank;
   late String _selectedProduct;
@@ -1154,17 +1147,19 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   String _getSelectedCardImagePath() {
     final bankName = _selectedBank.trim().toLowerCase();
 
-    if (bankName.contains('banco estado') ||
-        bankName.contains('bancoestado')) {
-      return 'cards/bancoestadoazul.png';
+    // Se ejecuta únicamente desde _submit(), por lo que la imagen se elige
+    // una sola vez al crear la tarjeta y queda guardada en assetPath.
+    if (bankName.contains('banco estado') || bankName.contains('bancoestado')) {
+      final randomIndex = _random.nextInt(_bancoEstadoCardImages.length);
+      return _bancoEstadoCardImages[randomIndex];
     }
 
+    // Cualquier tarjeta o cuenta de Banco Falabella usa CMR.
     if (bankName.contains('falabella')) {
       return 'cards/cmr.png';
     }
 
-    if (bankName.contains('scotiabank') ||
-        bankName.contains('scotia')) {
+    if (bankName.contains('scotiabank') || bankName.contains('scotia')) {
       return 'cards/skotia.png';
     }
 
@@ -1173,7 +1168,7 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
       return 'cards/worldmember.png';
     }
 
-    // Los bancos sin imagen específica usan el diseño de respaldo.
+    // Los bancos sin imagen específica usan el diseño generado de respaldo.
     return '';
   }
 
