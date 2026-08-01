@@ -1,0 +1,54 @@
+name: Build Flutter iOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Mostrar versiones
+        run: |
+          flutter --version
+          xcodebuild -version
+          pod --version
+
+      - name: Instalar dependencias Flutter
+        run: flutter pub get
+
+      - name: Analizar proyecto
+        run: flutter analyze
+
+      - name: Instalar CocoaPods
+        run: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Compilar iOS sin firma
+        run: flutter build ios --release --no-codesign
+
+      - name: Comprimir aplicación
+        run: |
+          cd build/ios/iphoneos
+          zip -r Runner-app.zip Runner.app
+
+      - name: Guardar resultado
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-build
+          path: build/ios/iphoneos/Runner-app.zip
+          retention-days: 7
