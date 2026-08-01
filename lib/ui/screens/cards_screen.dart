@@ -314,8 +314,8 @@ class RouteCashStoredCard extends StatelessWidget {
               Hero(
                 tag: 'routecash-card-${card.id}',
                 child: Container(
-                  width: 112,
-                  height: 70,
+                  width: 138,
+                  height: 78,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F1F1),
                     borderRadius: BorderRadius.circular(12),
@@ -324,7 +324,7 @@ class RouteCashStoredCard extends StatelessWidget {
                   child: CardImageWidget(card: card),
                 ),
               ),
-              const SizedBox(width: 15),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -544,7 +544,7 @@ class CardDetailScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFFAFAFA),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(32, 20, 32, 40),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
           children: [
             Align(
               alignment: Alignment.centerLeft,
@@ -582,8 +582,9 @@ class CardDetailScreen extends StatelessWidget {
             Hero(
               tag: 'routecash-card-${card.id}',
               child: AspectRatio(
-                aspectRatio: 1.58,
+                aspectRatio: 1.75,
                 child: Container(
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF1F1F1),
                     borderRadius: BorderRadius.circular(24),
