@@ -56,7 +56,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => OtpVerificationScreen(
-              userId: widget.viewModel.userProfile!['user_id'],
+              userId: widget.viewModel.userId,
               email: newEmail,
               purpose: 'change_email',
               password: '',

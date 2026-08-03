@@ -9,6 +9,7 @@ import '../components/route_cash_inputs.dart';
 import 'auth_screen.dart';
 import 'reset_password_screen.dart';
 import '../../viewmodels/settings_view_model.dart';
+import '../../services/auth_service.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String userId;
@@ -30,6 +31,7 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final _viewModel = VerificationViewModel();
+  final _authService = AuthService();
   final _codeController = TextEditingController();
 
   @override
@@ -63,7 +65,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       code, 
       widget.purpose, 
       lang,
-      email: widget.purpose == 'change_email' ? widget.email : null,
+      email: (widget.purpose == 'change_email' || widget.purpose == 'verify_email') ? widget.email : null,
     );
     
     if (error == null) {
@@ -83,7 +85,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         await Supabase.instance.client.auth.signOut();
         
         if (!mounted) return;
-        Navigator.pushAndRemoveUntil(
+        // Si es vinculación de email/password o verificación de email
+      if (widget.purpose == 'verify_email') {
+        // Forzamos la actualización de la sesión para obtener las nuevas identidades (Google + Email)
+        await Supabase.instance.client.auth.refreshSession();
+      }
+
+      Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const AuthScreen()),
           (route) => false,
@@ -93,6 +101,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           const SnackBar(content: Text('Correo actualizado. Por favor inicia sesión con tu nueva dirección.')),
         );
         return;
+      }
+
+      // Si es vinculación de email/password o verificación de email
+      if (widget.purpose == 'verify_email') {
+        // Forzamos la actualización de la sesión para obtener las nuevas identidades (Google + Email)
+        await Supabase.instance.client.auth.refreshSession();
       }
 
       Navigator.pushAndRemoveUntil(
