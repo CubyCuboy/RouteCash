@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -28,11 +29,24 @@ class AuthService {
         email: email,
         password: password,
       );
+      if (response.user != null) {
+        await updateLastLogin(response.user!.id);
+      }
       return response;
     } on AuthException catch (e) {
       throw e.message;
     } catch (e) {
       throw 'Ocurrió un error inesperado al iniciar sesión';
+    }
+  }
+
+  Future<void> updateLastLogin(String userId) async {
+    try {
+      await _supabase.from('users').update({
+        'last_login_at': DateTime.now().toIso8601String(),
+      }).eq('user_id', userId);
+    } catch (e) {
+      debugPrint('Error updating last login: $e');
     }
   }
 
@@ -94,6 +108,7 @@ class AuthService {
   }
 
   static const String _userSettingsCacheKey = 'user_settings_cache';
+  static const String _userProfileCacheKey = 'user_profile_cache';
 
   Future<void> cacheUserSettings(Map<String, dynamic> settings) async {
     final prefs = await SharedPreferences.getInstance();
@@ -107,9 +122,22 @@ class AuthService {
     return json.decode(encoded) as Map<String, dynamic>;
   }
 
+  Future<void> cacheUserProfile(Map<String, dynamic> profile) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userProfileCacheKey, json.encode(profile));
+  }
+
+  Future<Map<String, dynamic>?> getCachedUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? encoded = prefs.getString(_userProfileCacheKey);
+    if (encoded == null) return null;
+    return json.decode(encoded) as Map<String, dynamic>;
+  }
+
   Future<void> clearSettingsCache() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userSettingsCacheKey);
+    await prefs.remove(_userProfileCacheKey);
   }
 
   Future<void> completeEmailChange(String newEmail) async {
@@ -117,8 +145,11 @@ class AuthService {
       final user = _supabase.auth.currentUser;
       if (user == null) throw 'No hay sesión activa';
 
-      // Actualizar en Auth
-      await _supabase.auth.updateUser(UserAttributes(email: newEmail));
+      // Solo actualizamos en Auth si el correo es realmente diferente
+      if (user.email != newEmail) {
+        // Actualizar en Auth (esto disparará el correo de confirmación de Supabase si está activado)
+        await _supabase.auth.updateUser(UserAttributes(email: newEmail));
+      }
       
       // Actualizar en la tabla users
       await _supabase.from('users').update({'email': newEmail}).eq('user_id', user.id);

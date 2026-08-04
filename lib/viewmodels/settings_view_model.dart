@@ -25,7 +25,20 @@ class SettingsViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> currencies = [];
 
   SettingsViewModel() {
+    _init();
+  }
+
+  Future<void> _init() async {
+    // 1. Cargar caché inmediatamente para que no haya parpadeo en blanco
+    await _loadFromCache();
+    // 2. Cargar de red para actualizar
     loadData();
+  }
+
+  Future<void> _loadFromCache() async {
+    userProfile = await _authService.getCachedUserProfile();
+    userSettings = await _authService.getCachedUserSettings();
+    notifyListeners();
   }
 
   Future<void> loadData() async {
@@ -34,23 +47,21 @@ class SettingsViewModel extends ChangeNotifier {
     debugPrint('SettingsViewModel: Start loading data...');
 
     try {
-      // Usar getUser() para forzar una recarga completa del usuario desde el servidor
       final response = await Supabase.instance.client.auth.getUser();
       final user = response.user;
 
       if (user != null) {
         debugPrint('SettingsViewModel: Loading profile for ${user.id}');
-        userProfile = await _authService.getUserProfile(user.id);
+        final profile = await _authService.getUserProfile(user.id);
+        if (profile != null) {
+          userProfile = profile;
+          await _authService.cacheUserProfile(profile);
+        }
         
-        // Cargar desde caché primero
-        final cached = await _authService.getCachedUserSettings();
-        if (cached != null) {
-          userSettings = cached;
-        } else {
-          userSettings = await _authService.getUserSettings(user.id);
-          if (userSettings != null) {
-            await _authService.cacheUserSettings(userSettings!);
-          }
+        final settings = await _authService.getUserSettings(user.id);
+        if (settings != null) {
+          userSettings = settings;
+          await _authService.cacheUserSettings(settings);
         }
         
         debugPrint('SettingsViewModel: Loading catalogs...');
@@ -79,23 +90,21 @@ class SettingsViewModel extends ChangeNotifier {
 
             if (countryMap != null && countryMap['country_id'] != null) {
               final String countryId = countryMap['country_id'].toString();
-              debugPrint('SettingsViewModel: Loading states for country $countryId');
               states = await _catalogService.getStates(countryId);
             }
           }
         }
         debugPrint('SettingsViewModel: Data loaded successfully');
-      } else {
-        debugPrint('SettingsViewModel: No current user found');
       }
     } catch (e, stack) {
       debugPrint('SettingsViewModel: Error loading data: $e');
-      debugPrint('Stack trace: $stack');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
+
+  String get userId => userProfile?['user_id'] ?? _authService.currentUser?.id ?? '';
 
   Future<void> loadStates(String countryId) async {
     states = await _catalogService.getStates(countryId);
@@ -104,20 +113,29 @@ class SettingsViewModel extends ChangeNotifier {
 
   Future<String?> updateProfile({
     required String fullName,
+    String? nickname,
     required String phone,
     required String stateId,
     required int currencyId,
+    String? profileImageUrl,
   }) async {
     try {
       final user = _authService.currentUser;
       if (user == null) return 'No hay sesión activa';
 
-      await _authService.updateUserProfile(user.id, {
+      final Map<String, dynamic> data = {
         'full_name': fullName,
+        'nickname': nickname,
         'phone': phone,
         'state_id': stateId,
         'default_currency_id': currencyId,
-      });
+      };
+
+      if (profileImageUrl != null) {
+        data['profile_image_url'] = profileImageUrl;
+      }
+
+      await _authService.updateUserProfile(user.id, data);
 
       await loadData();
       return null;
@@ -151,7 +169,7 @@ class SettingsViewModel extends ChangeNotifier {
       );
 
       if (result['success'] == true) {
-        return null; // Éxito al enviar el código
+        return null;
       } else {
         return result['error'] ?? 'Error al enviar el código de verificación';
       }
@@ -276,11 +294,17 @@ class SettingsViewModel extends ChangeNotifier {
   }
 
   bool get hasEmailPasswordAuth {
+    final user = _authService.currentUser;
+    if (user == null) return false;
+
     // A veces Supabase no lista 'email' inmediatamente después de un refreshSession()
     // si el usuario es principalmente OAuth. Verificamos identidades y también si hay email.
     final providers = linkedIdentities.map((e) => e.provider).toList();
     debugPrint('SettingsViewModel: User providers: $providers');
-    return providers.contains('email');
+    
+    // Es usuario de email si tiene la identidad 'email' 
+    // O si tiene email y contraseña (identificado por tener email confirmado en un contexto de vinculación)
+    return providers.contains('email') || (user.email != null && user.emailConfirmedAt != null);
   }
 
   Future<String?> addEmailPasswordAuth(String email, String password) async {

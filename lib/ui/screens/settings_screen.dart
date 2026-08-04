@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/verification_service.dart';
 import '../../viewmodels/settings_view_model.dart';
@@ -12,6 +13,7 @@ import 'otp_verification_screen.dart';
 import 'language_selection_screen.dart';
 import 'change_email_screen.dart';
 import 'link_email_password_screen.dart';
+import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -46,14 +48,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _editProfile() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditProfileScreen(viewModel: _viewModel),
       ),
-      builder: (context) => _ProfileEditSheet(viewModel: _viewModel),
     );
   }
 
@@ -249,12 +248,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, _) {
-            if (_viewModel.isLoading && _viewModel.userProfile == null) {
-              return const Center(child: CircularProgressIndicator(color: Colors.black));
-            }
-
             final profile = _viewModel.userProfile;
             final settings = _viewModel.userSettings;
+            final isLoading = _viewModel.isLoading && profile == null;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(26, 24, 26, 120),
@@ -273,7 +269,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           letterSpacing: 2,
                         ),
                       ),
-                      if (!_viewModel.isEmailVerified)
+                      if (!_viewModel.isEmailVerified && !isLoading)
                         _Badge(
                           text: strings.verifyingEmailBadge,
                           color: Colors.orange,
@@ -294,10 +290,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 32),
                   
-                  _ProfileHeader(
-                    fullName: profile?['full_name'] ?? 'Usuario',
-                    email: profile?['email'] ?? '',
-                    onEdit: _editProfile,
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: isLoading 
+                      ? const _ProfileHeaderSkeleton()
+                      : _ProfileHeader(
+                          fullName: profile?['full_name'] ?? 'Usuario',
+                          email: profile?['email'] ?? '',
+                          imageUrl: profile?['profile_image_url'],
+                          onEdit: _editProfile,
+                        ),
                   ),
                   
                   const SizedBox(height: 32),
@@ -308,19 +310,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _SettingsTile(
                         icon: Icons.g_mobiledata,
                         title: 'Google',
-                        trailing: _viewModel.isProviderLinked('google') 
-                          ? Text(strings.changeAccount, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12))
-                          : Text(strings.link, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12)),
-                        onTap: _viewModel.isProviderLinked('google') ? _unlinkGoogle : _linkGoogle,
+                        trailing: isLoading 
+                          ? const _Skeleton(width: 40, height: 12)
+                          : _viewModel.isProviderLinked('google') 
+                            ? Text(strings.changeAccount, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12))
+                            : Text(strings.link, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12)),
+                        onTap: isLoading ? null : (_viewModel.isProviderLinked('google') ? _unlinkGoogle : _linkGoogle),
                       ),
                       const Divider(height: 1, indent: 16),
                       _SettingsTile(
                         icon: Icons.window,
                         title: 'Microsoft',
-                        trailing: _viewModel.isProviderLinked('azure')
-                          ? Text(strings.linked, style: const TextStyle(color: Colors.green, fontSize: 12))
-                          : Text(strings.link, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12)),
-                        onTap: _viewModel.isProviderLinked('azure') ? null : () => _viewModel.linkAccount(OAuthProvider.azure),
+                        trailing: isLoading
+                          ? const _Skeleton(width: 40, height: 12)
+                          : _viewModel.isProviderLinked('azure')
+                            ? Text(strings.linked, style: const TextStyle(color: Colors.green, fontSize: 12))
+                            : Text(strings.link, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12)),
+                        onTap: isLoading ? null : (_viewModel.isProviderLinked('azure') ? null : () => _viewModel.linkAccount(OAuthProvider.azure)),
                       ),
                     ],
                   ),
@@ -333,13 +339,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _SettingsTile(
                         icon: Icons.phone_android_outlined,
                         title: strings.verifyPhone,
-                        trailing: _viewModel.isPhoneVerified
-                          ? const Icon(Icons.check_circle, color: Colors.green, size: 18)
-                          : Text(strings.notVerified, style: const TextStyle(color: Colors.orange, fontSize: 12)),
-                        onTap: _viewModel.isPhoneVerified ? null : _verifyPhone,
+                        trailing: isLoading
+                          ? const _Skeleton(width: 40, height: 12)
+                          : _viewModel.isPhoneVerified
+                            ? const Icon(Icons.check_circle, color: Colors.green, size: 18)
+                            : Text(strings.notVerified, style: const TextStyle(color: Colors.orange, fontSize: 12)),
+                        onTap: isLoading ? null : (_viewModel.isPhoneVerified ? null : _verifyPhone),
                       ),
                       const Divider(height: 1, indent: 16),
-                      if (_viewModel.hasEmailPasswordAuth) ...[
+                      if (isLoading)
+                        const _SettingsTileSkeleton()
+                      else if (_viewModel.hasEmailPasswordAuth) ...[
                         _SettingsTile(
                           icon: Icons.lock_outline,
                           title: strings.changePassword,
@@ -370,18 +380,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _SettingsTile(
                         icon: Icons.dark_mode_outlined,
                         title: strings.darkMode,
-                        trailing: Switch(
-                          value: settings?['theme_mode'] == 'dark',
-                          activeColor: Colors.black,
-                          onChanged: (val) => _viewModel.updateSetting('theme_mode', val ? 'dark' : 'light'),
-                        ),
+                        trailing: isLoading
+                          ? const _Skeleton(width: 40, height: 24)
+                          : Switch(
+                              value: settings?['theme_mode'] == 'dark',
+                              activeColor: Colors.black,
+                              onChanged: (val) => _viewModel.updateSetting('theme_mode', val ? 'dark' : 'light'),
+                            ),
                       ),
                       const Divider(height: 1, indent: 16),
                       _SettingsTile(
                         icon: Icons.language,
                         title: strings.language,
-                        trailing: Text(currentLocale.languageCode == 'es' ? 'Español' : currentLocale.languageCode == 'pt' ? 'Português' : 'English', style: const TextStyle(fontSize: 12)),
-                        onTap: _changeLanguage,
+                        trailing: isLoading
+                          ? const _Skeleton(width: 60, height: 12)
+                          : Text(currentLocale.languageCode == 'es' ? 'Español' : currentLocale.languageCode == 'pt' ? 'Português' : 'English', style: const TextStyle(fontSize: 12)),
+                        onTap: isLoading ? null : _changeLanguage,
                       ),
                     ],
                   ),
@@ -414,9 +428,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 class _ProfileHeader extends StatelessWidget {
   final String fullName;
   final String email;
+  final String? imageUrl;
   final VoidCallback onEdit;
 
-  const _ProfileHeader({required this.fullName, required this.email, required this.onEdit});
+  const _ProfileHeader({
+    required this.fullName, 
+    required this.email, 
+    this.imageUrl,
+    required this.onEdit
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -439,10 +459,15 @@ class _ProfileHeader extends StatelessWidget {
           CircleAvatar(
             radius: 30,
             backgroundColor: Colors.black,
-            child: Text(
-              fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
-              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            backgroundImage: imageUrl != null && imageUrl!.isNotEmpty 
+                ? NetworkImage(imageUrl!) 
+                : null,
+            child: imageUrl == null || imageUrl!.isEmpty
+                ? Text(
+                    fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
+                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -542,6 +567,81 @@ class _SettingsTile extends StatelessWidget {
         : null,
       trailing: trailing ?? (onTap != null ? const Icon(Icons.chevron_right, size: 20, color: Color(0xFFC7C7C7)) : null),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    );
+  }
+}
+
+class _Skeleton extends StatelessWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  const _Skeleton({
+    required this.width,
+    required this.height,
+    this.borderRadius = 4,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileHeaderSkeleton extends StatelessWidget {
+  const _ProfileHeaderSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE5E5E5)),
+      ),
+      child: Row(
+        children: [
+          const _Skeleton(width: 60, height: 60, borderRadius: 30),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Skeleton(width: 120, height: 18),
+                SizedBox(height: 8),
+                _Skeleton(width: 180, height: 12),
+              ],
+            ),
+          ),
+          const _Skeleton(width: 24, height: 24),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsTileSkeleton extends StatelessWidget {
+  const _SettingsTileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ListTile(
+      leading: _Skeleton(width: 36, height: 36, borderRadius: 10),
+      title: _Skeleton(width: 100, height: 14),
+      trailing: _Skeleton(width: 20, height: 20),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
 }
@@ -871,7 +971,7 @@ class _SecurityEditSheetState extends State<_SecurityEditSheet> {
                       context,
                       MaterialPageRoute(
                         builder: (_) => OtpVerificationScreen(
-                          userId: widget.viewModel.userProfile!['user_id'],
+                          userId: widget.viewModel.userId,
                           email: _controller.text.trim(),
                           purpose: 'change_email',
                           password: '',

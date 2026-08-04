@@ -2,6 +2,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'auth_service.dart';
 
 class GoogleAuthService {
   GoogleAuthService._();
@@ -51,11 +52,17 @@ class GoogleAuthService {
       );
     }
 
-    return Supabase.instance.client.auth.signInWithIdToken(
+    final response = await Supabase.instance.client.auth.signInWithIdToken(
       provider: OAuthProvider.google,
       idToken: idToken,
       accessToken: authorization.accessToken,
     );
+
+    if (response.user != null) {
+      await AuthService().updateLastLogin(response.user!.id);
+    }
+
+    return response;
   }
 
   Future<void> linkAccount() async {

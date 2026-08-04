@@ -76,19 +76,14 @@ class LinkEmailPasswordViewModel extends ChangeNotifier {
       final user = _authService.currentUser;
       if (user == null) return 'No hay sesión activa';
 
-      final cleanEmail = email.trim();
-      
-      // Si el email es el mismo que el actual, solo actualizamos contraseña
-      // para evitar problemas de "email pendiente de verificación" en Supabase.
-      if (user.email == cleanEmail) {
-        await Supabase.instance.client.auth.updateUser(
-          UserAttributes(password: password),
-        );
-      } else {
-        await Supabase.instance.client.auth.updateUser(
-          UserAttributes(email: cleanEmail, password: password),
-        );
-      }
+      // Siempre actualizamos la contraseña primero. Esto es inmediato para el usuario actual.
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(password: password),
+      );
+
+      // NO actualizamos el email aquí si es diferente, para evitar que Supabase envíe
+      // su propio correo de confirmación simultáneamente con nuestro OTP personalizado.
+      // El cambio de email se completará en OtpVerificationScreen tras validar nuestro OTP.
 
       return null;
     } catch (e) {
