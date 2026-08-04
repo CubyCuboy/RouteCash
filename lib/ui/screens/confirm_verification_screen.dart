@@ -65,7 +65,17 @@ class _ConfirmVerificationScreenState extends State<ConfirmVerificationScreen> {
                 icon: Icons.arrow_back,
                 onPressed: () => Navigator.pop(context),
               ),
-              const SizedBox(height: 42),
+              const SizedBox(height: 32),
+              Text(
+                'Hola Diego 👋',
+                style: GoogleFonts.playfairDisplay(
+                  color: Colors.black,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 16),
               Text(
                 'VERIFICACIÓN',
                 style: GoogleFonts.inter(

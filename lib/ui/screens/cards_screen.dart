@@ -1031,11 +1031,6 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   final TextEditingController _expiryDateController = TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
 
-  String? _bankError;
-  String? _productError;
-  String? _cardNumberError;
-  String? _expiryDateError;
-  String? _cvvError;
 
   static const List<String> _chileanBanks = [
     'Banco Estado',
@@ -1057,7 +1052,7 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
 
   static const List<String> _baseDebitProducts = [
     'Cuenta Corriente',
-    'Cuenta Vista',
+    'Cuenta RUT / Vista',
     'Cuenta Digital / Prepago',
     'Cuenta de Ahorro',
   ];
@@ -1147,76 +1142,22 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
 
   String _getSelectedCardImagePath() {
     final bankName = _selectedBank.trim().toLowerCase();
-
-    // Se ejecuta únicamente desde _submit(), por lo que la imagen se elige
-    // una sola vez al crear la tarjeta y queda guardada en assetPath.
     if (bankName.contains('banco estado') || bankName.contains('bancoestado')) {
       final randomIndex = _random.nextInt(_bancoEstadoCardImages.length);
       return _bancoEstadoCardImages[randomIndex];
     }
-
-    // Cualquier tarjeta o cuenta de Banco Falabella usa CMR.
-    if (bankName.contains('falabella')) {
-      return 'cards/cmr.png';
-    }
-
-    if (bankName.contains('scotiabank') || bankName.contains('scotia')) {
-      return 'cards/skotia.png';
-    }
-
-    if (bankName.contains('santander') &&
-        _selectedProduct.toLowerCase().contains('worldmember')) {
-      return 'cards/worldmember.png';
-    }
-
-    // Los bancos sin imagen específica usan el diseño generado de respaldo.
+    if (bankName.contains('falabella')) return 'cards/cmr.png';
+    if (bankName.contains('scotiabank') || bankName.contains('scotia')) return 'cards/skotia.png';
+    if (bankName.contains('santander') && _selectedProduct.toLowerCase().contains('worldmember')) return 'cards/worldmember.png';
     return '';
   }
 
   void _submit() {
-    final rawNumber = _cardNumberController.text.replaceAll(RegExp(r'\D'), '');
-    final expiryDate = _expiryDateController.text.trim();
-    final cvv = _cvvController.text.trim();
-
-    final expiryIsValid = RegExp(
-      r'^(0[1-9]|1[0-2])\/\d{2}$',
-    ).hasMatch(expiryDate);
-    final cvvIsValid = RegExp(r'^\d{3,4}$').hasMatch(cvv);
-
-    setState(() {
-      _bankError = _selectedBank.trim().isEmpty ? 'Selecciona un banco.' : null;
-
-      _productError = _selectedProduct.trim().isEmpty
-          ? 'Selecciona un producto o tipo de cuenta.'
-          : (_selectedProduct == 'Cuenta RUT' && _selectedBank != 'Banco Estado'
-                ? 'Cuenta RUT solo pertenece a Banco Estado.'
-                : null);
-
-      _cardNumberError = rawNumber.isEmpty
-          ? 'Ingresa el número de la tarjeta.'
-          : (rawNumber.length != 16
-                ? 'El número debe contener 16 dígitos.'
-                : null);
-
-      _expiryDateError = expiryDate.isEmpty
-          ? 'Ingresa la fecha de caducidad.'
-          : (!expiryIsValid ? 'Usa una fecha válida en formato MM/AA.' : null);
-
-      _cvvError = cvv.isEmpty
-          ? 'Ingresa el código CVC.'
-          : (!cvvIsValid ? 'El CVC debe tener 3 o 4 dígitos.' : null);
-    });
-
-    final hasErrors =
-        _bankError != null ||
-        _productError != null ||
-        _cardNumberError != null ||
-        _expiryDateError != null ||
-        _cvvError != null;
-
-    if (hasErrors) return;
-
-    final lastFour = rawNumber.substring(rawNumber.length - 4);
+    final rawNumber =
+        _cardNumberController.text.replaceAll(RegExp(r'\D'), '');
+    final lastFour = rawNumber.length >= 4
+        ? rawNumber.substring(rawNumber.length - 4)
+        : (rawNumber.isNotEmpty ? rawNumber.padLeft(4, '0') : '0000');
 
     final newCard = RouteCashCardModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -1227,8 +1168,8 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
       type: _cardType,
       assetPath: _getSelectedCardImagePath(),
       cardNumber: _cardNumberController.text,
-      expiryDate: expiryDate,
-      cvv: cvv,
+      expiryDate: _expiryDateController.text,
+      cvv: _cvvController.text,
     );
 
     widget.onCardAdded(newCard);
@@ -1282,7 +1223,6 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
               ),
             ),
             const SizedBox(height: 20),
-
             Row(
               children: [
                 Expanded(
@@ -1303,7 +1243,6 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
               ],
             ),
             const SizedBox(height: 18),
-
             _buildLabel('Banco'),
             _buildDropdownField(
               value: _selectedBank,
@@ -1312,54 +1251,35 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
                 if (val == null) return;
                 setState(() {
                   _selectedBank = val;
-                  _bankError = null;
-
                   if (_cardType == RouteCashCardType.debit &&
                       !_debitProducts.contains(_selectedProduct)) {
                     _selectedProduct = _debitProducts.first;
                   }
-                  _productError = null;
                 });
               },
               icon: Icons.account_balance_outlined,
-              errorText: _bankError,
             ),
             const SizedBox(height: 14),
-
             _buildLabel('Nombre del Producto / Tipo de Cuenta'),
             _buildDropdownField(
               value: _selectedProduct,
               items: currentProducts,
               onChanged: (val) {
-                if (val != null) {
-                  setState(() {
-                    _selectedProduct = val;
-                    _productError = null;
-                  });
-                }
+                if (val != null) setState(() => _selectedProduct = val);
               },
               icon: Icons.subtitles_outlined,
-              errorText: _productError,
             ),
             const SizedBox(height: 14),
-
             _buildLabel('Número de Tarjeta'),
             _buildTextField(
               controller: _cardNumberController,
               hint: '1234 5678 9012 3456',
               icon: Icons.credit_card_outlined,
               keyboardType: TextInputType.number,
-              onChanged: (value) {
-                _formatCardNumber(value);
-                if (_cardNumberError != null) {
-                  setState(() => _cardNumberError = null);
-                }
-              },
+              onChanged: _formatCardNumber,
               maxLength: 19,
-              errorText: _cardNumberError,
             ),
             const SizedBox(height: 14),
-
             Row(
               children: [
                 Expanded(
@@ -1372,14 +1292,8 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
                         hint: 'MM/AA (ej: 12/28)',
                         icon: Icons.calendar_today_outlined,
                         keyboardType: TextInputType.number,
-                        onChanged: (value) {
-                          _formatExpiryDate(value);
-                          if (_expiryDateError != null) {
-                            setState(() => _expiryDateError = null);
-                          }
-                        },
+                        onChanged: _formatExpiryDate,
                         maxLength: 5,
-                        errorText: _expiryDateError,
                       ),
                     ],
                   ),
@@ -1397,12 +1311,6 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
                         keyboardType: TextInputType.number,
                         obscureText: true,
                         maxLength: 4,
-                        errorText: _cvvError,
-                        onChanged: (_) {
-                          if (_cvvError != null) {
-                            setState(() => _cvvError = null);
-                          }
-                        },
                       ),
                     ],
                   ),
@@ -1410,7 +1318,6 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
               ],
             ),
             const SizedBox(height: 24),
-
             RouteCashPrimaryButton(text: 'Guardar Tarjeta', onPressed: _submit),
           ],
         ),
@@ -1437,60 +1344,30 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     required List<String> items,
     required ValueChanged<String?> onChanged,
     required IconData icon,
-    String? errorText,
   }) {
     return DropdownButtonFormField<String>(
       value: items.contains(value) ? value : items.first,
       onChanged: onChanged,
       isExpanded: true,
-      icon: const Icon(
-        Icons.keyboard_arrow_down_rounded,
-        color: Color(0xFF888888),
-      ),
-      style: GoogleFonts.inter(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF888888)),
+      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
       decoration: InputDecoration(
-        errorText: errorText,
-        errorMaxLines: 2,
         prefixIcon: Icon(icon, color: const Color(0xFF888888), size: 19),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
-            color: errorText == null
-                ? const Color(0xFFE2E2E2)
-                : const Color(0xFFB3261E),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE2E2E2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Colors.black, width: 1.5),
         ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFB3261E)),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFB3261E), width: 1.5),
-        ),
       ),
       dropdownColor: Colors.white,
       borderRadius: BorderRadius.circular(14),
-      items: items.map((item) {
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(item, overflow: TextOverflow.ellipsis),
-        );
-      }).toList(),
+      items: items.map((item) => DropdownMenuItem<String>(value: item, child: Text(item, overflow: TextOverflow.ellipsis))).toList(),
     );
   }
 
@@ -1502,7 +1379,6 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     bool obscureText = false,
     ValueChanged<String>? onChanged,
     int? maxLength,
-    String? errorText,
   }) {
     return TextField(
       controller: controller,
@@ -1516,8 +1392,6 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
         color: Colors.black,
       ),
       decoration: InputDecoration(
-        errorText: errorText,
-        errorMaxLines: 2,
         counterText: '',
         hintText: hint,
         hintStyle: GoogleFonts.inter(
@@ -1528,29 +1402,15 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
         prefixIcon: Icon(icon, color: const Color(0xFF888888), size: 19),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
-        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
-            color: errorText == null
-                ? const Color(0xFFE2E2E2)
-                : const Color(0xFFB3261E),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE2E2E2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Colors.black, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFB3261E)),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFB3261E), width: 1.5),
         ),
       ),
     );
