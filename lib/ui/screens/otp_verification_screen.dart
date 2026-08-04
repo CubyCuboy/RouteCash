@@ -8,8 +8,6 @@ import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
 import 'auth_screen.dart';
 import 'reset_password_screen.dart';
-import '../../viewmodels/settings_view_model.dart';
-import '../../services/auth_service.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String userId;
@@ -31,7 +29,6 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final _viewModel = VerificationViewModel();
-  final _authService = AuthService();
   final _codeController = TextEditingController();
 
   @override
@@ -52,6 +49,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   void _verify() async {
     final strings = AppLocalizations.of(context)!;
     final code = _codeController.text.trim();
+
     if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(strings.errorUnexpected)),
@@ -60,73 +58,86 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
 
     final lang = Localizations.localeOf(context).languageCode;
+
     final error = await _viewModel.verifyCode(
-      widget.userId, 
-      code, 
-      widget.purpose, 
+      widget.userId,
+      code,
+      widget.purpose,
       lang,
-      email: (widget.purpose == 'change_email' || widget.purpose == 'verify_email') ? widget.email : null,
+      email: widget.purpose == 'change_email' ||
+              widget.purpose == 'verify_email'
+          ? widget.email
+          : null,
     );
-    
-    if (error == null) {
+
+    if (error != null) {
       if (!mounted) return;
-      
-      if (widget.purpose == 'recovery') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ResetPasswordScreen(email: widget.email),
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    if (widget.purpose == 'recovery') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ResetPasswordScreen(
+            email: widget.email,
           ),
-        );
-        return;
-      }
+        ),
+      );
+      return;
+    }
 
-      if (widget.purpose == 'change_email') {
-        await Supabase.instance.client.auth.signOut();
-        
-        if (!mounted) return;
-        // Si es vinculación de email/password o verificación de email
-      if (widget.purpose == 'verify_email') {
-        // Forzamos la actualización de la sesión para obtener las nuevas identidades (Google + Email)
-        await Supabase.instance.client.auth.refreshSession();
-      }
+    if (widget.purpose == 'change_email') {
+      await Supabase.instance.client.auth.signOut();
 
-      Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const AuthScreen()),
-          (route) => false,
-        );
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Correo actualizado. Por favor inicia sesión con tu nueva dirección.')),
-        );
-        return;
-      }
-
-      // Si es vinculación de email/password o verificación de email
-      if (widget.purpose == 'verify_email') {
-        // Forzamos la actualización de la sesión para obtener las nuevas identidades (Google + Email)
-        await Supabase.instance.client.auth.refreshSession();
-      }
+      if (!mounted) return;
 
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => VerificationSuccessScreen(
-            email: widget.email,
-            password: widget.password,
-            returnToHome: Supabase.instance.client.auth.currentSession != null,
-            initialIndex: widget.purpose == 'verify_email' && Supabase.instance.client.auth.currentSession != null ? 3 : 0,
-          ),
+          builder: (_) => const AuthScreen(),
         ),
         (route) => false,
       );
-    } else {
-      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
+        const SnackBar(
+          content: Text(
+            'Correo actualizado. Por favor inicia sesión con tu nueva dirección.',
+          ),
+        ),
       );
+      return;
     }
+
+    if (widget.purpose == 'verify_email') {
+      await Supabase.instance.client.auth.refreshSession();
+
+      if (!mounted) return;
+    }
+
+    final hasActiveSession =
+        Supabase.instance.client.auth.currentSession != null;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VerificationSuccessScreen(
+          email: widget.email,
+          password: widget.password,
+          returnToHome: hasActiveSession,
+          initialIndex:
+              widget.purpose == 'verify_email' && hasActiveSession ? 3 : 0,
+        ),
+      ),
+      (route) => false,
+    );
   }
 
   void _resend() async {

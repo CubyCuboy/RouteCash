@@ -1,4 +1,4 @@
-package com.example.android
+package cl.routecash.app
 
 import io.flutter.embedding.android.FlutterActivity
 
