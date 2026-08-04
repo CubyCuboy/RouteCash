@@ -21,7 +21,25 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _oldEmailController.text = widget.viewModel.currentEmail;
+    widget.viewModel.addListener(_syncCurrentEmail);
+  }
+
+  void _syncCurrentEmail() {
+    final currentEmail = widget.viewModel.currentEmail;
+    if (!mounted || currentEmail.isEmpty) return;
+
+    if (_oldEmailController.text != currentEmail) {
+      _oldEmailController.text = currentEmail;
+      setState(() {});
+    }
+  }
+
+  @override
   void dispose() {
+    widget.viewModel.removeListener(_syncCurrentEmail);
     _oldEmailController.dispose();
     _newEmailController.dispose();
     super.dispose();
@@ -122,6 +140,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
               controller: _oldEmailController,
               keyboardType: TextInputType.emailAddress,
               hintText: 'ejemplo@correo.com',
+              readOnly: true,
             ),
             const SizedBox(height: 24),
             RouteCashTextField(

@@ -105,6 +105,8 @@ class SettingsViewModel extends ChangeNotifier {
   }
 
   String get userId => userProfile?['user_id'] ?? _authService.currentUser?.id ?? '';
+  String get currentEmail =>
+      _authService.currentUser?.email ?? userProfile?['email']?.toString() ?? '';
 
   Future<void> loadStates(String countryId) async {
     states = await _catalogService.getStates(countryId);
@@ -152,7 +154,7 @@ class SettingsViewModel extends ChangeNotifier {
       final cleanOld = EmailValidator.normalize(oldEmail);
       final cleanNew = EmailValidator.normalize(newEmail);
 
-      if (user.email != cleanOld) {
+      if (user.email == null || EmailValidator.normalize(user.email!) != cleanOld) {
         return 'El correo anterior no coincide con el registrado';
       }
 
