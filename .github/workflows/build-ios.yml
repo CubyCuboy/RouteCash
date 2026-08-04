@@ -1,0 +1,53 @@
+name: Build Flutter iOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Verificar Node.js
+        run: |
+          node --version
+          npm --version
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Verificar herramientas
+        run: |
+          flutter --version
+          xcodebuild -version
+          pod --version
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Compilar iOS sin firma
+        run: flutter build ios --release --no-codesign
+
+      - name: Comprimir aplicación
+        run: |
+          cd build/ios/iphoneos
+          zip -r Runner-app.zip Runner.app
+
+      - name: Guardar compilación
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-build
+          path: build/ios/iphoneos/Runner-app.zip
+          retention-days: 7
