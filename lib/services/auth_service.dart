@@ -134,10 +134,20 @@ class AuthService {
     return json.decode(encoded) as Map<String, dynamic>;
   }
 
-  Future<void> clearSettingsCache() async {
+  Future<void> clearSettingsCache({bool excludeCardImages = true}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_userSettingsCacheKey);
-    await prefs.remove(_userProfileCacheKey);
+    
+    if (!excludeCardImages) {
+      await prefs.clear();
+    } else {
+      // Obtenemos todas las llaves y removemos todas excepto las de imágenes de tarjetas
+      final keys = prefs.getKeys();
+      for (final key in keys) {
+        if (!key.startsWith('card_image_')) {
+          await prefs.remove(key);
+        }
+      }
+    }
   }
 
   Future<void> completeEmailChange(String newEmail) async {
@@ -150,7 +160,7 @@ class AuthService {
         // Actualizar en Auth (esto disparará el correo de confirmación de Supabase si está activado)
         await _supabase.auth.updateUser(UserAttributes(email: newEmail));
       }
-      
+
       // Actualizar en la tabla users
       await _supabase.from('users').update({'email': newEmail}).eq('user_id', user.id);
     } on AuthException catch (e) {
@@ -168,9 +178,12 @@ class AuthService {
     }
   }
 
-  Future<void> linkProvider(OAuthProvider provider) async {
+  Future<void> linkProvider(OAuthProvider provider, {Map<String, String>? queryParams}) async {
     try {
-      await _supabase.auth.linkIdentity(provider);
+      await _supabase.auth.linkIdentity(
+        provider,
+        queryParams: queryParams,
+      );
     } catch (e) {
       throw 'Error al vincular cuenta: $e';
     }
@@ -185,19 +198,23 @@ class AuthService {
     required int currencyId,
   }) async {
     try {
-      await _supabase.from('users').insert({
+      // Intentamos un upsert basado en el email para manejar casos donde el usuario
+      // ya tiene un perfil con ese correo pero quizás con un userId distinto (ej: cambio de proveedor social no vinculado)
+      // o donde el proceso se interrumpió.
+      await _supabase.from('users').upsert({
         'user_id': userId,
         'full_name': fullName,
         'email': email,
         'phone': phone,
         'state_id': stateId,
         'default_currency_id': currencyId,
-      });
+      }, onConflict: 'email');
 
-      await _supabase.from('user_settings').insert({
+      await _supabase.from('user_settings').upsert({
         'user_id': userId,
-      });
+      }, onConflict: 'user_id');
     } catch (e) {
+      debugPrint('Error en createUserProfile: $e');
       throw 'Error al crear el perfil del usuario: $e';
     }
   }

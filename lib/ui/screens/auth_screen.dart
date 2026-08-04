@@ -182,27 +182,54 @@ Future<void> debugSignOut(String origin) async {
 }
   Future<void> _handleSocialLogin(String userId) async {
     final authService = AuthService();
+    final user = Supabase.instance.client.auth.currentUser;
 
-    final profile = await authService.getUserProfile(userId);
+    // Intentamos obtener el perfil por el ID de usuario
+    var profile = await authService.getUserProfile(userId);
 
-    if (!mounted) {
-      return;
+    // Si no existe por ID, verificamos si existe por correo electrónico
+    // Esto sucede cuando el usuario se registró antes con otro método pero con el mismo correo
+    if (profile == null && user?.email != null) {
+      final response = await Supabase.instance.client
+          .from('users')
+          .select()
+          .eq('email', user!.email!)
+          .maybeSingle();
+      
+      if (response != null) {
+        // Encontramos un perfil existente con este correo. 
+        // Lo vinculamos al nuevo userId para evitar duplicados y que el usuario mantenga su perfil.
+        try {
+          await Supabase.instance.client
+              .from('users')
+              .update({'user_id': userId})
+              .eq('email', user.email!);
+          
+          // También actualizamos settings si existen
+          await Supabase.instance.client
+              .from('user_settings')
+              .update({'user_id': userId})
+              .eq('user_id', response['user_id']);
+              
+          profile = await authService.getUserProfile(userId);
+        } catch (e) {
+          debugPrint('Error vinculando perfil existente: $e');
+        }
+      }
     }
+
+    if (!mounted) return;
 
     if (profile == null) {
       Navigator.pushAndRemoveUntil(
         context,
-
         MaterialPageRoute(builder: (_) => const SocialRegistrationScreen()),
-
         (route) => false,
       );
     } else {
       Navigator.pushAndRemoveUntil(
         context,
-
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
-
         (route) => false,
       );
     }

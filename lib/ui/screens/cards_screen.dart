@@ -959,7 +959,7 @@ class _CardImageWidgetState extends State<CardImageWidget> {
       return Image.asset(
         _resolvedImagePath,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _FallbackCard(card: widget.card),
+        errorBuilder: (_, _, _) => _FallbackCard(card: widget.card),
       );
     }
 
@@ -990,7 +990,7 @@ class _CardImageWidgetState extends State<CardImageWidget> {
         return Image.network(
           imageUrl,
           fit: BoxFit.cover,
-          errorBuilder: (_, error, ___) {
+          errorBuilder: (_, error, _) {
             debugPrint('No se pudo mostrar $_resolvedImagePath: $error');
             return _FallbackCard(card: widget.card);
           },
@@ -1346,7 +1346,7 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     required IconData icon,
   }) {
     return DropdownButtonFormField<String>(
-      value: items.contains(value) ? value : items.first,
+      initialValue: items.contains(value) ? value : items.first,
       onChanged: onChanged,
       isExpanded: true,
       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF888888)),

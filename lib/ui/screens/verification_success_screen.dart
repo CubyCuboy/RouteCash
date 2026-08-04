@@ -49,7 +49,7 @@ class VerificationSuccessScreen extends StatelessWidget {
                   : 'Tu cuenta ha sido verificada correctamente. Ahora puedes iniciar sesión.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 16,
                 ),
               ),

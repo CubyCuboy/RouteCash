@@ -198,7 +198,7 @@ class _SupabaseImagesListScreenState
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _images.length,
-      separatorBuilder: (_, __) =>
+      separatorBuilder: (_, _) =>
           const Divider(height: 1),
       itemBuilder: (context, index) {
         final image = _images[index];

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../l10n/app_localizations.dart';
 import '../../viewmodels/verification_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import 'otp_verification_screen.dart';

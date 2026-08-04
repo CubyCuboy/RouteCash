@@ -400,7 +400,7 @@ class WeeklyFlowChartPainter extends CustomPainter {
     }
 
     final patternPaint = Paint()
-      ..color = Colors.white.withOpacity(0.14)
+      ..color = Colors.white.withValues(alpha: 0.14)
       ..strokeWidth = 0.8;
 
     for (int i = 0; i < 7; i++) {

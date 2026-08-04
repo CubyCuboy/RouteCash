@@ -174,46 +174,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final strings = AppLocalizations.of(context)!;
     try {
       await _viewModel.linkAccount(OAuthProvider.google);
-      await _viewModel.loadData();
       if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(strings.successLinking),
-            content: Text(strings.successLinkingMessage),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(strings.confirm),
-              ),
-            ],
-          ),
+        _showStyledNotification(
+          title: strings.successLinking,
+          message: strings.successLinkingMessage,
+          isSuccess: true,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e is AuthException ? e.message : '${strings.errorUnexpected}: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
+        _showStyledNotification(
+          title: strings.errorUnexpected,
+          message: e is AuthException ? e.message : e.toString(),
+          isSuccess: false,
         );
       }
     }
   }
 
-  void _unlinkGoogle() async {
+  void _unlinkProvider(String provider) async {
     final strings = AppLocalizations.of(context)!;
+    final providerName = provider == 'google' ? 'Google' : 'Microsoft';
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(strings.unlinkAccountTitle),
-        content: Text(strings.unlinkAccountMessage),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(strings.unlinkAccountTitle, style: GoogleFonts.playfairDisplay(fontWeight: FontWeight.bold)),
+        content: Text('¿Estás seguro de que quieres desvincular tu cuenta de $providerName?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(strings.cancel)),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(strings.cancel, style: const TextStyle(color: Colors.grey))),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(strings.unlink, style: const TextStyle(color: Colors.red)),
+            child: Text(strings.unlink, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -221,20 +214,110 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (confirm == true) {
       try {
-        await _viewModel.unlinkAccount('google');
+        await _viewModel.unlinkAccount(provider);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(strings.unlinkAccountTitle)),
+          _showStyledNotification(
+            title: 'Éxito',
+            message: 'Cuenta de $providerName desvinculada correctamente.',
+            isSuccess: true,
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${strings.errorUnexpected}: $e')),
+          _showStyledNotification(
+            title: 'Error de seguridad',
+            message: e.toString().replaceFirst('Exception: ', ''),
+            isSuccess: false,
           );
         }
       }
     }
+  }
+
+  void _showStyledNotification({required String title, required String message, bool isSuccess = true}) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        contentPadding: const EdgeInsets.all(24),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isSuccess ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isSuccess ? Icons.check_circle_outline : Icons.error_outline,
+                color: isSuccess ? Colors.green : Colors.red,
+                size: 48,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.playfairDisplay(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600], height: 1.5),
+            ),
+            const SizedBox(height: 32),
+            RouteCashPrimaryButton(
+              text: 'ENTENDIDO',
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAccountOptions(String provider) {
+    final identity = _viewModel.getProviderIdentity(provider);
+    if (identity == null) return;
+
+    final email = identity.identityData?['email']?.toString() ?? 'Sin correo';
+    final createdAt = identity.createdAt != null 
+        ? DateTime.tryParse(identity.createdAt!)?.toLocal() 
+        : null;
+    
+    final providerName = provider == 'google' ? 'Google' : 'Microsoft';
+    final providerDescription = provider == 'google' 
+        ? 'Vincula tu cuenta de Google para iniciar sesión de forma rápida y segura.' 
+        : 'Vincula tu cuenta de Microsoft/Outlook para acceder a tus datos.';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (context) => _AccountOptionsSheet(
+        provider: providerName,
+        description: providerDescription,
+        email: email,
+        linkedAt: createdAt,
+        onChange: () {
+          Navigator.pop(context);
+          if (provider == 'google') {
+            _linkGoogle();
+          } else {
+            _viewModel.linkAccount(OAuthProvider.azure);
+          }
+        },
+        onUnlink: () {
+          Navigator.pop(context);
+          _unlinkProvider(provider);
+        },
+      ),
+    );
   }
 
   @override
@@ -242,185 +325,213 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final strings = AppLocalizations.of(context)!;
     final currentLocale = Localizations.localeOf(context);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, _) {
-            final profile = _viewModel.userProfile;
-            final settings = _viewModel.userSettings;
-            final isLoading = _viewModel.isLoading && profile == null;
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFFFAFAFA),
+          body: SafeArea(
+            child: ListenableBuilder(
+              listenable: _viewModel,
+              builder: (context, _) {
+                final profile = _viewModel.userProfile;
+                final settings = _viewModel.userSettings;
+                final isLoading = _viewModel.isLoading && profile == null;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(26, 24, 26, 120),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                return RefreshIndicator(
+                  onRefresh: () => _viewModel.loadData(forceRefresh: true),
+                  color: Colors.black,
+                  backgroundColor: Colors.white,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(26, 24, 26, 120),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            strings.settingsLabel,
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF9D9D9D),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          if (!_viewModel.isEmailVerified && !isLoading)
+                            _Badge(
+                              text: strings.verifyingEmailBadge,
+                              color: Colors.orange,
+                              onTap: () {  },
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
                       Text(
-                        strings.settingsLabel,
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF9D9D9D),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 2,
+                        strings.settingsTitle,
+                        style: GoogleFonts.playfairDisplay(
+                          color: Colors.black,
+                          fontSize: 42,
+                          height: 1,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -1.5,
                         ),
                       ),
-                      if (!_viewModel.isEmailVerified && !isLoading)
-                        _Badge(
-                          text: strings.verifyingEmailBadge,
-                          color: Colors.orange,
-                          onTap: () {  },
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    strings.settingsTitle,
-                    style: GoogleFonts.playfairDisplay(
-                      color: Colors.black,
-                      fontSize: 42,
-                      height: 1,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: isLoading 
-                      ? const _ProfileHeaderSkeleton()
-                      : _ProfileHeader(
-                          fullName: profile?['full_name'] ?? 'Usuario',
-                          email: profile?['email'] ?? '',
-                          imageUrl: profile?['profile_image_url'],
-                          onEdit: _editProfile,
-                        ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  _SettingsSection(
-                    title: strings.accountLinking,
-                    children: [
-                      _SettingsTile(
-                        icon: Icons.g_mobiledata,
-                        title: 'Google',
-                        trailing: isLoading 
-                          ? const _Skeleton(width: 40, height: 12)
-                          : _viewModel.isProviderLinked('google') 
-                            ? Text(strings.changeAccount, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12))
-                            : Text(strings.link, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12)),
-                        onTap: isLoading ? null : (_viewModel.isProviderLinked('google') ? _unlinkGoogle : _linkGoogle),
-                      ),
-                      const Divider(height: 1, indent: 16),
-                      _SettingsTile(
-                        icon: Icons.window,
-                        title: 'Microsoft',
-                        trailing: isLoading
-                          ? const _Skeleton(width: 40, height: 12)
-                          : _viewModel.isProviderLinked('azure')
-                            ? Text(strings.linked, style: const TextStyle(color: Colors.green, fontSize: 12))
-                            : Text(strings.link, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12)),
-                        onTap: isLoading ? null : (_viewModel.isProviderLinked('azure') ? null : () => _viewModel.linkAccount(OAuthProvider.azure)),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  _SettingsSection(
-                    title: strings.security,
-                    children: [
-                      _SettingsTile(
-                        icon: Icons.phone_android_outlined,
-                        title: strings.verifyPhone,
-                        trailing: isLoading
-                          ? const _Skeleton(width: 40, height: 12)
-                          : _viewModel.isPhoneVerified
-                            ? const Icon(Icons.check_circle, color: Colors.green, size: 18)
-                            : Text(strings.notVerified, style: const TextStyle(color: Colors.orange, fontSize: 12)),
-                        onTap: isLoading ? null : (_viewModel.isPhoneVerified ? null : _verifyPhone),
-                      ),
-                      const Divider(height: 1, indent: 16),
-                      if (isLoading)
-                        const _SettingsTileSkeleton()
-                      else if (_viewModel.hasEmailPasswordAuth) ...[
-                        _SettingsTile(
-                          icon: Icons.lock_outline,
-                          title: strings.changePassword,
-                          onTap: () => _changeSecurity('password'),
-                        ),
-                        const Divider(height: 1, indent: 16),
-                        _SettingsTile(
-                          icon: Icons.alternate_email,
-                          title: strings.changeEmail,
-                          onTap: () => _changeSecurity('email'),
-                        ),
-                      ] else ...[
-                        _SettingsTile(
-                          icon: Icons.add_moderator_outlined,
-                          title: 'Configurar acceso con correo',
-                          subtitle: 'Agrega una contraseña a tu cuenta',
-                          onTap: _showAddPasswordSheet,
-                        ),
-                      ],
-                    ],
-                  ),
-
-                  const SizedBox(height: 32),
-                  
-                  _SettingsSection(
-                    title: strings.preferences,
-                    children: [
-                      _SettingsTile(
-                        icon: Icons.dark_mode_outlined,
-                        title: strings.darkMode,
-                        trailing: isLoading
-                          ? const _Skeleton(width: 40, height: 24)
-                          : Switch(
-                              value: settings?['theme_mode'] == 'dark',
-                              activeColor: Colors.black,
-                              onChanged: (val) => _viewModel.updateSetting('theme_mode', val ? 'dark' : 'light'),
+                      const SizedBox(height: 32),
+                      
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: isLoading 
+                          ? const _ProfileHeaderSkeleton()
+                          : _ProfileHeader(
+                              fullName: profile?['full_name'] ?? 'Usuario',
+                              email: _viewModel.currentEmail,
+                              imageUrl: profile?['profile_image_url'],
+                              onEdit: _editProfile,
                             ),
                       ),
-                      const Divider(height: 1, indent: 16),
-                      _SettingsTile(
-                        icon: Icons.language,
-                        title: strings.language,
-                        trailing: isLoading
-                          ? const _Skeleton(width: 60, height: 12)
-                          : Text(currentLocale.languageCode == 'es' ? 'Español' : currentLocale.languageCode == 'pt' ? 'Português' : 'English', style: const TextStyle(fontSize: 12)),
-                        onTap: isLoading ? null : _changeLanguage,
+                      
+                      const SizedBox(height: 32),
+                      
+                      _SettingsSection(
+                        title: strings.accountLinking,
+                        children: [
+                          _SettingsTile(
+                            icon: Icons.g_mobiledata,
+                            title: 'Google',
+                            subtitle: _viewModel.isProviderLinked('google') 
+                              ? (_viewModel.getProviderIdentity('google')?.identityData?['email']?.toString())
+                              : null,
+                            trailing: isLoading
+                              ? const _Skeleton(width: 40, height: 12)
+                              : _viewModel.isProviderLinked('google') 
+                                ? const Icon(Icons.more_vert, size: 20, color: Color(0xFFC7C7C7))
+                                : Text(strings.link, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12)),
+                            onTap: isLoading ? null : (_viewModel.isProviderLinked('google') ? () => _showAccountOptions('google') : _linkGoogle),
+                          ),
+                          const Divider(height: 1, indent: 16),
+                          _SettingsTile(
+                            icon: Icons.window,
+                            title: 'Microsoft',
+                            subtitle: _viewModel.isProviderLinked('azure')
+                              ? (_viewModel.getProviderIdentity('azure')?.identityData?['email']?.toString())
+                              : null,
+                            trailing: isLoading
+                              ? const _Skeleton(width: 40, height: 12)
+                              : _viewModel.isProviderLinked('azure') 
+                                ? const Icon(Icons.more_vert, size: 20, color: Color(0xFFC7C7C7))
+                                : Text(strings.link, style: const TextStyle(color: Color(0xFF1473E6), fontSize: 12)),
+                            onTap: isLoading ? null : (_viewModel.isProviderLinked('azure') ? () => _showAccountOptions('azure') : () => _viewModel.linkAccount(OAuthProvider.azure)),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 32),
+                      
+                      _SettingsSection(
+                        title: strings.security,
+                        children: [
+                          _SettingsTile(
+                            icon: Icons.phone_android_outlined,
+                            title: strings.verifyPhone,
+                            trailing: isLoading
+                              ? const _Skeleton(width: 40, height: 12)
+                              : _viewModel.isPhoneVerified
+                                ? const Icon(Icons.check_circle, color: Colors.green, size: 18)
+                                : Text(strings.notVerified, style: const TextStyle(color: Colors.orange, fontSize: 12)),
+                            onTap: isLoading ? null : (_viewModel.isPhoneVerified ? null : _verifyPhone),
+                          ),
+                          const Divider(height: 1, indent: 16),
+                          if (isLoading)
+                            const _SettingsTileSkeleton()
+                          else if (_viewModel.hasEmailPasswordAuth) ...[
+                            _SettingsTile(
+                              icon: Icons.lock_outline,
+                              title: strings.changePassword,
+                              onTap: () => _changeSecurity('password'),
+                            ),
+                            const Divider(height: 1, indent: 16),
+                            _SettingsTile(
+                              icon: Icons.alternate_email,
+                              title: strings.changeEmail,
+                              onTap: () => _changeSecurity('email'),
+                            ),
+                          ] else ...[
+                            _SettingsTile(
+                              icon: Icons.add_moderator_outlined,
+                              title: 'Configurar acceso con correo',
+                              subtitle: 'Agrega una contraseña a tu cuenta',
+                              onTap: _showAddPasswordSheet,
+                            ),
+                          ],
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+                      
+                      _SettingsSection(
+                        title: strings.preferences,
+                        children: [
+                          _SettingsTile(
+                            icon: Icons.dark_mode_outlined,
+                            title: strings.darkMode,
+                            trailing: isLoading
+                              ? const _Skeleton(width: 40, height: 24)
+                              : Switch(
+                                  value: settings?['theme_mode'] == 'dark',
+                                  activeThumbColor: Colors.black,
+                                  onChanged: (val) => _viewModel.updateSetting('theme_mode', val ? 'dark' : 'light'),
+                                ),
+                          ),
+                          const Divider(height: 1, indent: 16),
+                          _SettingsTile(
+                            icon: Icons.language,
+                            title: strings.language,
+                            trailing: isLoading
+                              ? const _Skeleton(width: 60, height: 12)
+                              : Text(currentLocale.languageCode == 'es' ? 'Español' : currentLocale.languageCode == 'pt' ? 'Português' : 'English', style: const TextStyle(fontSize: 12)),
+                            onTap: isLoading ? null : _changeLanguage,
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 48),
+                      
+                      RouteCashPrimaryButton(
+                        text: strings.logout,
+                        backgroundColor: Colors.white,
+                        textColor: Colors.redAccent,
+                        onPressed: _signOut,
+                      ),
+                      const SizedBox(height: 24),
+                      Center(
+                        child: Text(
+                          'RouteCash v1.0.0',
+                          style: GoogleFonts.inter(color: Colors.grey, fontSize: 10),
+                        ),
                       ),
                     ],
                   ),
-                  
-                  const SizedBox(height: 48),
-                  
-                  RouteCashPrimaryButton(
-                    text: strings.logout,
-                    backgroundColor: Colors.white,
-                    textColor: Colors.redAccent,
-                    onPressed: _signOut,
-                  ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: Text(
-                      'RouteCash v1.0.0',
-                      style: GoogleFonts.inter(color: Colors.grey, fontSize: 10),
-                    ),
-                  ),
-                ],
+                ),
+                );
+              },
+            ),
+          ),
+        ),
+        ListenableBuilder(
+          listenable: _viewModel,
+          builder: (context, _) {
+            if (!_viewModel.isLoading || _viewModel.userProfile == null) return const SizedBox.shrink();
+            return Container(
+              color: Colors.black.withValues(alpha: 0.3),
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.white),
               ),
             );
-          },
+          }
         ),
-      ),
+      ],
     );
   }
 }
@@ -448,7 +559,7 @@ class _ProfileHeader extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE5E5E5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -660,9 +771,9 @@ class _Badge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Text(
           text,
@@ -694,11 +805,11 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
     final profile = widget.viewModel.userProfile;
     _nameController = TextEditingController(text: profile?['full_name']?.toString() ?? '');
     _phoneController = TextEditingController(text: profile?['phone']?.toString() ?? '');
-    
+
     if (widget.viewModel.countries.isNotEmpty && profile?['states'] != null) {
       final dynamic statesData = profile!['states'];
       Map<String, dynamic>? stateMap;
-      
+
       if (statesData is List && statesData.isNotEmpty) {
         stateMap = Map<String, dynamic>.from(statesData.first);
       } else if (statesData is Map) {
@@ -708,7 +819,7 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
       if (stateMap != null && stateMap['countries'] != null) {
         final dynamic countryData = stateMap['countries'];
         Map<String, dynamic>? countryMap;
-        
+
         if (countryData is List && countryData.isNotEmpty) {
           countryMap = Map<String, dynamic>.from(countryData.first);
         } else if (countryData is Map) {
@@ -718,23 +829,23 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
         if (countryMap != null) {
           final countryId = countryMap['country_id'];
           _selectedCountry = widget.viewModel.countries.firstWhere(
-            (c) => c['country_id'] == countryId, 
+            (c) => c['country_id'] == countryId,
             orElse: () => widget.viewModel.countries.first
           );
         }
       }
     }
-    
+
     if (widget.viewModel.states.isNotEmpty && profile?['state_id'] != null) {
       _selectedState = widget.viewModel.states.firstWhere(
-        (s) => s['state_id'] == profile!['state_id'], 
+        (s) => s['state_id'] == profile!['state_id'],
         orElse: () => widget.viewModel.states.first
       );
     }
 
     if (widget.viewModel.currencies.isNotEmpty && profile?['default_currency_id'] != null) {
       _selectedCurrency = widget.viewModel.currencies.firstWhere(
-        (c) => c['currency_id'] == profile!['default_currency_id'], 
+        (c) => c['currency_id'] == profile!['default_currency_id'],
         orElse: () => widget.viewModel.currencies.first
       );
     }
@@ -990,6 +1101,124 @@ class _SecurityEditSheetState extends State<_SecurityEditSheet> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AccountOptionsSheet extends StatelessWidget {
+  final String provider;
+  final String description;
+  final String email;
+  final DateTime? linkedAt;
+  final VoidCallback onChange;
+  final VoidCallback onUnlink;
+
+  const _AccountOptionsSheet({
+    required this.provider,
+    required this.description,
+    required this.email,
+    this.linkedAt,
+    required this.onChange,
+    required this.onUnlink,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = linkedAt != null 
+        ? "${linkedAt!.day}/${linkedAt!.month}/${linkedAt!.year} ${linkedAt!.hour.toString().padLeft(2, '0')}:${linkedAt!.minute.toString().padLeft(2, '0')}"
+        : 'Desconocida';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 24, 32, 48),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
+          Row(
+            children: [
+              Icon(
+                provider.toLowerCase() == 'google' ? Icons.g_mobiledata : Icons.window,
+                size: 32,
+                color: Colors.black,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                provider,
+                style: GoogleFonts.playfairDisplay(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            description,
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700], height: 1.5),
+          ),
+          const SizedBox(height: 24),
+          _InfoRow(label: 'Cuenta vinculada', value: email),
+          const SizedBox(height: 12),
+          _InfoRow(label: 'Fecha de vinculación', value: dateStr),
+          const SizedBox(height: 32),
+          RouteCashPrimaryButton(
+            text: 'CAMBIAR CUENTA',
+            onPressed: onChange,
+          ),
+          const SizedBox(height: 12),
+          RouteCashPrimaryButton(
+            text: 'DESVINCULAR',
+            backgroundColor: Colors.white,
+            textColor: Colors.redAccent,
+            onPressed: onUnlink,
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'CANCELAR',
+                style: GoogleFonts.inter(color: Colors.black, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _InfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: GoogleFonts.inter(
+            color: const Color(0xFF999999),
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+        ),
+      ],
     );
   }
 }

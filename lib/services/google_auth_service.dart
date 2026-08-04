@@ -1,7 +1,6 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
 import 'auth_service.dart';
 
 class GoogleAuthService {
@@ -16,14 +15,8 @@ class GoogleAuthService {
   static final String _webClientId = dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
 
   Future<void> _initialize() async {
-    if (_initialized) {
-      return;
-    }
-
-    await _googleSignIn.initialize(
-      serverClientId: _webClientId,
-    );
-
+    if (_initialized) return;
+    await _googleSignIn.initialize(serverClientId: _webClientId);
     _initialized = true;
   }
 
@@ -35,10 +28,7 @@ class GoogleAuthService {
 
     final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-    const scopes = <String>[
-      'email',
-      'profile',
-    ];
+    const scopes = <String>['email', 'profile'];
 
     final authorization =
         await googleUser.authorizationClient.authorizationForScopes(scopes) ??
@@ -47,9 +37,7 @@ class GoogleAuthService {
     final idToken = googleUser.authentication.idToken;
 
     if (idToken == null) {
-      throw const AuthException(
-        'Google no entregó un ID Token.',
-      );
+      throw const AuthException('Google no entregó un ID Token.');
     }
 
     final response = await Supabase.instance.client.auth.signInWithIdToken(
@@ -99,7 +87,6 @@ class GoogleAuthService {
   bool isGoogleLinked() {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return false;
-    
     return user.identities?.any((identity) => identity.provider == 'google') ?? false;
   }
 
@@ -108,13 +95,16 @@ class GoogleAuthService {
     if (user == null) return;
 
     final googleIdentity = user.identities?.where(
-      (identity) => identity.provider == 'google',
+          (identity) => identity.provider == 'google',
     ).firstOrNull;
 
     if (googleIdentity != null) {
       await Supabase.instance.client.auth.unlinkIdentity(googleIdentity);
     }
-    
+    await signOutGoogle();
+  }
+
+  Future<void> signOutGoogle() async {
     await _googleSignIn.signOut();
   }
 

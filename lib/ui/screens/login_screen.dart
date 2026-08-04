@@ -5,7 +5,6 @@ import '../../l10n/app_localizations.dart';
 import '../../viewmodels/login_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
-import 'accounts_setup_screen.dart';
 import 'confirm_verification_screen.dart';
 import 'main_navigation_screen.dart';
 import 'register_screen.dart';

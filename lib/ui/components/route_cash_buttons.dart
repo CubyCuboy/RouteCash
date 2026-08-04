@@ -36,7 +36,7 @@ class RouteCashPrimaryButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          disabledBackgroundColor: backgroundColor.withOpacity(0.6),
+          disabledBackgroundColor: backgroundColor.withValues(alpha: 0.6),
         ),
         child: isLoading
             ? SizedBox(
