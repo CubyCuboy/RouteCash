@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/card_model.dart';
+import '../../services/bank_card_nfc.dart';
 import '../components/route_cash_buttons.dart';
 import 'main_navigation_screen.dart';
 import 'dart:math';
@@ -1031,6 +1032,11 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   final TextEditingController _expiryDateController = TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
 
+  final BankCardNfcService _nfcService = BankCardNfcService();
+
+  bool _isScanningNfc = false;
+  String? _nfcStatus;
+
 
   static const List<String> _chileanBanks = [
     'Banco Estado',
@@ -1093,10 +1099,80 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
 
   @override
   void dispose() {
+    _nfcService.stopReading();
     _cardNumberController.dispose();
     _expiryDateController.dispose();
     _cvvController.dispose();
     super.dispose();
+  }
+
+  Future<void> _scanCardWithNfc() async {
+    if (_isScanningNfc) return;
+
+    setState(() {
+      _isScanningNfc = true;
+      _nfcStatus =
+          'Acerca una tarjeta contactless a la parte trasera del teléfono.';
+    });
+
+    try {
+      final result = await _nfcService.readPaymentCard();
+
+      if (!mounted) return;
+
+      setState(() {
+        _nfcStatus = result.message;
+
+        if (result.brand == 'Visa') {
+          _cardType = RouteCashCardType.credit;
+          _selectedProduct = 'Tarjeta de Crédito Visa';
+        } else if (result.brand == 'Mastercard') {
+          _cardType = RouteCashCardType.credit;
+          _selectedProduct = 'Tarjeta de Crédito Mastercard';
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message),
+          backgroundColor: Colors.black,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      final message = error.toString().replaceFirst('Exception: ', '');
+
+      setState(() {
+        _nfcStatus = message;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isScanningNfc = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _cancelNfcScan() async {
+    await _nfcService.stopReading();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isScanningNfc = false;
+      _nfcStatus = 'Lectura NFC cancelada.';
+    });
   }
 
   void _onTypeChanged(RouteCashCardType newType) {
@@ -1220,6 +1296,107 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
               style: GoogleFonts.inter(
                 color: const Color(0xFF999999),
                 fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: const Color(0xFFE2E2E2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.nfc_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Leer tarjeta con NFC',
+                              style: GoogleFonts.inter(
+                                color: Colors.black,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Detecta una tarjeta contactless y reconoce su red.',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF999999),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_nfcStatus != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _nfcStatus!,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF666666),
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          _isScanningNfc ? _cancelNfcScan : _scanCardWithNfc,
+                      icon: _isScanningNfc
+                          ? const SizedBox(
+                              width: 17,
+                              height: 17,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black,
+                              ),
+                            )
+                          : const Icon(Icons.nfc_rounded),
+                      label: Text(
+                        _isScanningNfc
+                            ? 'Cancelar lectura'
+                            : 'Escanear con NFC',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Por seguridad, RouteCash no obtiene ni guarda CVV, PIN, saldo ni movimientos mediante NFC.',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF999999),
+                      fontSize: 10,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),
