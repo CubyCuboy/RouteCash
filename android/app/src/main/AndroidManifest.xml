@@ -1,7 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.NFC" />
+
     <uses-feature
-    android:name="android.hardware.nfc"
-    android:required="false" />
+        android:name="android.hardware.nfc"
+        android:required="false" />
+
     <application
         android:label="RouteCash"
         android:name="${applicationName}"
@@ -55,6 +59,5 @@
             <data android:mimeType="text/plain" />
         </intent>
     </queries>
-
 
 </manifest>
