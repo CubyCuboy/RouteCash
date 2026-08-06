@@ -26,7 +26,6 @@ class _SocialRegistrationScreenState extends State<SocialRegistrationScreen> {
   void initState() {
     super.initState();
     _viewModel = SocialRegisterViewModel();
-    // Pre-fill controllers when data is loaded
     _viewModel.addListener(_onViewModelChange);
   }
 
@@ -92,80 +91,105 @@ class _SocialRegistrationScreenState extends State<SocialRegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: _viewModel,
-          builder: (context, _) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFFFAFAFA),
+          body: SafeArea(
+            child: ListenableBuilder(
+              listenable: _viewModel,
+              builder: (context, _) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          CircleIconButton(
-                            icon: Icons.arrow_back,
-                            onPressed: _onBack,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              CircleIconButton(
+                                icon: Icons.arrow_back,
+                                onPressed: _onBack,
+                              ),
+                              Text(
+                                'PASO ${_currentStep + 1} DE 2',
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF999999),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            'PASO ${_currentStep + 1} DE 2',
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF999999),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          const SizedBox(height: 32),
+                          Row(
+                            children: List.generate(2, (index) {
+                              return Expanded(
+                                child: Container(
+                                  height: 4,
+                                  margin: EdgeInsets.only(right: index < 1 ? 8 : 0),
+                                  decoration: BoxDecoration(
+                                    color: index <= _currentStep ? Colors.black : const Color(0xFFE0E0E0),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              );
+                            }),
                           ),
+                          const SizedBox(height: 12),
+                          _buildStepTitle(),
                         ],
                       ),
-                      const SizedBox(height: 32),
-                      Row(
-                        children: List.generate(2, (index) {
-                          return Expanded(
-                            child: Container(
-                              height: 4,
-                              margin: EdgeInsets.only(right: index < 1 ? 8 : 0),
-                              decoration: BoxDecoration(
-                                color: index <= _currentStep ? Colors.black : const Color(0xFFE0E0E0),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          );
-                        }),
+                    ),
+
+                    Expanded(
+                      child: _viewModel.countries.isEmpty && _viewModel.isLoading
+                          ? const Center(child: CircularProgressIndicator(color: Colors.black))
+                          : PageView(
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildStep1(),
+                          _buildStep2(),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      _buildStepTitle(),
-                    ],
-                  ),
-                ),
+                    ),
 
-                Expanded(
-                  child: _viewModel.countries.isEmpty && _viewModel.isLoading
-                      ? const Center(child: CircularProgressIndicator(color: Colors.black))
-                      : PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildStep1(),
-                      _buildStep2(),
-                    ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
+                      child: _buildFooterButtons(),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+        ListenableBuilder(
+          listenable: _viewModel,
+          builder: (context, _) {
+            if (!_viewModel.isLoading || _viewModel.countries.isEmpty) return const SizedBox.shrink();
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 300),
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Container(
+                    color: Colors.white.withValues(alpha: 0.6 * value),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.black),
+                    ),
                   ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
-                  child: _buildFooterButtons(),
-                ),
-              ],
+                );
+              },
             );
           },
         ),
-      ),
+      ],
     );
   }
 

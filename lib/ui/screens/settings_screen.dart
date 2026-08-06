@@ -91,9 +91,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
 
               if (!mounted) return;
-              Navigator.pop(outerContext);
+              if (Navigator.of(outerContext).canPop()) {
+                Navigator.pop(outerContext);
+              }
 
               if (result['success'] == true) {
+                if (!mounted) return;
                 Navigator.push(
                   outerContext,
                   MaterialPageRoute(
@@ -106,6 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 );
               } else {
+                if (!mounted) return;
                 ScaffoldMessenger.of(outerContext).showSnackBar(
                   SnackBar(content: Text(result['error'] ?? strings.errorUnexpected)),
                 );
@@ -144,6 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       MaterialPageRoute(
         builder: (_) => LinkEmailPasswordScreen(
           initialEmail: _viewModel.userProfile?['email'],
+          initialName: _viewModel.userProfile?['full_name'],
         ),
       ),
     );
@@ -214,10 +219,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (confirm == true) {
       try {
-        await _viewModel.unlinkAccount(provider);
+        await _viewModel.unlinkAccount(provider, l10n: strings);
         if (mounted) {
           _showStyledNotification(
-            title: 'Éxito',
+            title: strings.successAccountUnlinked,
             message: 'Cuenta de $providerName desvinculada correctamente.',
             isSuccess: true,
           );
@@ -387,6 +392,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           : _ProfileHeader(
                               fullName: profile?['full_name'] ?? 'Usuario',
                               email: _viewModel.currentEmail,
+                              providerLabel: _viewModel.currentProviderLabel,
                               imageUrl: profile?['profile_image_url'],
                               onEdit: _editProfile,
                             ),
@@ -539,12 +545,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 class _ProfileHeader extends StatelessWidget {
   final String fullName;
   final String email;
+  final String providerLabel;
   final String? imageUrl;
   final VoidCallback onEdit;
 
   const _ProfileHeader({
     required this.fullName, 
     required this.email, 
+    required this.providerLabel,
     this.imageUrl,
     required this.onEdit
   });
@@ -585,9 +593,32 @@ class _ProfileHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  fullName,
-                  style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        fullName,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        providerLabel.toUpperCase(),
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 Text(
                   email,
@@ -896,7 +927,9 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
           RouteCashPrimaryButton(
             text: strings.saveChanges,
             onPressed: () async {
+              final strings = AppLocalizations.of(context)!;
               final err = await widget.viewModel.updateProfile(
+                l10n: strings,
                 fullName: _nameController.text.trim(),
                 phone: _phoneController.text.trim(),
                 stateId: _selectedState?['state_id'] ?? '',
@@ -1060,16 +1093,20 @@ class _SecurityEditSheetState extends State<_SecurityEditSheet> {
                 } else {
                   final lang = Localizations.localeOf(context).languageCode;
                   err = await widget.viewModel.initiateEmailChange(
-                    _oldEmailController.text.trim(),
-                    _controller.text.trim(),
-                    lang,
+                    l10n: strings,
+                    oldEmail: _oldEmailController.text.trim(),
+                    newEmail: _controller.text.trim(),
+                    lang: lang,
                   );
                 }
               } else {
                 if (_controller.text != _confirmController.text) {
                   err = 'Las contraseñas no coinciden';
                 } else {
-                  err = await widget.viewModel.updatePassword(_controller.text);
+                  err = await widget.viewModel.updatePassword(
+                    l10n: strings,
+                    newPassword: _controller.text,
+                  );
                 }
               }
               

@@ -132,8 +132,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           email: widget.email,
           password: widget.password,
           returnToHome: hasActiveSession,
-          initialIndex:
-              widget.purpose == 'verify_email' && hasActiveSession ? 3 : 0,
+          initialIndex: 0,
         ),
       ),
       (route) => false,

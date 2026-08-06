@@ -78,7 +78,19 @@ class AppLocalizationsPt extends AppLocalizations {
   String get errorInvalidCredentials => 'E-mail ou senha inválidos';
 
   @override
-  String get errorUserExists => 'O usuário já existe';
+  String get errorUserExists => 'Este e-mail já está registrado';
+
+  @override
+  String get errorInvalidEmail => 'O formato do e-mail é inválido';
+
+  @override
+  String get errorPasswordTooShort => 'A senha é muito curta';
+
+  @override
+  String get errorRegistrationDisabled => 'O registro está temporariamente desativado';
+
+  @override
+  String get errorNetwork => 'Erro de conexão. Verifique sua internet';
 
   @override
   String get errorUnexpected => 'Ocorreu um erro inesperado';
@@ -473,4 +485,181 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get errorRequiredFields => 'Você deve preencher todos os campos para continuar.';
+
+  @override
+  String stepLabel(int current, int total) {
+    return 'PASSO $current DE $total';
+  }
+
+  @override
+  String get step1Title => 'Comece\npor você.';
+
+  @override
+  String get step1Subtitle => 'Sua informação pessoal para criar seu espaço.';
+
+  @override
+  String get step2Title => 'De onde\nvocê fala?';
+
+  @override
+  String get step2Subtitle => 'Adaptaremos as taxas e formatos à sua região.';
+
+  @override
+  String get step3Title => 'Segurança e\npreferências.';
+
+  @override
+  String get step3Subtitle => 'Último passo para garantir sua rota financeira.';
+
+  @override
+  String get fullNamePlaceholder => 'Ex. Andrea Moreno';
+
+  @override
+  String get emailPlaceholder => 'email@exemplo.com';
+
+  @override
+  String get phonePlaceholder => '123456789';
+
+  @override
+  String get phoneCodeLabel => 'CÓDIGO';
+
+  @override
+  String get passwordPlaceholder => '••••••••••';
+
+  @override
+  String get nextStep => 'PRÓXIMO PASSO';
+
+  @override
+  String get createAccount => 'CRIAR MINHA CONTA';
+
+  @override
+  String get invalidPhone => 'Número de telefone inválido';
+
+  @override
+  String get reqMinLength => '8+ caracteres';
+
+  @override
+  String get reqUppercase => 'Uma letra maiúscula';
+
+  @override
+  String get reqNumber => 'Um número';
+
+  @override
+  String get reqSpecialChar => 'Caractere especial (!@#\$)';
+
+  @override
+  String get reqMatch => 'As senhas coincidem';
+
+  @override
+  String get changeEmailDescription => 'Insira seu e-mail atual e o novo endereço onde deseja receber suas notificações.';
+
+  @override
+  String get emailExamplePlaceholder => 'exemplo@e-mail.com';
+
+  @override
+  String get newEmailExamplePlaceholder => 'novo@e-mail.com';
+
+  @override
+  String get errorNoSession => 'Nenhuma sessão ativa';
+
+  @override
+  String get errorOldEmailMismatch => 'O e-mail antigo não corresponde ao registrado';
+
+  @override
+  String get errorInvalidNewEmail => 'O formato do novo e-mail é inválido';
+
+  @override
+  String get errorUnlinkOnlyMethod => 'Você não pode desvincular seu único método de acesso. Configure uma senha primeiro.';
+
+  @override
+  String get errorGoogleLinkExists => 'Esta conta do Google já está vinculada a outro usuário';
+
+  @override
+  String get errorEmailUpdate => 'Erro ao atualizar o e-mail';
+
+  @override
+  String get errorPasswordUpdate => 'Erro ao atualizar a senha';
+
+  @override
+  String get errorProfileUpdate => 'Erro ao atualizar o perfil';
+
+  @override
+  String get errorLinkAccount => 'Erro ao vincular a conta';
+
+  @override
+  String get errorUnlinkAccount => 'Erro ao desvincular a conta';
+
+  @override
+  String get errorDeleteAccount => 'Erro ao excluir a conta';
+
+  @override
+  String get successProfileUpdate => 'Perfil atualizado com sucesso';
+
+  @override
+  String get successEmailChange => 'E-mail atualizado com sucesso';
+
+  @override
+  String get successPasswordUpdate => 'Senha atualizada com sucesso';
+
+  @override
+  String get successAccountLinked => 'Conta vinculada com sucesso';
+
+  @override
+  String get successAccountUnlinked => 'Conta desvinculada com sucesso';
+
+  @override
+  String get providerLabelEmail => 'E-mail';
+
+  @override
+  String get providerLabelGoogle => 'Google';
+
+  @override
+  String get providerLabelMicrosoft => 'Microsoft';
+
+  @override
+  String get otpSentSuccess => 'Código de verificação enviado com sucesso';
+
+  @override
+  String get keepMeLoggedIn => 'Manter sessão iniciada';
+
+  @override
+  String get appleNotConfigured => 'Início de sessão com Apple ainda não disponível';
+
+  @override
+  String get googleSessionError => 'Não foi possível iniciar sessão com Google';
+
+  @override
+  String get microsoftSessionError => 'Não foi possível iniciar sessão com Outlook';
+
+  @override
+  String errorGoogleAuth(String error) {
+    return 'Erro ao conectar com Google: $error';
+  }
+
+  @override
+  String errorMicrosoftAuth(String error) {
+    return 'Erro ao conectar com Outlook: $error';
+  }
+
+  @override
+  String get verificationLabel => 'VERIFICAÇÃO';
+
+  @override
+  String get confirmAccountTitle => 'Confirme sua conta.';
+
+  @override
+  String get weWillSendCode => 'Enviaremos um código de segurança para:';
+
+  @override
+  String get sendCode => 'Enviar código';
+
+  @override
+  String get successTitle => 'Sucesso!';
+
+  @override
+  String get successAccountVerified => 'Sua conta foi verificada com sucesso. Agora você pode entrar.';
+
+  @override
+  String get successAccountLinkedMsg => 'Sua conta foi vinculada com sucesso. Você pode continuar usando o aplicativo.';
+
+  @override
+  String get goToLogin => 'Ir para o Login';
 }

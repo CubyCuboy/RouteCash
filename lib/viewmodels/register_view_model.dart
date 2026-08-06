@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
 import '../services/catalog_service.dart';
 import '../utils/email_validator.dart';
+import '../utils/phone_validator.dart';
 
 class RegisterViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -20,6 +22,7 @@ class RegisterViewModel extends ChangeNotifier {
 
   // Form fields
   String name = '';
+  String get fullName => name;
   String email = '';
   String phone = '';
   String password = '';
@@ -60,7 +63,7 @@ class RegisterViewModel extends ChangeNotifier {
       
       if (countries.isNotEmpty) {
         selectedCountry = null; // Let user select
-        selectedPhoneCode = countries.first['phone_code'];
+        selectedPhoneCode = null; // Default to empty
       }
       
       if (currencies.isNotEmpty) {
@@ -149,7 +152,8 @@ class RegisterViewModel extends ChangeNotifier {
 
   bool get isStep1Valid => 
     name.trim().isNotEmpty && 
-    EmailValidator.isValid(email);
+    EmailValidator.isValid(email) &&
+    PhoneValidator.isValid(phone);
 
   bool get isStep2Valid => 
     selectedCountry != null && 
@@ -202,9 +206,6 @@ class RegisterViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Ahora enviamos todos los metadatos. 
-      // El Trigger en Supabase (SECURITY DEFINER) se encargará de insertar en las tablas públicas
-      // sin importar que el usuario aún no haya verificado su email.
       final response = await _authService.signUp(
         cleanEmail,
         password,
@@ -220,12 +221,40 @@ class RegisterViewModel extends ChangeNotifier {
       await _authService.saveWelcomeMessage(formattedName);
       
       if (response.user != null) {
+        try {
+          await _authService.createUserProfile(
+            userId: response.user!.id,
+            fullName: formattedName,
+            email: cleanEmail,
+            phone: fullPhone,
+            stateId: selectedState!['state_id'],
+            currencyId: selectedCurrency!['currency_id'],
+          );
+        } catch (_) {}
+
         return 'verify:${response.user!.id}';
       }
       return null;
+    } on AuthException catch (e) {
+      debugPrint('Auth Error: ${e.message}');
+      final msg = e.message.toLowerCase();
+      if (msg.contains('already registered') || msg.contains('already in use')) {
+        return 'errorUserExists';
+      }
+      if (msg.contains('invalid email')) {
+        return 'errorInvalidEmail';
+      }
+      if (msg.contains('password')) {
+        return 'errorPasswordTooShort';
+      }
+      return e.message;
     } catch (e) {
-      debugPrint('Error en registro: $e');
-      return e.toString();
+      debugPrint('Unexpected Error: $e');
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('timeout') || msg.contains('connection')) {
+        return 'errorNetwork';
+      }
+      return 'errorUnexpected';
     } finally {
       _isLoading = false;
       notifyListeners();

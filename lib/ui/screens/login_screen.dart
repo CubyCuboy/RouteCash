@@ -110,178 +110,203 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(32, 20, 32, 24),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight:
-              MediaQuery.of(context).size.height -
-                  MediaQuery.of(context).padding.top -
-                  MediaQuery.of(context).padding.bottom -
-                  44,
-            ),
-            child: IntrinsicHeight(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleIconButton(
-                    icon: Icons.arrow_back,
-                    onPressed: () => Navigator.pop(context),
-                  ),
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFFFAFAFA),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(32, 20, 32, 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight:
+                  MediaQuery.of(context).size.height -
+                      MediaQuery.of(context).padding.top -
+                      MediaQuery.of(context).padding.bottom -
+                      44,
+                ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleIconButton(
+                        icon: Icons.arrow_back,
+                        onPressed: () => Navigator.pop(context),
+                      ),
 
-                  const SizedBox(height: 42),
+                      const SizedBox(height: 42),
 
-                  Text(
-                    AppLocalizations.of(context)!.loginWelcomeLabel,
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF9D9D9D),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 2,
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  Text(
-                    AppLocalizations.of(context)!.loginTitle,
-                    style: GoogleFonts.playfairDisplay(
-                      color: Colors.black,
-                      fontSize: 48,
-                      height: 0.88,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -1.8,
-                    ),
-                  ),
-
-                  const SizedBox(height: 50),
-
-                  RouteCashTextField(
-                    label: AppLocalizations.of(context)!.emailLabel,
-                    hintText: 'andrea@correo.com',
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-
-                  const SizedBox(height: 26),
-
-                  ListenableBuilder(
-                    listenable: _viewModel,
-                    builder: (context, _) {
-                      return RouteCashTextField(
-                        label: AppLocalizations.of(context)!.passwordLabel,
-                        hintText: '••••••••••',
-                        controller: _passwordController,
-                        obscureText: _viewModel.obscurePassword,
-                        suffixIcon: IconButton(
-                          onPressed: _viewModel.togglePasswordVisibility,
-                          icon: Icon(
-                            _viewModel.obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            size: 20,
-                            color: const Color(0xFF999999),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 17),
-
-                  ListenableBuilder(
-                    listenable: _viewModel,
-                    builder: (context, _) {
-                      return Column(
-                        children: [
-                          Row(
-                            children: [
-                              SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: Checkbox(
-                                  value: _viewModel.rememberMe,
-                                  onChanged: _viewModel.toggleRememberMe,
-                                  activeColor: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Mantener sesión',
-                                style: GoogleFonts.inter(fontSize: 12),
-                              ),
-                              const Spacer(),
-                              TextButton(
-                                onPressed: _forgotPassword,
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  foregroundColor: Colors.black,
-                                ),
-                                child: Text(
-                                  AppLocalizations.of(context)!.forgotPassword,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    decoration: TextDecoration.underline,
-                                    decorationThickness: 1.2,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 50),
-
-                  ListenableBuilder(
-                    listenable: _viewModel,
-                    builder: (context, _) {
-                      return RouteCashPrimaryButton(
-                        text: AppLocalizations.of(context)!.signIn,
-                        onPressed: _login,
-                        isLoading: _viewModel.isLoading,
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterScreen(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        AppLocalizations.of(context)!.noAccountRegister,
+                      Text(
+                        AppLocalizations.of(context)!.loginWelcomeLabel,
                         style: GoogleFonts.inter(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF9D9D9D),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 2,
                         ),
                       ),
-                    ),
-                  ),
 
-                  const Spacer(),
-                ],
+                      const SizedBox(height: 14),
+
+                      Text(
+                        AppLocalizations.of(context)!.loginTitle,
+                        style: GoogleFonts.playfairDisplay(
+                          color: Colors.black,
+                          fontSize: 48,
+                          height: 0.88,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -1.8,
+                        ),
+                      ),
+
+                      const SizedBox(height: 50),
+
+                      RouteCashTextField(
+                        label: AppLocalizations.of(context)!.emailLabel,
+                        hintText: 'andrea@correo.com',
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+
+                      const SizedBox(height: 26),
+
+                      ListenableBuilder(
+                        listenable: _viewModel,
+                        builder: (context, _) {
+                          return RouteCashTextField(
+                            label: AppLocalizations.of(context)!.passwordLabel,
+                            hintText: '••••••••••',
+                            controller: _passwordController,
+                            obscureText: _viewModel.obscurePassword,
+                            suffixIcon: IconButton(
+                              onPressed: _viewModel.togglePasswordVisibility,
+                              icon: Icon(
+                                _viewModel.obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                size: 20,
+                                color: const Color(0xFF999999),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 17),
+
+                      ListenableBuilder(
+                        listenable: _viewModel,
+                        builder: (context, _) {
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: Checkbox(
+                                      value: _viewModel.rememberMe,
+                                      onChanged: (val) => _viewModel.toggleRememberMe(val),
+                                      activeColor: Colors.black,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    AppLocalizations.of(context)!.keepMeLoggedIn,
+                                    style: GoogleFonts.inter(fontSize: 12),
+                                  ),
+                                  const Spacer(),
+                                  TextButton(
+                                    onPressed: _forgotPassword,
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      foregroundColor: Colors.black,
+                                    ),
+                                    child: Text(
+                                      AppLocalizations.of(context)!.forgotPassword,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                        decorationThickness: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 50),
+
+                      ListenableBuilder(
+                        listenable: _viewModel,
+                        builder: (context, _) {
+                          return RouteCashPrimaryButton(
+                            text: AppLocalizations.of(context)!.signIn,
+                            onPressed: _viewModel.isLoading ? null : _login,
+                            isLoading: _viewModel.isLoading,
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const RegisterScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            AppLocalizations.of(context)!.noAccountRegister,
+                            style: GoogleFonts.inter(
+                              color: Colors.black,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const Spacer(),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
         ),
-      ),
+        ListenableBuilder(
+          listenable: _viewModel,
+          builder: (context, _) {
+            if (!_viewModel.isLoading) return const SizedBox.shrink();
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 300),
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Container(
+                    color: Colors.white.withValues(alpha: 0.6 * value),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.black),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
     );
   }
 }

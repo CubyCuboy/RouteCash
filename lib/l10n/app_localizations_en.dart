@@ -78,7 +78,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorInvalidCredentials => 'Invalid email or password';
 
   @override
-  String get errorUserExists => 'User already exists';
+  String get errorUserExists => 'This email is already registered';
+
+  @override
+  String get errorInvalidEmail => 'Invalid email format';
+
+  @override
+  String get errorPasswordTooShort => 'Password is too short';
+
+  @override
+  String get errorRegistrationDisabled => 'Registration is temporarily disabled';
+
+  @override
+  String get errorNetwork => 'Network error. Please check your connection';
 
   @override
   String get errorUnexpected => 'An unexpected error occurred';
@@ -473,4 +485,181 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorRequiredFields => 'You must complete all fields to continue.';
+
+  @override
+  String stepLabel(int current, int total) {
+    return 'STEP $current OF $total';
+  }
+
+  @override
+  String get step1Title => 'Start with\nyou.';
+
+  @override
+  String get step1Subtitle => 'Your personal information to create your space.';
+
+  @override
+  String get step2Title => 'Where are you\njoining from?';
+
+  @override
+  String get step2Subtitle => 'We will adapt rates and formats to your region.';
+
+  @override
+  String get step3Title => 'Security and\npreferences.';
+
+  @override
+  String get step3Subtitle => 'Last step to secure your financial route.';
+
+  @override
+  String get fullNamePlaceholder => 'e.g. Andrea Moreno';
+
+  @override
+  String get emailPlaceholder => 'email@example.com';
+
+  @override
+  String get phonePlaceholder => '123456789';
+
+  @override
+  String get phoneCodeLabel => 'CODE';
+
+  @override
+  String get passwordPlaceholder => '••••••••••';
+
+  @override
+  String get nextStep => 'NEXT STEP';
+
+  @override
+  String get createAccount => 'CREATE MY ACCOUNT';
+
+  @override
+  String get invalidPhone => 'Invalid phone number';
+
+  @override
+  String get reqMinLength => '8+ characters';
+
+  @override
+  String get reqUppercase => 'One uppercase letter';
+
+  @override
+  String get reqNumber => 'One number';
+
+  @override
+  String get reqSpecialChar => 'Special character (!@#\$)';
+
+  @override
+  String get reqMatch => 'Passwords match';
+
+  @override
+  String get changeEmailDescription => 'Enter your current email and the new address where you want to receive your notifications.';
+
+  @override
+  String get emailExamplePlaceholder => 'example@email.com';
+
+  @override
+  String get newEmailExamplePlaceholder => 'new@email.com';
+
+  @override
+  String get keepMeLoggedIn => 'Keep me logged in';
+
+  @override
+  String get appleNotConfigured => 'Apple sign-in not yet available';
+
+  @override
+  String get googleSessionError => 'Could not sign in with Google';
+
+  @override
+  String get microsoftSessionError => 'Could not sign in with Outlook';
+
+  @override
+  String errorGoogleAuth(String error) {
+    return 'Error connecting with Google: $error';
+  }
+
+  @override
+  String errorMicrosoftAuth(String error) {
+    return 'Error connecting with Outlook: $error';
+  }
+
+  @override
+  String get errorNoSession => 'No active session';
+
+  @override
+  String get errorOldEmailMismatch => 'The old email does not match the registered one';
+
+  @override
+  String get errorInvalidNewEmail => 'The format of the new email is invalid';
+
+  @override
+  String get errorUnlinkOnlyMethod => 'You cannot unlink your only access method. Set up a password first.';
+
+  @override
+  String get errorGoogleLinkExists => 'This Google account is already linked to another user';
+
+  @override
+  String get errorEmailUpdate => 'Error updating email';
+
+  @override
+  String get errorPasswordUpdate => 'Error updating password';
+
+  @override
+  String get errorProfileUpdate => 'Error updating profile';
+
+  @override
+  String get errorLinkAccount => 'Error linking account';
+
+  @override
+  String get errorUnlinkAccount => 'Error unlinking account';
+
+  @override
+  String get errorDeleteAccount => 'Error deleting account';
+
+  @override
+  String get successProfileUpdate => 'Profile updated successfully';
+
+  @override
+  String get successEmailChange => 'Email updated successfully';
+
+  @override
+  String get successPasswordUpdate => 'Password updated successfully';
+
+  @override
+  String get successAccountLinked => 'Account linked successfully';
+
+  @override
+  String get successAccountUnlinked => 'Account unlinked successfully';
+
+  @override
+  String get providerLabelEmail => 'Email';
+
+  @override
+  String get providerLabelGoogle => 'Google';
+
+  @override
+  String get providerLabelMicrosoft => 'Microsoft';
+
+  @override
+  String get otpSentSuccess => 'Verification code sent successfully';
+
+  @override
+  String get verificationLabel => 'VERIFICATION';
+
+  @override
+  String get confirmAccountTitle => 'Confirm your account.';
+
+  @override
+  String get weWillSendCode => 'We will send a security code to:';
+
+  @override
+  String get sendCode => 'Send code';
+
+  @override
+  String get successTitle => 'Success!';
+
+  @override
+  String get successAccountVerified => 'Your account has been successfully verified. You can now sign in.';
+
+  @override
+  String get successAccountLinkedMsg => 'Your account has been successfully linked. You can continue using the application.';
+
+  @override
+  String get goToLogin => 'Go to Login';
 }

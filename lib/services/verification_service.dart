@@ -29,7 +29,7 @@ class VerificationService {
         },
         body: jsonEncode({
           'user_id': userId,
-          'email': email.trim().toLowerCase(), // Forzamos limpieza aquí también
+          'email': email.trim().toLowerCase(),
           'purpose': finalPurpose,
           'lang': lang,
         }),

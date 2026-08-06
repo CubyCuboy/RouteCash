@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../l10n/app_localizations.dart';
 import '../../viewmodels/link_email_password_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
@@ -9,8 +10,9 @@ import 'confirm_verification_screen.dart';
 
 class LinkEmailPasswordScreen extends StatefulWidget {
   final String? initialEmail;
+  final String? initialName;
 
-  const LinkEmailPasswordScreen({super.key, this.initialEmail});
+  const LinkEmailPasswordScreen({super.key, this.initialEmail, this.initialName});
 
   @override
   State<LinkEmailPasswordScreen> createState() => _LinkEmailPasswordScreenState();
@@ -42,7 +44,8 @@ class _LinkEmailPasswordScreenState extends State<LinkEmailPasswordScreen> {
   }
 
   void _onSubmit() async {
-    final result = await _viewModel.submit();
+    final strings = AppLocalizations.of(context)!;
+    final result = await _viewModel.submit(l10n: strings);
 
     if (result == null) {
       if (!mounted) return;
@@ -56,6 +59,7 @@ class _LinkEmailPasswordScreenState extends State<LinkEmailPasswordScreen> {
               email: _viewModel.email,
               purpose: 'verify_email',
               password: _viewModel.password,
+              userName: widget.initialName,
             ),
           ),
         );

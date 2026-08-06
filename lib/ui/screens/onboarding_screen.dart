@@ -26,7 +26,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.white,
       body: GestureDetector(
         onHorizontalDragEnd: (details) {
-          // Deslizar hacia la izquierda.
           if ((details.primaryVelocity ?? 0) < -200) {
             _openAuthScreen();
           }

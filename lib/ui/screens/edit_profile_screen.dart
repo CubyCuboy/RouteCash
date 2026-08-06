@@ -157,6 +157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       final err = await widget.viewModel.updateProfile(
+        l10n: strings,
         fullName: _nameController.text.trim(),
         nickname: _nicknameController.text.trim(),
         phone: _phoneController.text.trim(),
