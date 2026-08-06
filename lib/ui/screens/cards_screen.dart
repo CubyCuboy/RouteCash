@@ -1170,34 +1170,37 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   }
 }
 void _applyNfcResult(BankCardNfcResult result) {
-  switch (result.brand) {
-    case 'Visa':
-      _cardType = RouteCashCardType.credit;
-      _selectedProduct = 'Tarjeta de Crédito Visa';
-      break;
-
-    case 'Mastercard':
-      _cardType = RouteCashCardType.credit;
-      _selectedProduct = 'Tarjeta de Crédito Mastercard';
-      break;
-
-    case 'American Express':
-      _cardType = RouteCashCardType.credit;
-
-      if (_creditProducts.contains('American Express')) {
-        _selectedProduct = 'American Express';
+  setState(() {
+    if (result.brand != null) {
+      switch (result.brand) {
+        case 'Visa':
+          _cardType = RouteCashCardType.credit;
+          _selectedProduct = 'Tarjeta de Crédito Visa';
+          break;
+        case 'Mastercard':
+          _cardType = RouteCashCardType.credit;
+          _selectedProduct = 'Tarjeta de Crédito Mastercard';
+          break;
+        case 'American Express':
+          _cardType = RouteCashCardType.credit;
+          if (_creditProducts.contains('American Express')) {
+            _selectedProduct = 'American Express';
+          }
+          break;
+        default:
+          _cardType = RouteCashCardType.credit;
+          break;
       }
+    }
 
-      break;
-
-    case 'JCB':
-    case 'Discover':
-      _cardType = RouteCashCardType.credit;
-      break;
-
-    default:
-      break;
-  }
+    if (result.cardNumber != null) {
+      _formatCardNumber(result.cardNumber!);
+    }
+    
+    if (result.expiryDate != null) {
+      _formatExpiryDate(result.expiryDate!.replaceAll('/', ''));
+    }
+  });
 }
   Future<void> _cancelNfcScan() async {
     await _nfcService.stopReading();
