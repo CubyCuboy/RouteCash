@@ -864,6 +864,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Verify'**
   String get verify;
+
+  /// No description provided for @nfcStatusIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring the card closer to the reader...'**
+  String get nfcStatusIdle;
+
+  /// No description provided for @nfcStatusDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Card detected! Keep the card held...'**
+  String get nfcStatusDetected;
+
+  /// No description provided for @nfcStatusReadingConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading configuration... Do not remove the card.'**
+  String get nfcStatusReadingConfig;
+
+  /// No description provided for @nfcStatusRetrievingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrieving data... Almost done.'**
+  String get nfcStatusRetrievingData;
+
+  /// No description provided for @nfcStatusSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading completed successfully.'**
+  String get nfcStatusSuccess;
+
+  /// No description provided for @nfcErrorAvailability.
+  ///
+  /// In en, this message translates to:
+  /// **'NFC is not available or is disabled.'**
+  String get nfcErrorAvailability;
+
+  /// No description provided for @nfcErrorSessionActive.
+  ///
+  /// In en, this message translates to:
+  /// **'A reading is already in progress.'**
+  String get nfcErrorSessionActive;
+
+  /// No description provided for @nfcErrorPpse.
+  ///
+  /// In en, this message translates to:
+  /// **'Error initiating contact with the card.'**
+  String get nfcErrorPpse;
+
+  /// No description provided for @nfcErrorIncompatible.
+  ///
+  /// In en, this message translates to:
+  /// **'This card is not compatible with the payment standard.'**
+  String get nfcErrorIncompatible;
+
+  /// No description provided for @nfcErrorNoAid.
+  ///
+  /// In en, this message translates to:
+  /// **'No compatible payment application found.'**
+  String get nfcErrorNoAid;
+
+  /// No description provided for @nfcErrorAidAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'The card did not allow access to the data.'**
+  String get nfcErrorAidAccess;
+
+  /// No description provided for @nfcErrorRetrieveFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not retrieve the data, please try again.'**
+  String get nfcErrorRetrieveFail;
+
+  /// No description provided for @nfcTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Time out. Please bring the card closer again.'**
+  String get nfcTimeout;
+
+  /// No description provided for @nfcCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'NFC reading canceled.'**
+  String get nfcCancel;
+
+  /// No description provided for @selectBank.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your bank'**
+  String get selectBank;
+
+  /// No description provided for @selectAccountType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select account type'**
+  String get selectAccountType;
+
+  /// No description provided for @cardNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Card Number'**
+  String get cardNumberLabel;
+
+  /// No description provided for @expiryDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry Date'**
+  String get expiryDateLabel;
+
+  /// No description provided for @saveCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Card'**
+  String get saveCard;
+
+  /// No description provided for @invalidCardNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'The card number is invalid.'**
+  String get invalidCardNumber;
+
+  /// No description provided for @invalidExpiryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'The expiry date is invalid.'**
+  String get invalidExpiryDate;
+
+  /// No description provided for @errorRequiredFields.
+  ///
+  /// In en, this message translates to:
+  /// **'You must complete all fields to continue.'**
+  String get errorRequiredFields;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

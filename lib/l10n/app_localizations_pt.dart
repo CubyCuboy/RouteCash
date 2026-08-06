@@ -407,4 +407,70 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get verify => 'Verificar';
+
+  @override
+  String get nfcStatusIdle => 'Aproxime o cartão do leitor...';
+
+  @override
+  String get nfcStatusDetected => 'Cartão detectado! Mantenha o cartão firme...';
+
+  @override
+  String get nfcStatusReadingConfig => 'Lendo configuração... Não retire o cartão.';
+
+  @override
+  String get nfcStatusRetrievingData => 'Resgatando dados... Quase pronto.';
+
+  @override
+  String get nfcStatusSuccess => 'Leitura concluída com sucesso.';
+
+  @override
+  String get nfcErrorAvailability => 'NFC não está disponível ou está desativado.';
+
+  @override
+  String get nfcErrorSessionActive => 'Já existe uma leitura em curso.';
+
+  @override
+  String get nfcErrorPpse => 'Erro ao iniciar contato com o cartão.';
+
+  @override
+  String get nfcErrorIncompatible => 'Este cartão não é compatível com o padrão de pagamento.';
+
+  @override
+  String get nfcErrorNoAid => 'Nenhum aplicativo de pagamento compatível encontrado.';
+
+  @override
+  String get nfcErrorAidAccess => 'O cartão não permitiu o acesso aos dados.';
+
+  @override
+  String get nfcErrorRetrieveFail => 'Não foi possível resgatar os datos, tente novamente.';
+
+  @override
+  String get nfcTimeout => 'Tempo esgotado. Por favor, aproxime o cartão novamente.';
+
+  @override
+  String get nfcCancel => 'Leitura NFC cancelada.';
+
+  @override
+  String get selectBank => 'Selecione seu banco';
+
+  @override
+  String get selectAccountType => 'Selecione o tipo de conta';
+
+  @override
+  String get cardNumberLabel => 'Número do Cartão';
+
+  @override
+  String get expiryDateLabel => 'Data de Validade';
+
+  @override
+  String get saveCard => 'Salvar Cartão';
+
+  @override
+  String get invalidCardNumber => 'Número de cartão inválido.';
+
+  @override
+  String get invalidExpiryDate => 'Data de validade inválida.';
+
+  @override
+  String get errorRequiredFields => 'Você deve preencher todos os campos para continuar.';
 }

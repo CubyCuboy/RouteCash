@@ -407,4 +407,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verify => 'Verify';
+
+  @override
+  String get nfcStatusIdle => 'Bring the card closer to the reader...';
+
+  @override
+  String get nfcStatusDetected => 'Card detected! Keep the card held...';
+
+  @override
+  String get nfcStatusReadingConfig => 'Reading configuration... Do not remove the card.';
+
+  @override
+  String get nfcStatusRetrievingData => 'Retrieving data... Almost done.';
+
+  @override
+  String get nfcStatusSuccess => 'Reading completed successfully.';
+
+  @override
+  String get nfcErrorAvailability => 'NFC is not available or is disabled.';
+
+  @override
+  String get nfcErrorSessionActive => 'A reading is already in progress.';
+
+  @override
+  String get nfcErrorPpse => 'Error initiating contact with the card.';
+
+  @override
+  String get nfcErrorIncompatible => 'This card is not compatible with the payment standard.';
+
+  @override
+  String get nfcErrorNoAid => 'No compatible payment application found.';
+
+  @override
+  String get nfcErrorAidAccess => 'The card did not allow access to the data.';
+
+  @override
+  String get nfcErrorRetrieveFail => 'Could not retrieve the data, please try again.';
+
+  @override
+  String get nfcTimeout => 'Time out. Please bring the card closer again.';
+
+  @override
+  String get nfcCancel => 'NFC reading canceled.';
+
+  @override
+  String get selectBank => 'Select your bank';
+
+  @override
+  String get selectAccountType => 'Select account type';
+
+  @override
+  String get cardNumberLabel => 'Card Number';
+
+  @override
+  String get expiryDateLabel => 'Expiry Date';
+
+  @override
+  String get saveCard => 'Save Card';
+
+  @override
+  String get invalidCardNumber => 'The card number is invalid.';
+
+  @override
+  String get invalidExpiryDate => 'The expiry date is invalid.';
+
+  @override
+  String get errorRequiredFields => 'You must complete all fields to continue.';
 }

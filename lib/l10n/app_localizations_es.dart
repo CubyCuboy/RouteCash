@@ -407,4 +407,70 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get verify => 'Verificar';
+
+  @override
+  String get nfcStatusIdle => 'Acerca la tarjeta al lector...';
+
+  @override
+  String get nfcStatusDetected => '¡Tarjeta detectada! Mantén la tarjeta pegada...';
+
+  @override
+  String get nfcStatusReadingConfig => 'Leyendo configuración... No retires la tarjeta.';
+
+  @override
+  String get nfcStatusRetrievingData => 'Rescatando datos... Ya casi termina.';
+
+  @override
+  String get nfcStatusSuccess => 'Lectura completada con éxito.';
+
+  @override
+  String get nfcErrorAvailability => 'NFC no está disponible o está desactivado.';
+
+  @override
+  String get nfcErrorSessionActive => 'Ya existe una lectura en curso.';
+
+  @override
+  String get nfcErrorPpse => 'Error al iniciar contacto con la tarjeta.';
+
+  @override
+  String get nfcErrorIncompatible => 'Esta tarjeta no es compatible con el estándar de pago.';
+
+  @override
+  String get nfcErrorNoAid => 'No se encontró una aplicación de pago compatible.';
+
+  @override
+  String get nfcErrorAidAccess => 'La tarjeta no permitió el acceso a los datos.';
+
+  @override
+  String get nfcErrorRetrieveFail => 'No se lograran rescatar los datos, intentalo de nuevo.';
+
+  @override
+  String get nfcTimeout => 'Tiempo agotado. Por favor acerca la tarjeta nuevamente.';
+
+  @override
+  String get nfcCancel => 'Lectura NFC cancelada.';
+
+  @override
+  String get selectBank => 'Selecciona tu banco';
+
+  @override
+  String get selectAccountType => 'Selecciona el tipo de cuenta';
+
+  @override
+  String get cardNumberLabel => 'Número de Tarjeta';
+
+  @override
+  String get expiryDateLabel => 'Fecha Caducidad';
+
+  @override
+  String get saveCard => 'Guardar Tarjeta';
+
+  @override
+  String get invalidCardNumber => 'El número de tarjeta no es válido.';
+
+  @override
+  String get invalidExpiryDate => 'La fecha de expiración no es válida.';
+
+  @override
+  String get errorRequiredFields => 'Debes completar todos los datos para continuar.';
 }

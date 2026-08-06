@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/card_model.dart';
 import '../../services/bank_card_nfc.dart';
+import '../../utils/card_utils.dart';
+import '../../utils/bank_utils.dart';
+import '../../l10n/app_localizations.dart';
 import '../components/route_cash_buttons.dart';
 import 'main_navigation_screen.dart';
 import 'dart:math';
@@ -1028,17 +1031,16 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   late String _selectedBank;
   late String _selectedProduct;
 
-  final TextEditingController _cardNumberController = TextEditingController();
+  late final MaskedCardNumberController _cardNumberController = MaskedCardNumberController();
   final TextEditingController _expiryDateController = TextEditingController();
-  final TextEditingController _cvvController = TextEditingController();
 
   final BankCardNfcService _nfcService = BankCardNfcService();
 
   bool _isScanningNfc = false;
-  String? _nfcStatus;
+  String? _nfcStatusKey;
 
-
-  static const List<String> _chileanBanks = [
+  late final List<String> _chileanBanks = [
+    AppLocalizations.of(context)!.selectBank,
     'Banco Estado',
     'Banco de Chile / Edwards',
     'Banco Santander',
@@ -1056,7 +1058,8 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     'Otro Banco',
   ];
 
-  static const List<String> _baseDebitProducts = [
+  late final List<String> _baseDebitProducts = [
+    AppLocalizations.of(context)!.selectAccountType,
     'Cuenta Corriente',
     'Cuenta RUT / Vista',
     'Cuenta Digital / Prepago',
@@ -1065,7 +1068,8 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
 
   List<String> get _debitProducts {
     if (_selectedBank == 'Banco Estado') {
-      return const [
+      return [
+        AppLocalizations.of(context)!.selectAccountType,
         'Cuenta Corriente',
         'Cuenta RUT',
         'Cuenta Vista',
@@ -1077,7 +1081,8 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     return _baseDebitProducts;
   }
 
-  static const List<String> _creditProducts = [
+  late final List<String> _creditProducts = [
+    AppLocalizations.of(context)!.selectAccountType,
     'Tarjeta de Crédito Visa',
     'Tarjeta de Crédito Mastercard',
     'American Express',
@@ -1089,9 +1094,8 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _cardType = widget.initialType;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _selectedBank = _chileanBanks.first;
     _selectedProduct = _cardType == RouteCashCardType.debit
         ? _debitProducts.first
@@ -1099,12 +1103,39 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _cardType = widget.initialType;
+    // La inicialización real se hace en didChangeDependencies para tener acceso al context/l10n
+  }
+
+  @override
   void dispose() {
     _nfcService.stopReading();
     _cardNumberController.dispose();
     _expiryDateController.dispose();
-    _cvvController.dispose();
     super.dispose();
+  }
+
+  String _translateNfcStatus(String key) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (key) {
+      case 'nfcStatusIdle': return l10n.nfcStatusIdle;
+      case 'nfcStatusDetected': return l10n.nfcStatusDetected;
+      case 'nfcStatusReadingConfig': return l10n.nfcStatusReadingConfig;
+      case 'nfcStatusRetrievingData': return l10n.nfcStatusRetrievingData;
+      case 'nfcStatusSuccess': return l10n.nfcStatusSuccess;
+      case 'nfcErrorAvailability': return l10n.nfcErrorAvailability;
+      case 'nfcErrorSessionActive': return l10n.nfcErrorSessionActive;
+      case 'nfcErrorPpse': return l10n.nfcErrorPpse;
+      case 'nfcErrorIncompatible': return l10n.nfcErrorIncompatible;
+      case 'nfcErrorNoAid': return l10n.nfcErrorNoAid;
+      case 'nfcErrorAidAccess': return l10n.nfcErrorAidAccess;
+      case 'nfcErrorRetrieveFail': return l10n.nfcErrorRetrieveFail;
+      case 'nfcTimeout': return l10n.nfcTimeout;
+      case 'nfcCancel': return l10n.nfcCancel;
+      default: return key;
+    }
   }
 
   Future<void> _scanCardWithNfc() async {
@@ -1112,8 +1143,7 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
 
   setState(() {
     _isScanningNfc = true;
-    _nfcStatus =
-        'Acerca una tarjeta contactless a la parte trasera del teléfono.';
+    _nfcStatusKey = 'nfcStatusIdle';
   });
 
   try {
@@ -1122,14 +1152,14 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     if (!mounted) return;
 
     setState(() {
-      _nfcStatus = result.message;
+      _nfcStatusKey = result.message;
       _applyNfcResult(result);
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          result.message,
+          _translateNfcStatus(result.message),
           style: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
           ),
@@ -1141,18 +1171,16 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   } catch (error) {
     if (!mounted) return;
 
-    final message = error
-        .toString()
-        .replaceFirst('Exception: ', '');
+    final key = error.toString();
 
     setState(() {
-      _nfcStatus = message;
+      _nfcStatusKey = key;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          message,
+          _translateNfcStatus(key),
           style: GoogleFonts.inter(
             fontWeight: FontWeight.w600,
           ),
@@ -1169,39 +1197,35 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     }
   }
 }
-void _applyNfcResult(BankCardNfcResult result) {
-  setState(() {
-    if (result.brand != null) {
-      switch (result.brand) {
-        case 'Visa':
-          _cardType = RouteCashCardType.credit;
-          _selectedProduct = 'Tarjeta de Crédito Visa';
-          break;
-        case 'Mastercard':
-          _cardType = RouteCashCardType.credit;
-          _selectedProduct = 'Tarjeta de Crédito Mastercard';
-          break;
-        case 'American Express':
-          _cardType = RouteCashCardType.credit;
-          if (_creditProducts.contains('American Express')) {
-            _selectedProduct = 'American Express';
-          }
-          break;
-        default:
-          _cardType = RouteCashCardType.credit;
-          break;
+    void _applyNfcResult(BankCardNfcResult result) {
+    setState(() {
+      if (result.bankName != null && result.bankName != 'Banco Emisor') {
+        final matchedBank = _chileanBanks.firstWhere(
+          (b) => b.toLowerCase().contains(result.bankName!.toLowerCase()),
+          orElse: () => _chileanBanks.first,
+        );
+        _selectedBank = matchedBank;
+      } else {
+        _selectedBank = _chileanBanks.first;
       }
-    }
 
-    if (result.cardNumber != null) {
-      _formatCardNumber(result.cardNumber!);
-    }
-    
-    if (result.expiryDate != null) {
-      _formatExpiryDate(result.expiryDate!.replaceAll('/', ''));
-    }
-  });
-}
+      if (result.type != null) {
+        _cardType = result.type!;
+      }
+
+      if (result.cardNumber != null) {
+        _formatCardNumber(CardUtils.formatCardNumber(result.cardNumber!));
+      }
+
+      if (result.expiryDate != null) {
+        _formatExpiryDate(CardUtils.formatExpiryDate(result.expiryDate!.replaceAll('/', '')));
+      }
+
+      _selectedProduct = _cardType == RouteCashCardType.debit
+          ? _debitProducts.first
+          : _creditProducts.first;
+    });
+  }
   Future<void> _cancelNfcScan() async {
     await _nfcService.stopReading();
 
@@ -1209,7 +1233,7 @@ void _applyNfcResult(BankCardNfcResult result) {
 
     setState(() {
       _isScanningNfc = false;
-      _nfcStatus = 'Lectura NFC cancelada.';
+      _nfcStatusKey = 'nfcCancel';
     });
   }
 
@@ -1223,29 +1247,37 @@ void _applyNfcResult(BankCardNfcResult result) {
   }
 
   void _formatCardNumber(String value) {
-    String clean = value.replaceAll(RegExp(r'\D'), '');
-    if (clean.length > 16) clean = clean.substring(0, 16);
-    final buffer = StringBuffer();
-    for (int i = 0; i < clean.length; i++) {
-      if (i > 0 && i % 4 == 0) buffer.write(' ');
-      buffer.write(clean[i]);
-    }
-    final formatted = buffer.toString();
+    final formatted = CardUtils.formatCardNumber(value);
     if (_cardNumberController.text != formatted) {
       _cardNumberController.value = TextEditingValue(
         text: formatted,
         selection: TextSelection.collapsed(offset: formatted.length),
       );
     }
+
+    // Identificación automática del banco mientras escribe
+    if (formatted.replaceAll(' ', '').length >= 6) {
+      final details = BankUtils.identifyCard(formatted);
+      if (details.bankName != 'Banco Emisor') {
+        final matchedBank = _chileanBanks.firstWhere(
+          (b) => b.toLowerCase().contains(details.bankName.toLowerCase()),
+          orElse: () => _selectedBank,
+        );
+        if (_selectedBank != matchedBank) {
+          setState(() {
+            _selectedBank = matchedBank;
+            _cardType = details.type;
+            _selectedProduct = _cardType == RouteCashCardType.debit
+                ? _debitProducts.first
+                : _creditProducts.first;
+          });
+        }
+      }
+    }
   }
 
   void _formatExpiryDate(String value) {
-    String clean = value.replaceAll(RegExp(r'\D'), '');
-    if (clean.length > 4) clean = clean.substring(0, 4);
-    String formatted = clean;
-    if (clean.length >= 3) {
-      formatted = '${clean.substring(0, 2)}/${clean.substring(2)}';
-    }
+    final formatted = CardUtils.formatExpiryDate(value);
     if (_expiryDateController.text != formatted) {
       _expiryDateController.value = TextEditingValue(
         text: formatted,
@@ -1267,11 +1299,36 @@ void _applyNfcResult(BankCardNfcResult result) {
   }
 
   void _submit() {
-    final rawNumber =
-        _cardNumberController.text.replaceAll(RegExp(r'\D'), '');
-    final lastFour = rawNumber.length >= 4
-        ? rawNumber.substring(rawNumber.length - 4)
-        : (rawNumber.isNotEmpty ? rawNumber.padLeft(4, '0') : '0000');
+    final l10n = AppLocalizations.of(context)!;
+    final cardNumber = _cardNumberController.text.trim();
+    final expiryDate = _expiryDateController.text.trim();
+
+    // 1. Verificar que se haya seleccionado un banco real
+    if (_selectedBank == l10n.selectBank) {
+      _showErrorSnackBar(l10n.errorRequiredFields);
+      return;
+    }
+
+    // 2. Verificar que se haya seleccionado un tipo de producto/cuenta real
+    if (_selectedProduct == l10n.selectAccountType) {
+      _showErrorSnackBar(l10n.errorRequiredFields);
+      return;
+    }
+
+    // 3. Validar número de tarjeta (Luhn y longitud)
+    if (!CardUtils.validateCardNumber(cardNumber)) {
+      _showErrorSnackBar(l10n.invalidCardNumber);
+      return;
+    }
+
+    // 4. Validar fecha de expiración (Formato y que no esté vencida)
+    if (!CardUtils.validateExpiryDate(expiryDate)) {
+      _showErrorSnackBar(l10n.invalidExpiryDate);
+      return;
+    }
+
+    // Si todo es válido, procedemos a guardar
+    final lastFour = CardUtils.getLastFourDigits(cardNumber);
 
     final newCard = RouteCashCardModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -1281,13 +1338,26 @@ void _applyNfcResult(BankCardNfcResult result) {
       availableAmount: 0.0,
       type: _cardType,
       assetPath: _getSelectedCardImagePath(),
-      cardNumber: _cardNumberController.text,
-      expiryDate: _expiryDateController.text,
-      cvv: _cvvController.text,
+      expiryDate: expiryDate,
     );
 
     widget.onCardAdded(newCard);
     Navigator.pop(context);
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white),
+        ),
+        backgroundColor: Colors.redAccent.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(20),
+      ),
+    );
   }
 
   @override
@@ -1391,10 +1461,10 @@ void _applyNfcResult(BankCardNfcResult result) {
                       ),
                     ],
                   ),
-                  if (_nfcStatus != null) ...[
+                  if (_nfcStatusKey != null) ...[
                     const SizedBox(height: 12),
                     Text(
-                      _nfcStatus!,
+                      _translateNfcStatus(_nfcStatusKey!),
                       style: GoogleFonts.inter(
                         color: const Color(0xFF666666),
                         fontSize: 12,
@@ -1485,55 +1555,35 @@ void _applyNfcResult(BankCardNfcResult result) {
               icon: Icons.subtitles_outlined,
             ),
             const SizedBox(height: 14),
-            _buildLabel('Número de Tarjeta'),
+            _buildLabel(AppLocalizations.of(context)!.cardNumberLabel),
             _buildTextField(
               controller: _cardNumberController,
               hint: '1234 5678 9012 3456',
               icon: Icons.credit_card_outlined,
               keyboardType: TextInputType.number,
-              onChanged: _formatCardNumber,
+              onChanged: (val) => _formatCardNumber(val),
               maxLength: 19,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _cardNumberController.isVisible ? Icons.visibility : Icons.visibility_off,
+                  color: const Color(0xFF888888),
+                  size: 20,
+                ),
+                onPressed: () => setState(() => _cardNumberController.isVisible = !_cardNumberController.isVisible),
+              ),
             ),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel('Fecha Caducidad'),
-                      _buildTextField(
-                        controller: _expiryDateController,
-                        hint: 'MM/AA (ej: 12/28)',
-                        icon: Icons.calendar_today_outlined,
-                        keyboardType: TextInputType.number,
-                        onChanged: _formatExpiryDate,
-                        maxLength: 5,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel('Código Trasero (CVC)'),
-                      _buildTextField(
-                        controller: _cvvController,
-                        hint: '123',
-                        icon: Icons.lock_outline,
-                        keyboardType: TextInputType.number,
-                        obscureText: true,
-                        maxLength: 4,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            _buildLabel(AppLocalizations.of(context)!.expiryDateLabel),
+            _buildTextField(
+              controller: _expiryDateController,
+              hint: 'MM/AA (ej: 12/28)',
+              icon: Icons.calendar_today_outlined,
+              keyboardType: TextInputType.number,
+              onChanged: (val) => _formatExpiryDate(val),
+              maxLength: 5,
             ),
             const SizedBox(height: 24),
-            RouteCashPrimaryButton(text: 'Guardar Tarjeta', onPressed: _submit),
+            RouteCashPrimaryButton(text: AppLocalizations.of(context)!.saveCard, onPressed: _submit),
           ],
         ),
       ),
@@ -1594,6 +1644,7 @@ void _applyNfcResult(BankCardNfcResult result) {
     bool obscureText = false,
     ValueChanged<String>? onChanged,
     int? maxLength,
+    Widget? suffixIcon,
   }) {
     return TextField(
       controller: controller,
@@ -1615,6 +1666,7 @@ void _applyNfcResult(BankCardNfcResult result) {
           fontWeight: FontWeight.w400,
         ),
         prefixIcon: Icon(icon, color: const Color(0xFF888888), size: 19),
+        suffixIcon: suffixIcon,
         filled: true,
         fillColor: Colors.white,
         contentPadding:
@@ -1669,5 +1721,42 @@ class _TypeChip extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class MaskedCardNumberController extends TextEditingController {
+  bool _isVisible = false;
+  bool get isVisible => _isVisible;
+  set isVisible(bool value) {
+    _isVisible = value;
+    notifyListeners();
+  }
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    if (_isVisible || text.isEmpty) {
+      return super.buildTextSpan(
+        context: context,
+        style: style,
+        withComposing: withComposing,
+      );
+    }
+
+    final textValue = text;
+    final masked = StringBuffer();
+    for (int i = 0; i < textValue.length; i++) {
+      if (textValue[i] == ' ') {
+        masked.write(' ');
+      } else if (i < textValue.length - 4) {
+        masked.write('•');
+      } else {
+        masked.write(textValue[i]);
+      }
+    }
+    return TextSpan(text: masked.toString(), style: style);
   }
 }

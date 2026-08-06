@@ -132,5 +132,27 @@
         "example": "5:10 PM"
       }
     }
-  }
+  },
+  "nfcStatusIdle": "Acerca la tarjeta al lector...",
+  "nfcStatusDetected": "¡Tarjeta detectada! Mantén la tarjeta pegada...",
+  "nfcStatusReadingConfig": "Leyendo configuración... No retires la tarjeta.",
+  "nfcStatusRetrievingData": "Rescatando datos... Ya casi termina.",
+  "nfcStatusSuccess": "Lectura completada con éxito.",
+  "nfcErrorAvailability": "NFC no está disponible o está desactivado.",
+  "nfcErrorSessionActive": "Ya existe una lectura en curso.",
+  "nfcErrorPpse": "Error al iniciar contacto con la tarjeta.",
+  "nfcErrorIncompatible": "Esta tarjeta no es compatible con el estándar de pago.",
+  "nfcErrorNoAid": "No se encontró una aplicación de pago compatible.",
+  "nfcErrorAidAccess": "La tarjeta no permitió el acceso a los datos.",
+  "nfcErrorRetrieveFail": "No se lograran rescatar los datos, intentalo de nuevo.",
+  "nfcTimeout": "Tiempo agotado. Por favor acerca la tarjeta nuevamente.",
+  "nfcCancel": "Lectura NFC cancelada.",
+  "selectBank": "Selecciona tu banco",
+  "selectAccountType": "Selecciona el tipo de cuenta",
+  "cardNumberLabel": "Número de Tarjeta",
+  "expiryDateLabel": "Fecha Caducidad",
+  "saveCard": "Guardar Tarjeta",
+  "invalidCardNumber": "El número de tarjeta no es válido.",
+  "invalidExpiryDate": "La fecha de expiración no es válida.",
+  "errorRequiredFields": "Debes completar todos los datos para continuar."
 }
