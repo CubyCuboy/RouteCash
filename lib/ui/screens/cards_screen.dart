@@ -1080,6 +1080,7 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   static const List<String> _creditProducts = [
     'Tarjeta de Crédito Visa',
     'Tarjeta de Crédito Mastercard',
+    'American Express',
     'Tarjeta de Crédito Signature / Black',
     'CMR Falabella',
     'Cencosud Scotiabank',
@@ -1107,63 +1108,97 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
   }
 
   Future<void> _scanCardWithNfc() async {
-    if (_isScanningNfc) return;
+  if (_isScanningNfc) return;
+
+  setState(() {
+    _isScanningNfc = true;
+    _nfcStatus =
+        'Acerca una tarjeta contactless a la parte trasera del teléfono.';
+  });
+
+  try {
+    final result = await _nfcService.readPaymentCard();
+
+    if (!mounted) return;
 
     setState(() {
-      _isScanningNfc = true;
-      _nfcStatus =
-          'Acerca una tarjeta contactless a la parte trasera del teléfono.';
+      _nfcStatus = result.message;
+      _applyNfcResult(result);
     });
 
-    try {
-      final result = await _nfcService.readPaymentCard();
-
-      if (!mounted) return;
-
-      setState(() {
-        _nfcStatus = result.message;
-
-        if (result.brand == 'Visa') {
-          _cardType = RouteCashCardType.credit;
-          _selectedProduct = 'Tarjeta de Crédito Visa';
-        } else if (result.brand == 'Mastercard') {
-          _cardType = RouteCashCardType.credit;
-          _selectedProduct = 'Tarjeta de Crédito Mastercard';
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message),
-          backgroundColor: Colors.black,
-          behavior: SnackBarBehavior.floating,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.message,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+          ),
         ),
-      );
-    } catch (error) {
-      if (!mounted) return;
+        backgroundColor: Colors.black,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  } catch (error) {
+    if (!mounted) return;
 
-      final message = error.toString().replaceFirst('Exception: ', '');
+    final message = error
+        .toString()
+        .replaceFirst('Exception: ', '');
 
-      setState(() {
-        _nfcStatus = message;
-      });
+    setState(() {
+      _nfcStatus = message;
+    });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+          ),
         ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isScanningNfc = false;
-        });
-      }
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isScanningNfc = false;
+      });
     }
   }
+}
+void _applyNfcResult(BankCardNfcResult result) {
+  switch (result.brand) {
+    case 'Visa':
+      _cardType = RouteCashCardType.credit;
+      _selectedProduct = 'Tarjeta de Crédito Visa';
+      break;
 
+    case 'Mastercard':
+      _cardType = RouteCashCardType.credit;
+      _selectedProduct = 'Tarjeta de Crédito Mastercard';
+      break;
+
+    case 'American Express':
+      _cardType = RouteCashCardType.credit;
+
+      if (_creditProducts.contains('American Express')) {
+        _selectedProduct = 'American Express';
+      }
+
+      break;
+
+    case 'JCB':
+    case 'Discover':
+      _cardType = RouteCashCardType.credit;
+      break;
+
+    default:
+      break;
+  }
+}
   Future<void> _cancelNfcScan() async {
     await _nfcService.stopReading();
 

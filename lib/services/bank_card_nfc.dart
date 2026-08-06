@@ -24,10 +24,26 @@ class BankCardNfcService {
 
   static final Uint8List _selectPpseCommand = Uint8List.fromList(
     <int>[
-      0x00, 0xA4, 0x04, 0x00, 0x0E,
-      0x32, 0x50, 0x41, 0x59, 0x2E,
-      0x53, 0x59, 0x53, 0x2E, 0x44,
-      0x44, 0x46, 0x30, 0x31, 0x00,
+      0x00,
+      0xA4,
+      0x04,
+      0x00,
+      0x0E,
+      0x32,
+      0x50,
+      0x41,
+      0x59,
+      0x2E,
+      0x53,
+      0x59,
+      0x53,
+      0x2E,
+      0x44,
+      0x44,
+      0x46,
+      0x30,
+      0x31,
+      0x00,
     ],
   );
 
@@ -67,11 +83,19 @@ class BankCardNfcService {
             _selectPpseCommand,
           );
 
-          final hex = _toHex(response);
-
-          if (!hex.endsWith('9000')) {
+          if (response.length < 2) {
             throw Exception(
-              'Se detectó una tarjeta NFC, pero no respondió como tarjeta EMV.',
+              'La tarjeta devolvió una respuesta NFC incompleta.',
+            );
+          }
+
+          final hex = _toHex(response);
+          final statusWord = hex.substring(hex.length - 4);
+
+          if (statusWord != '9000') {
+            throw Exception(
+              'Se detectó una tarjeta NFC, pero no respondió como tarjeta EMV. '
+              'Código: $statusWord.',
             );
           }
 
@@ -83,7 +107,7 @@ class BankCardNfcService {
             brand: brand,
             applicationId: aid,
             message: brand == null
-                ? 'Tarjeta contactless detectada. La red no pudo identificarse.'
+                ? 'Tarjeta contactless detectada, pero no fue posible identificar su red.'
                 : 'Tarjeta $brand detectada correctamente.',
           );
 
@@ -120,44 +144,70 @@ class BankCardNfcService {
 
     try {
       await NfcManager.instance.stopSession();
-    } catch (_) {}
+    } catch (_) {
+      // La sesión puede haber sido detenida previamente.
+    }
   }
 
   String _toHex(Uint8List bytes) {
     return bytes
-        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .map(
+          (byte) => byte
+              .toRadixString(16)
+              .padLeft(2, '0'),
+        )
         .join()
         .toUpperCase();
   }
 
   String? _findKnownAid(String payload) {
     const prefixes = <String>[
-      'A000000003',
-      'A000000004',
-      'A000000025',
-      'A000000065',
-      'A000000152',
+      'A000000003', // Visa
+      'A000000004', // Mastercard
+      'A000000025', // American Express
+      'A000000065', // JCB
+      'A000000152', // Discover
     ];
 
     for (final prefix in prefixes) {
       final index = payload.indexOf(prefix);
 
-      if (index >= 0) {
-        final remaining = payload.substring(index);
-        final length = remaining.length >= 16 ? 16 : remaining.length;
-        return remaining.substring(0, length);
-      }
+      if (index < 0) continue;
+
+      final remaining = payload.substring(index);
+
+      // Para el MVP se conservan hasta 8 bytes del AID.
+      final length = remaining.length >= 16
+          ? 16
+          : remaining.length;
+
+      return remaining.substring(0, length);
     }
 
     return null;
   }
 
   String? _detectBrand(String payload) {
-    if (payload.contains('A000000003')) return 'Visa';
-    if (payload.contains('A000000004')) return 'Mastercard';
-    if (payload.contains('A000000025')) return 'American Express';
-    if (payload.contains('A000000065')) return 'JCB';
-    if (payload.contains('A000000152')) return 'Discover';
+    if (payload.contains('A000000003')) {
+      return 'Visa';
+    }
+
+    if (payload.contains('A000000004')) {
+      return 'Mastercard';
+    }
+
+    if (payload.contains('A000000025')) {
+      return 'American Express';
+    }
+
+    if (payload.contains('A000000065')) {
+      return 'JCB';
+    }
+
+    if (payload.contains('A000000152')) {
+      return 'Discover';
+    }
+
     return null;
   }
 }
