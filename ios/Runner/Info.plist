@@ -51,19 +51,6 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
-	<key>NFCReaderUsageDescription</key>
-	<string>Requerimos acceso al NFC para leer los datos básicos de tu tarjeta bancaria de forma segura.</string>
-	<key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
-	<array>
-		<string>A0000000031010</string>
-		<string>A0000000041010</string>
-		<string>A000000025010801</string>
-		<string>A0000000032010</string>
-		<string>A0000000043060</string>
-		<string>A0000000041010</string>
-		<string>A0000000046000</string>
-		<string>325041592E5359532E4444463031</string>
-	</array>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
 	<key>UISupportedInterfaceOrientations</key>
