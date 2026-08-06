@@ -6,10 +6,12 @@ import '../services/catalog_service.dart';
 import '../services/google_auth_service.dart';
 import '../services/verification_service.dart';
 import '../utils/email_validator.dart';
+import '../l10n/app_localizations.dart';
 
 class SettingsViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final CatalogService _catalogService = CatalogService();
+  final VerificationService _verificationService = VerificationService();
 
   Timer? _debounceTimer;
   final Map<String, dynamic> _pendingSettings = {};
@@ -28,49 +30,59 @@ class SettingsViewModel extends ChangeNotifier {
     _init();
   }
 
+  void _log(String operation, {String? details, dynamic error}) {
+    final timestamp = DateTime.now().toIso8601String();
+    debugPrint('[SETTINGS_VM] [$timestamp] $operation ${details != null ? "- $details" : ""}');
+    if (error != null) {
+      debugPrint('[SETTINGS_VM] ERROR: $error');
+    }
+  }
+
   Future<void> _init() async {
-    // 1. Cargar caché inmediatamente para que no haya parpadeo en blanco
+    _log('INITIALIZING');
     await _loadFromCache();
-    // 2. Cargar de red para actualizar
-    loadData();
+    await loadData();
   }
 
   Future<void> _loadFromCache() async {
+    _log('CACHE_LOAD_START');
     userProfile = await _authService.getCachedUserProfile();
     userSettings = await _authService.getCachedUserSettings();
     notifyListeners();
   }
 
   Future<void> loadData({bool forceRefresh = false}) async {
-    if (forceRefresh) {
+    _log('LOAD_DATA_START', details: 'forceRefresh: $forceRefresh');
+    
+    // Always show loading on first load if profile is missing
+    if (forceRefresh || userProfile == null) {
       _isLoading = true;
       notifyListeners();
     }
-    debugPrint('SettingsViewModel: Start loading data...');
-
+    
     try {
-      final response = await Supabase.instance.client.auth.getUser();
-      final user = response.user;
+      final user = _authService.currentUser;
+      if (user == null) {
+        _log('LOAD_DATA_NO_USER');
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
 
-      if (user != null) {
-        debugPrint('SettingsViewModel: Loading profile for ${user.id}');
-        final profile = await _authService.getUserProfile(user.id);
-        if (profile != null) {
-          userProfile = profile;
-          await _authService.cacheUserProfile(profile);
-        }
+      // Priority: Supabase is the source of truth
+      final profile = await _authService.getUserProfile(user.id);
+      final settings = await _authService.getUserSettings(user.id);
+      
+      countries = await _catalogService.getCountries();
+      currencies = await _catalogService.getCurrencies();
+
+      if (profile != null) {
+        userProfile = profile;
+        await _authService.cacheUserProfile(profile);
+        _log('LOAD_DATA_PROFILE_FETCHED', details: 'name: ${profile['full_name']}');
         
-        final settings = await _authService.getUserSettings(user.id);
-        if (settings != null) {
-          userSettings = settings;
-          await _authService.cacheUserSettings(settings);
-        }
-        
-        debugPrint('SettingsViewModel: Loading catalogs...');
-        countries = await _catalogService.getCountries();
-        currencies = await _catalogService.getCurrencies();
-        
-        if (userProfile != null && userProfile!['states'] != null) {
+        // Dynamic state loading based on profile's current state/country
+        if (userProfile!['states'] != null) {
           final dynamic statesData = userProfile!['states'];
           Map<String, dynamic>? stateMap;
           
@@ -96,10 +108,18 @@ class SettingsViewModel extends ChangeNotifier {
             }
           }
         }
-        debugPrint('SettingsViewModel: Data loaded successfully');
+      } else {
+        _log('LOAD_DATA_PROFILE_NULL');
       }
+
+      if (settings != null) {
+        userSettings = settings;
+        await _authService.cacheUserSettings(settings);
+      }
+      
+      _log('LOAD_DATA_SUCCESS');
     } catch (e) {
-      debugPrint('SettingsViewModel: Error loading data: $e');
+      _log('LOAD_DATA_ERROR', error: e);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -107,34 +127,52 @@ class SettingsViewModel extends ChangeNotifier {
   }
 
   String get userId => userProfile?['user_id'] ?? _authService.currentUser?.id ?? '';
-  
-  String get currentEmail {
-    final identities = linkedIdentities;
-    
-    // 1. Prioridad Google
-    for (var identity in identities) {
-      if (identity.provider == 'google') {
-        return identity.identityData?['email']?.toString() ?? '';
-      }
+
+  String get currentEmail => primaryEmailInfo['email'] ?? '';
+  String get currentProviderLabel => primaryEmailInfo['label'] ?? '';
+
+  /// Returns information about the oldest linked identity (email and provider)
+  Map<String, String> get primaryEmailInfo {
+    final user = _authService.currentUser;
+    if (user == null) return {'email': '', 'provider': '', 'label': ''};
+
+    final identities = user.identities ?? [];
+    if (identities.isEmpty) {
+      return {
+        'email': user.email ?? '',
+        'provider': 'email',
+        'label': 'Email',
+      };
     }
-    
-    // 2. Prioridad Microsoft
-    for (var identity in identities) {
-      if (identity.provider == 'azure') {
-        return identity.identityData?['email']?.toString() ?? '';
-      }
-    }
-    
-    // 3. Correo de Auth o Perfil
-    return _authService.currentUser?.email ?? userProfile?['email']?.toString() ?? '';
+
+    final sorted = List<UserIdentity>.from(identities);
+    sorted.sort((a, b) {
+      final dateA = DateTime.tryParse(a.createdAt ?? '') ?? DateTime.now();
+      final dateB = DateTime.tryParse(b.createdAt ?? '') ?? DateTime.now();
+      return dateA.compareTo(dateB);
+    });
+
+    final oldest = sorted.first;
+    String providerLabel = oldest.provider;
+    if (providerLabel == 'azure') providerLabel = 'Microsoft';
+    if (providerLabel == 'google') providerLabel = 'Google';
+    if (providerLabel == 'email') providerLabel = 'Email';
+
+    return {
+      'email': oldest.identityData?['email']?.toString() ?? user.email ?? '',
+      'provider': oldest.provider,
+      'label': providerLabel,
+    };
   }
 
   Future<void> loadStates(String countryId) async {
+    _log('LOAD_STATES', details: 'countryId: $countryId');
     states = await _catalogService.getStates(countryId);
     notifyListeners();
   }
 
   Future<String?> updateProfile({
+    required AppLocalizations l10n,
     required String fullName,
     String? nickname,
     required String phone,
@@ -142,9 +180,10 @@ class SettingsViewModel extends ChangeNotifier {
     required int currencyId,
     String? profileImageUrl,
   }) async {
+    _log('UPDATE_PROFILE_START');
     try {
       final user = _authService.currentUser;
-      if (user == null) return 'No hay sesión activa';
+      if (user == null) return l10n.errorNoSession;
 
       final Map<String, dynamic> data = {
         'full_name': fullName,
@@ -159,32 +198,40 @@ class SettingsViewModel extends ChangeNotifier {
       }
 
       await _authService.updateUserProfile(user.id, data);
-
-      await loadData();
+      await loadData(forceRefresh: true);
+      
+      _log('UPDATE_PROFILE_SUCCESS');
       return null;
     } catch (e) {
-      return e.toString();
+      _log('UPDATE_PROFILE_ERROR', error: e);
+      return l10n.errorProfileUpdate;
     }
   }
 
-  Future<String?> initiateEmailChange(String oldEmail, String newEmail, String lang) async {
+  Future<String?> initiateEmailChange({
+    required AppLocalizations l10n,
+    required String oldEmail,
+    required String newEmail,
+    required String lang,
+  }) async {
+    _log('INITIATE_EMAIL_CHANGE', details: 'from: $oldEmail to: $newEmail');
     try {
       final user = _authService.currentUser;
-      if (user == null) return 'No hay sesión activa';
+      if (user == null) return l10n.errorNoSession;
       
       final cleanOld = EmailValidator.normalize(oldEmail);
       final cleanNew = EmailValidator.normalize(newEmail);
 
+      // Verify that the old email matches what Supabase has
       if (user.email == null || EmailValidator.normalize(user.email!) != cleanOld) {
-        return 'El correo anterior no coincide con el registrado';
+        return l10n.errorOldEmailMismatch;
       }
 
       if (!EmailValidator.isValid(cleanNew)) {
-        return 'El formato del nuevo correo es inválido';
+        return l10n.errorInvalidNewEmail;
       }
 
-      final verificationService = VerificationService();
-      final result = await verificationService.sendOtp(
+      final result = await _verificationService.sendOtp(
         userId: user.id,
         email: cleanNew,
         purpose: 'change_email',
@@ -192,66 +239,107 @@ class SettingsViewModel extends ChangeNotifier {
       );
 
       if (result['success'] == true) {
+        _log('INITIATE_EMAIL_CHANGE_OTP_SENT');
         return null;
       } else {
-        return result['error'] ?? 'Error al enviar el código de verificación';
+        _log('INITIATE_EMAIL_CHANGE_OTP_ERROR', details: result['error']);
+        return result['error'] ?? l10n.errorUnexpected;
       }
     } catch (e) {
+      _log('INITIATE_EMAIL_CHANGE_ERROR', error: e);
       return e.toString();
     }
   }
 
-  Future<String?> finalizeEmailChange(String newEmail) async {
+  Future<String?> finalizeEmailChange({
+    required AppLocalizations l10n,
+    required String newEmail,
+  }) async {
+    _log('FINALIZE_EMAIL_CHANGE', details: 'newEmail: $newEmail');
     try {
       await _authService.completeEmailChange(EmailValidator.normalize(newEmail));
       await loadData(forceRefresh: true);
+      _log('FINALIZE_EMAIL_CHANGE_SUCCESS');
       return null;
     } catch (e) {
-      return e.toString();
+      _log('FINALIZE_EMAIL_CHANGE_ERROR', error: e);
+      return l10n.errorEmailUpdate;
     }
   }
 
-  Future<String?> updatePassword(String newPassword) async {
+  Future<String?> updatePassword({
+    required AppLocalizations l10n,
+    required String newPassword,
+  }) async {
+    _log('UPDATE_PASSWORD_START');
     try {
       await _authService.updatePassword(newPassword);
+      _log('UPDATE_PASSWORD_SUCCESS');
       return null;
     } catch (e) {
-      return e.toString();
+      _log('UPDATE_PASSWORD_ERROR', error: e);
+      return l10n.errorPasswordUpdate;
     }
   }
 
   Future<void> linkAccount(OAuthProvider provider) async {
+    final providerStr = provider == OAuthProvider.google ? 'google' : 'azure';
+    _log('LINK_ACCOUNT_START', details: 'provider: $providerStr');
+    
     _isLoading = true;
     notifyListeners();
+    
     try {
-      final providerStr = provider == OAuthProvider.google ? 'google' : 'azure';
-      
-      // Si ya hay identidades de este proveedor, las limpiamos primero para evitar duplicados
-      final existingIdentities = linkedIdentities.where((id) => id.provider == providerStr).toList();
-      for (var id in existingIdentities) {
-        await Supabase.instance.client.auth.unlinkIdentity(id);
-      }
+      final user = _authService.currentUser;
+      if (user == null) throw Exception('No session');
 
+      // 1. Link provider
       if (provider == OAuthProvider.google) {
         await GoogleAuthService.instance.linkAccount();
       } else {
         await _authService.linkProvider(
           provider,
-          queryParams: provider == OAuthProvider.azure ? {'prompt': 'login'} : null,
+          queryParams: {'prompt': 'login'},
         );
       }
       
+      // 2. Refresh session to get new identities
       await Supabase.instance.client.auth.refreshSession();
-      
-      // Sincronizar el nuevo correo social con la tabla de usuarios
-      final newEmail = currentEmail;
-      if (newEmail.isNotEmpty) {
-        await _authService.updateUserProfile(userId, {'email': newEmail});
+      final freshUser = _authService.currentUser;
+
+      if (freshUser != null) {
+        // 3. Strict cleanup: ensure only the new identity for this provider exists
+        final providerIdentities = freshUser.identities?.where((id) => id.provider == providerStr).toList() ?? [];
+        
+        if (providerIdentities.length > 1) {
+          _log('LINK_ACCOUNT_CLEANUP', details: 'found ${providerIdentities.length} identities');
+          // Sort by createdAt descending (newest first)
+          providerIdentities.sort((a, b) {
+            final dA = DateTime.tryParse(a.createdAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final dB = DateTime.tryParse(b.createdAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return dB.compareTo(dA);
+          });
+
+          // Keep the first (newest), unlink others
+          for (var i = 1; i < providerIdentities.length; i++) {
+            await Supabase.instance.client.auth.unlinkIdentity(providerIdentities[i]);
+            _log('LINK_ACCOUNT_UNLINKED_OLD', details: 'id: ${providerIdentities[i].id}');
+          }
+        }
+
+        // 4. Update DB email from the primary identity
+        final info = primaryEmailInfo;
+        final newEmail = info['email'] ?? '';
+        if (newEmail.isNotEmpty) {
+          await _authService.updateUserProfile(freshUser.id, {'email': newEmail});
+          _log('LINK_ACCOUNT_DB_UPDATED', details: 'email: $newEmail');
+        }
       }
       
       await loadData(forceRefresh: true);
+      _log('LINK_ACCOUNT_SUCCESS');
     } catch (e) {
-      debugPrint('Error linking account: $e');
+      _log('LINK_ACCOUNT_ERROR', error: e);
       rethrow;
     } finally {
       _isLoading = false;
@@ -259,43 +347,60 @@ class SettingsViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> unlinkAccount(String provider) async {
-    // 1. Obtener datos frescos del usuario e identidades antes de empezar
-    final response = await Supabase.instance.client.auth.getUser();
-    final user = response.user;
+  Future<void> unlinkAccount(String provider, {required AppLocalizations l10n}) async {
+    _log('UNLINK_ACCOUNT_START', details: 'provider: $provider');
+    
+    final user = _authService.currentUser;
     if (user == null) return;
     
     final identities = user.identities ?? [];
     final hasPassword = hasEmailPasswordAuth;
     
-    // Seguridad: Evitar que el usuario se quede sin acceso
+    // Safety check: must have at least one method remaining
     if (identities.length <= 1 && !hasPassword) {
-      throw Exception('No puedes desvincular tu única forma de acceso. Configura una contraseña primero en la sección de Seguridad.');
+      throw Exception(l10n.errorUnlinkOnlyMethod);
     }
 
     _isLoading = true;
     notifyListeners();
     try {
-      // 2. Identificar todas las identidades de este proveedor
       final toRemove = identities.where((id) => id.provider == provider).toList();
       
-      // 3. Desvincular cada una de forma explícita en Supabase
       for (var identity in toRemove) {
         await Supabase.instance.client.auth.unlinkIdentity(identity);
+        _log('UNLINK_ACCOUNT_REMOVED', details: 'provider: $provider, identityId: ${identity.id}');
       }
 
-      // 4. Si es Google, cerrar sesión SOLO en el SDK de Google (no en Supabase)
       if (provider == 'google') {
         await GoogleAuthService.instance.signOutGoogle();
       }
       
-      // 5. Refrescar la sesión para que Supabase reconozca que las identidades ya no existen
       await Supabase.instance.client.auth.refreshSession();
-      
-      // 6. Recargar perfil y catálogo
       await loadData(forceRefresh: true);
+      _log('UNLINK_ACCOUNT_SUCCESS');
     } catch (e) {
-      debugPrint('Error desvinculando cuenta: $e');
+      _log('UNLINK_ACCOUNT_ERROR', error: e);
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteAccount({required AppLocalizations l10n}) async {
+    _log('DELETE_ACCOUNT_START');
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await Supabase.instance.client.rpc('delete_user_data'); 
+      await _authService.signOut();
+      _log('DELETE_ACCOUNT_SUCCESS');
+    } catch (e) {
+      _log('DELETE_ACCOUNT_ERROR', error: e);
       rethrow;
     } finally {
       _isLoading = false;
@@ -330,13 +435,14 @@ class SettingsViewModel extends ChangeNotifier {
     try {
       await _authService.updateUserSettings(user.id, Map.from(_pendingSettings));
       _pendingSettings.clear();
-      debugPrint('Settings synced to DB');
+      _log('SYNC_SETTINGS_SUCCESS');
     } catch (e) {
-      debugPrint('Error syncing settings: $e');
+      _log('SYNC_SETTINGS_ERROR', error: e);
     }
   }
 
   Future<void> syncAndSignOut() async {
+    _log('SYNC_AND_SIGN_OUT');
     await syncSettings();
     await _authService.clearSettingsCache(excludeCardImages: true);
     await _authService.signOut();
@@ -363,23 +469,30 @@ class SettingsViewModel extends ChangeNotifier {
     final user = _authService.currentUser;
     if (user == null) return false;
 
-    final providers = linkedIdentities.map((e) => e.provider).toList();
-    debugPrint('SettingsViewModel: User providers: $providers');
-    return providers.contains('email') || (user.email != null && user.emailConfirmedAt != null);
+    final identities = linkedIdentities;
+    return identities.any((e) => e.provider == 'email') || 
+           (user.email != null && user.emailConfirmedAt != null);
   }
 
-  Future<String?> addEmailPasswordAuth(String email, String password) async {
+  Future<String?> addEmailPasswordAuth({
+    required AppLocalizations l10n,
+    required String email, 
+    required String password,
+  }) async {
+    _log('ADD_EMAIL_PASSWORD_AUTH_START', details: 'email: $email');
     try {
       final user = _authService.currentUser;
-      if (user == null) return 'No hay sesión activa';
+      if (user == null) return l10n.errorNoSession;
 
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(email: email, password: password),
       );
 
-      await loadData();
+      await loadData(forceRefresh: true);
+      _log('ADD_EMAIL_PASSWORD_AUTH_SUCCESS');
       return null;
     } catch (e) {
+      _log('ADD_EMAIL_PASSWORD_AUTH_ERROR', error: e);
       return e.toString();
     }
   }

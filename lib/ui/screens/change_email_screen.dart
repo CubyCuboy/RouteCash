@@ -65,7 +65,13 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
 
     setState(() => _isLoading = true);
     final lang = Localizations.localeOf(context).languageCode;
-    final err = await widget.viewModel.initiateEmailChange(oldEmail, newEmail, lang);
+    final strings = AppLocalizations.of(context)!;
+    final err = await widget.viewModel.initiateEmailChange(
+      l10n: strings,
+      oldEmail: oldEmail,
+      newEmail: newEmail,
+      lang: lang,
+    );
 
     if (mounted) {
       setState(() => _isLoading = false);
@@ -127,7 +133,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Ingresa tu correo actual y la nueva dirección donde deseas recibir tus notificaciones.',
+              strings.changeEmailDescription,
               style: GoogleFonts.inter(
                 color: const Color(0xFF999999),
                 fontSize: 14,
@@ -139,7 +145,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
               label: strings.currentEmail,
               controller: _oldEmailController,
               keyboardType: TextInputType.emailAddress,
-              hintText: 'ejemplo@correo.com',
+              hintText: strings.emailExamplePlaceholder,
               readOnly: true,
             ),
             const SizedBox(height: 24),
@@ -147,7 +153,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
               label: strings.newEmail,
               controller: _newEmailController,
               keyboardType: TextInputType.emailAddress,
-              hintText: 'nuevo@correo.com',
+              hintText: strings.newEmailExamplePlaceholder,
             ),
             const SizedBox(height: 48),
             RouteCashPrimaryButton(

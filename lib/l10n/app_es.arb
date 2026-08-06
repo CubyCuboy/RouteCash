@@ -24,6 +24,10 @@
   "passwordsDoNotMatch": "Las contraseñas no coinciden",
   "errorInvalidCredentials": "Email o contraseña incorrectos",
   "errorUserExists": "Este correo ya está registrado",
+  "errorInvalidEmail": "El formato del correo es inválido",
+  "errorPasswordTooShort": "La contraseña es demasiado corta",
+  "errorRegistrationDisabled": "El registro está temporalmente deshabilitado",
+  "errorNetwork": "Error de conexión. Revisa tu internet",
   "errorUnexpected": "Ocurrió un error inesperado",
   "confirmPasswordLabel": "Confirmar Contraseña",
   "confirmPasswordHint": "••••••••••",
@@ -154,5 +158,76 @@
   "saveCard": "Guardar Tarjeta",
   "invalidCardNumber": "El número de tarjeta no es válido.",
   "invalidExpiryDate": "La fecha de expiración no es válida.",
-  "errorRequiredFields": "Debes completar todos los datos para continuar."
+  "errorRequiredFields": "Debes completar todos los datos para continuar.",
+  "stepLabel": "PASO {current} DE {total}",
+  "step1Title": "Empieza\npor ti.",
+  "step1Subtitle": "Tu información personal para crear tu espacio.",
+  "step2Title": "¿Desde dónde\nnos hablas?",
+  "step2Subtitle": "Adaptaremos las tasas y formatos a tu región.",
+  "step3Title": "Seguridad y\npreferencias.",
+  "step3Subtitle": "Último paso para asegurar tu ruta financiera.",
+  "fullNamePlaceholder": "Ej. Andrea Moreno",
+  "emailPlaceholder": "correo@ejemplo.com",
+  "phonePlaceholder": "123456789",
+  "phoneCodeLabel": "CÓDIGO",
+  "passwordPlaceholder": "••••••••••",
+  "nextStep": "SIGUIENTE PASO",
+  "createAccount": "CREAR MI CUENTA",
+  "invalidPhone": "Número de teléfono inválido",
+  "reqMinLength": "8+ caracteres",
+  "reqUppercase": "Una mayúscula",
+  "reqNumber": "Un número",
+  "reqSpecialChar": "Carácter especial (!@#$$)",
+  "reqMatch": "Las contraseñas coinciden",
+  "changeEmailDescription": "Ingresa tu correo actual y la nueva dirección donde deseas recibir tus notificaciones.",
+  "emailExamplePlaceholder": "ejemplo@correo.com",
+  "newEmailExamplePlaceholder": "nuevo@correo.com",
+  "keepMeLoggedIn": "Mantener sesión iniciada",
+  "appleNotConfigured": "Inicio de sesión con Apple aún no disponible",
+  "googleSessionError": "No se pudo iniciar sesión con Google",
+  "microsoftSessionError": "No se pudo iniciar sesión con Outlook",
+  "errorGoogleAuth": "Error al conectar con Google: {error}",
+  "errorMicrosoftAuth": "Error al conectar con Outlook: {error}",
+  "@errorGoogleAuth": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@errorMicrosoftAuth": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorNoSession": "No hay sesión activa",
+  "errorOldEmailMismatch": "El correo anterior no coincide con el registrado",
+  "errorInvalidNewEmail": "El formato del nuevo correo es inválido",
+  "errorUnlinkOnlyMethod": "No puedes desvincular tu única forma de acceso. Configura una contraseña primero.",
+  "errorGoogleLinkExists": "Esta cuenta de Google ya está vinculada a otro usuario",
+  "errorEmailUpdate": "Error al actualizar el correo electrónico",
+  "errorPasswordUpdate": "Error al actualizar la contraseña",
+  "errorProfileUpdate": "Error al actualizar el perfil",
+  "errorLinkAccount": "Error al vincular la cuenta",
+  "errorUnlinkAccount": "Error al desvincular la cuenta",
+  "errorDeleteAccount": "Error al eliminar la cuenta",
+  "successProfileUpdate": "Perfil actualizado con éxito",
+  "successEmailChange": "Correo electrónico actualizado correctamente",
+  "successPasswordUpdate": "Contraseña actualizada con éxito",
+  "successAccountLinked": "Cuenta vinculada con éxito",
+  "successAccountUnlinked": "Cuenta desvinculada con éxito",
+  "providerLabelEmail": "Correo electrónico",
+  "providerLabelGoogle": "Google",
+  "providerLabelMicrosoft": "Microsoft",
+  "otpSentSuccess": "Código de verificación enviado con éxito",
+  "verificationLabel": "VERIFICACIÓN",
+  "confirmAccountTitle": "Confirma tu cuenta.",
+  "weWillSendCode": "Enviaremos un código de seguridad a:",
+  "sendCode": "Enviar código",
+  "successTitle": "¡Éxito!",
+  "successAccountVerified": "Tu cuenta ha sido verificada correctamente. Ahora puedes iniciar sesión.",
+  "successAccountLinkedMsg": "Tu cuenta ha sido vinculada correctamente. Puedes continuar usando la aplicación.",
+  "goToLogin": "Ir al Login"
 }

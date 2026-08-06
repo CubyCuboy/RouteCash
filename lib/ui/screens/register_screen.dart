@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
 import '../../viewmodels/register_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
@@ -45,8 +46,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _onNext() {
     if (_viewModel.currentStep < 2) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOutQuart,
       );
       _viewModel.setStep(_viewModel.currentStep + 1);
     } else {
@@ -57,8 +58,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _onBack() {
     if (_viewModel.currentStep > 0) {
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeOutQuart,
       );
       _viewModel.setStep(_viewModel.currentStep - 1);
     } else {
@@ -81,166 +82,265 @@ class _RegisterScreenState extends State<RegisterScreen> {
               email: _viewModel.email,
               purpose: 'verify_email',
               password: _viewModel.password,
+              userName: _viewModel.fullName,
             ),
           ),
         );
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+
+      // Localización de errores
+      final strings = AppLocalizations.of(context)!;
+      String message = result;
+
+      switch (result) {
+        case 'errorUserExists':
+          message = strings.errorUserExists;
+          break;
+        case 'errorInvalidEmail':
+          message = strings.errorInvalidEmail;
+          break;
+        case 'errorPasswordTooShort':
+          message = strings.errorPasswordTooShort;
+          break;
+        case 'errorNetwork':
+          message = strings.errorNetwork;
+          break;
+        case 'errorUnexpected':
+          message = strings.errorUnexpected;
+          break;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
-      body: SafeArea(
-        child: ListenableBuilder(
+    final strings = AppLocalizations.of(context)!;
+    
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFFFAFAFA),
+          body: Stack(
+            children: [
+              // Fondo de diseño sutil y elegante
+              Positioned(
+                top: -100,
+                right: -50,
+                child: _DesignCircle(size: 300, opacity: 0.03),
+              ),
+              Positioned(
+                bottom: -50,
+                left: -100,
+                child: _DesignCircle(size: 400, opacity: 0.02),
+              ),
+              Positioned(
+                top: 250,
+                left: -30,
+                child: _DesignCircle(size: 150, opacity: 0.01),
+              ),
+              
+              // Gradiente muy sutil
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFFFAFAFA),
+                      const Color(0xFFF5F5F5).withValues(alpha: 0.5),
+                      const Color(0xFFFAFAFA),
+                    ],
+                  ),
+                ),
+              ),
+              
+              SafeArea(
+                child: ListenableBuilder(
+                  listenable: _viewModel,
+                  builder: (context, _) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header con Progreso
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  CircleIconButton(
+                                    icon: Icons.arrow_back,
+                                    onPressed: _onBack,
+                                    backgroundColor: Colors.white,
+                                    borderColor: Colors.grey.withValues(alpha: 0.1),
+                                  ),
+                                  Text(
+                                    strings.stepLabel(_viewModel.currentStep + 1, 3),
+                                    style: GoogleFonts.inter(
+                                      color: Colors.black,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 32),
+                              _ProgressBar(progress: (_viewModel.currentStep + 1) / 3),
+                              const SizedBox(height: 32),
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 500),
+                                switchInCurve: Curves.easeOutQuart,
+                                switchOutCurve: Curves.easeInQuart,
+                                transitionBuilder: (child, animation) => FadeTransition(
+                                  opacity: animation,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0.05, 0),
+                                      end: Offset.zero,
+                                    ).animate(animation),
+                                    child: child,
+                                  ),
+                                ),
+                                child: _buildStepTitle(_viewModel.currentStep, strings),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        Expanded(
+                          child: PageView(
+                            controller: _pageController,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: [
+                              _buildStep1(strings),
+                              _buildStep2(strings),
+                              _buildStep3(strings),
+                            ],
+                          ),
+                        ),
+
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                          child: _buildFooterButtons(strings),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Overlay de carga premium
+        ListenableBuilder(
           listenable: _viewModel,
           builder: (context, _) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          CircleIconButton(
-                            icon: Icons.arrow_back,
-                            onPressed: _onBack,
-                          ),
-                          Text(
-                            'PASO ${_viewModel.currentStep + 1} DE 3',
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF999999),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      Row(
-                        children: List.generate(3, (index) {
-                          return Expanded(
-                            child: Container(
-                              height: 4,
-                              margin: EdgeInsets.only(right: index < 2 ? 8 : 0),
-                              decoration: BoxDecoration(
-                                color: index <= _viewModel.currentStep ? Colors.black : const Color(0xFFE0E0E0),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildStepTitle(),
-                    ],
+            if (!_viewModel.isLoading) return const SizedBox.shrink();
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 300),
+              builder: (context, value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Container(
+                    color: Colors.white.withValues(alpha: 0.8 * value),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.black),
+                    ),
                   ),
-                ),
-
-                Expanded(
-                  child: _viewModel.countries.isEmpty && _viewModel.isLoading
-                      ? const Center(child: CircularProgressIndicator(color: Colors.black))
-                      : PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      _buildStep1(),
-                      _buildStep2(),
-                      _buildStep3(),
-                    ],
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
-                  child: _buildFooterButtons(),
-                ),
-              ],
+                );
+              },
             );
           },
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildStepTitle() {
+  Widget _buildStepTitle(int step, AppLocalizations strings) {
     String title = '';
     String subtitle = '';
-    switch (_viewModel.currentStep) {
+    switch (step) {
       case 0:
-        title = 'Cuéntanos\nde ti.';
-        subtitle = 'Tu información básica para empezar.';
+        title = strings.step1Title;
+        subtitle = strings.step1Subtitle;
         break;
       case 1:
-        title = '¿Dónde te\nencuentras?';
-        subtitle = 'Personalizaremos tu experiencia según tu región.';
+        title = strings.step2Title;
+        subtitle = strings.step2Subtitle;
         break;
       case 2:
-        title = 'Seguridad y\npreferencias.';
-        subtitle = 'Crea una contraseña fuerte para tu cuenta.';
+        title = strings.step3Title;
+        subtitle = strings.step3Subtitle;
         break;
     }
 
     return Column(
+      key: ValueKey('title_$step'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: GoogleFonts.playfairDisplay(
             color: Colors.black,
-            fontSize: 40,
+            fontSize: 42,
             height: 1,
             fontWeight: FontWeight.w700,
-            letterSpacing: -1.5,
+            letterSpacing: -1.8,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Text(
           subtitle,
           style: GoogleFonts.inter(
-            color: const Color(0xFF999999),
+            color: const Color(0xFF888888),
             fontSize: 14,
+            height: 1.4,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStep1() {
+  Widget _buildStep1(AppLocalizations strings) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
       child: Column(
         children: [
           RouteCashTextField(
-            label: 'NOMBRE COMPLETO',
-            hintText: 'Andrea Moreno',
+            label: strings.fullNameLabel,
+            hintText: strings.fullNamePlaceholder,
             controller: _nameController,
             textCapitalization: TextCapitalization.words,
             onChanged: _viewModel.updateName,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           RouteCashTextField(
-            label: 'CORREO ELECTRÓNICO',
-            hintText: 'andrea@correo.com',
+            label: strings.emailLabel,
+            hintText: strings.emailPlaceholder,
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             onChanged: _viewModel.updateEmail,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               SizedBox(
                 width: 100,
                 child: RouteCashDropdown<String>(
-                  label: 'CÓDIGO',
+                  label: strings.phoneCodeLabel,
                   value: _viewModel.selectedPhoneCode,
                   items: _viewModel.countries
                       .map((c) => c['phone_code'] as String)
@@ -249,13 +349,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onChanged: _viewModel.updatePhoneCode,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: RouteCashTextField(
-                  label: 'TELÉFONO (OPCIONAL)',
-                  hintText: '1234567890',
+                  label: '${strings.phoneLabel} (${strings.notVerified.toUpperCase()})',
+                  hintText: strings.phonePlaceholder,
                   controller: _phoneController,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.number,
                   onChanged: _viewModel.updatePhone,
                 ),
               ),
@@ -266,21 +366,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildStep2() {
+  Widget _buildStep2(AppLocalizations strings) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
       child: Column(
         children: [
           RouteCashDropdown<Map<String, dynamic>>(
-            label: 'PAÍS',
+            label: strings.countryLabel,
             value: _viewModel.selectedCountry,
             items: _viewModel.countries,
             displayMember: 'name',
             onChanged: _viewModel.updateCountry,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           RouteCashDropdown<Map<String, dynamic>>(
-            label: 'ESTADO / REGIÓN',
+            label: strings.stateLabel,
             value: _viewModel.selectedState,
             items: _viewModel.states,
             displayMember: 'name',
@@ -292,19 +392,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildStep3() {
+  Widget _buildStep3(AppLocalizations strings) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
       child: Column(
         children: [
           RouteCashDropdown<Map<String, dynamic>>(
-            label: 'MONEDA POR DEFECTO',
+            label: strings.mainCurrencyLabel,
             value: _viewModel.selectedCurrency,
             items: _viewModel.currencies,
             displayMember: 'code',
             onChanged: _viewModel.updateCurrency,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           PasswordRequirements(
             hasMinLength: _viewModel.hasMinLength,
             hasUppercase: _viewModel.hasUppercase,
@@ -312,28 +412,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hasSpecialChar: _viewModel.hasSpecialChar,
             passwordsMatch: _viewModel.passwordsMatch,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           RouteCashTextField(
-            label: 'CONTRASEÑA',
-            hintText: '••••••••••',
+            label: strings.passwordLabel,
+            hintText: strings.passwordPlaceholder,
             controller: _passwordController,
             obscureText: _viewModel.obscurePassword,
             onChanged: _viewModel.updatePassword,
             suffixIcon: IconButton(
               onPressed: _viewModel.togglePasswordVisibility,
-              icon: Icon(_viewModel.obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
+              icon: Icon(
+                _viewModel.obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                size: 20,
+                color: Colors.black,
+              ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           RouteCashTextField(
-            label: 'CONFIRMAR CONTRASEÑA',
-            hintText: '••••••••••',
+            label: strings.confirmPasswordLabel,
+            hintText: strings.passwordPlaceholder,
             controller: _confirmPasswordController,
             obscureText: _viewModel.obscureConfirmPassword,
             onChanged: _viewModel.updateConfirmPassword,
             suffixIcon: IconButton(
               onPressed: _viewModel.toggleConfirmPasswordVisibility,
-              icon: Icon(_viewModel.obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20),
+              icon: Icon(
+                _viewModel.obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                size: 20,
+                color: Colors.black,
+              ),
             ),
           ),
         ],
@@ -341,27 +449,99 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildFooterButtons() {
+  Widget _buildFooterButtons(AppLocalizations strings) {
     final isLastStep = _viewModel.currentStep == 2;
+    final canContinue = _viewModel.canContinue;
+    
     return Column(
       children: [
         RouteCashPrimaryButton(
-          text: isLastStep ? 'CREAR CUENTA' : 'CONTINUAR',
-          onPressed: _viewModel.canContinue ? _onNext : () {},
+          text: isLastStep ? strings.createAccount : strings.nextStep,
+          onPressed: canContinue ? _onNext : null,
           isLoading: _viewModel.isLoading,
-          backgroundColor: _viewModel.canContinue ? Colors.black : Colors.grey.shade400,
+          backgroundColor: Colors.black,
+          showArrow: !isLastStep,
         ),
         if (!isLastStep) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Center(
             child: Text(
-              'Al continuar, aceptas nuestros términos y privacidad.',
+              strings.termsAndPrivacy,
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: const Color(0xFFB0B0B0), fontSize: 10),
+              style: GoogleFonts.inter(
+                color: const Color(0xFFB0B0B0),
+                fontSize: 11,
+                height: 1.4,
+              ),
             ),
           ),
         ],
       ],
+    );
+  }
+}
+
+class _ProgressBar extends StatelessWidget {
+  final double progress;
+  const _ProgressBar({required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 6,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFEEEEEE),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Stack(
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeOutQuart,
+                width: constraints.maxWidth * progress,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DesignCircle extends StatelessWidget {
+  final double size;
+  final double opacity;
+  const _DesignCircle({required this.size, required this.opacity});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            Colors.black.withValues(alpha: opacity),
+            Colors.black.withValues(alpha: 0),
+          ],
+        ),
+      ),
     );
   }
 }

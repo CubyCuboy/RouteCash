@@ -45,12 +45,14 @@ class RouteCashTextField extends StatelessWidget {
           readOnly: readOnly,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          obscuringCharacter: '•',
           textCapitalization: textCapitalization,
           cursorColor: Colors.black,
           style: GoogleFonts.inter(
             color: Colors.black,
             fontSize: 16,
             fontWeight: FontWeight.w400,
+            letterSpacing: obscureText ? 4.0 : null,
           ),
           decoration: InputDecoration(
             hintText: hintText,

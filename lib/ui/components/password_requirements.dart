@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
 
 class PasswordRequirements extends StatelessWidget {
   final bool hasMinLength;
@@ -19,6 +20,8 @@ class PasswordRequirements extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -28,11 +31,11 @@ class PasswordRequirements extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _RequirementRow(text: "8+ caracteres", isMet: hasMinLength),
-          _RequirementRow(text: "Una mayúscula", isMet: hasUppercase),
-          _RequirementRow(text: "Un número", isMet: hasNumber),
-          _RequirementRow(text: r"Carácter especial (!@#$)", isMet: hasSpecialChar),
-          _RequirementRow(text: "Las contraseñas coinciden", isMet: passwordsMatch),
+          _RequirementRow(text: strings.reqMinLength, isMet: hasMinLength),
+          _RequirementRow(text: strings.reqUppercase, isMet: hasUppercase),
+          _RequirementRow(text: strings.reqNumber, isMet: hasNumber),
+          _RequirementRow(text: strings.reqSpecialChar, isMet: hasSpecialChar),
+          _RequirementRow(text: strings.reqMatch, isMet: passwordsMatch),
         ],
       ),
     );

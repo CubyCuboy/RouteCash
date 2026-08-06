@@ -238,8 +238,32 @@ abstract class AppLocalizations {
   /// No description provided for @errorUserExists.
   ///
   /// In en, this message translates to:
-  /// **'User already exists'**
+  /// **'This email is already registered'**
   String get errorUserExists;
+
+  /// No description provided for @errorInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email format'**
+  String get errorInvalidEmail;
+
+  /// No description provided for @errorPasswordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password is too short'**
+  String get errorPasswordTooShort;
+
+  /// No description provided for @errorRegistrationDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration is temporarily disabled'**
+  String get errorRegistrationDisabled;
+
+  /// No description provided for @errorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Please check your connection'**
+  String get errorNetwork;
 
   /// No description provided for @errorUnexpected.
   ///
@@ -996,6 +1020,348 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You must complete all fields to continue.'**
   String get errorRequiredFields;
+
+  /// No description provided for @stepLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'STEP {current} OF {total}'**
+  String stepLabel(int current, int total);
+
+  /// No description provided for @step1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with\nyou.'**
+  String get step1Title;
+
+  /// No description provided for @step1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your personal information to create your space.'**
+  String get step1Subtitle;
+
+  /// No description provided for @step2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Where are you\njoining from?'**
+  String get step2Title;
+
+  /// No description provided for @step2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We will adapt rates and formats to your region.'**
+  String get step2Subtitle;
+
+  /// No description provided for @step3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Security and\npreferences.'**
+  String get step3Title;
+
+  /// No description provided for @step3Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Last step to secure your financial route.'**
+  String get step3Subtitle;
+
+  /// No description provided for @fullNamePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Andrea Moreno'**
+  String get fullNamePlaceholder;
+
+  /// No description provided for @emailPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'email@example.com'**
+  String get emailPlaceholder;
+
+  /// No description provided for @phonePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'123456789'**
+  String get phonePlaceholder;
+
+  /// No description provided for @phoneCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CODE'**
+  String get phoneCodeLabel;
+
+  /// No description provided for @passwordPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'••••••••••'**
+  String get passwordPlaceholder;
+
+  /// No description provided for @nextStep.
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT STEP'**
+  String get nextStep;
+
+  /// No description provided for @createAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'CREATE MY ACCOUNT'**
+  String get createAccount;
+
+  /// No description provided for @invalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid phone number'**
+  String get invalidPhone;
+
+  /// No description provided for @reqMinLength.
+  ///
+  /// In en, this message translates to:
+  /// **'8+ characters'**
+  String get reqMinLength;
+
+  /// No description provided for @reqUppercase.
+  ///
+  /// In en, this message translates to:
+  /// **'One uppercase letter'**
+  String get reqUppercase;
+
+  /// No description provided for @reqNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'One number'**
+  String get reqNumber;
+
+  /// No description provided for @reqSpecialChar.
+  ///
+  /// In en, this message translates to:
+  /// **'Special character (!@#\$)'**
+  String get reqSpecialChar;
+
+  /// No description provided for @reqMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords match'**
+  String get reqMatch;
+
+  /// No description provided for @changeEmailDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your current email and the new address where you want to receive your notifications.'**
+  String get changeEmailDescription;
+
+  /// No description provided for @emailExamplePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'example@email.com'**
+  String get emailExamplePlaceholder;
+
+  /// No description provided for @newEmailExamplePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'new@email.com'**
+  String get newEmailExamplePlaceholder;
+
+  /// No description provided for @keepMeLoggedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep me logged in'**
+  String get keepMeLoggedIn;
+
+  /// No description provided for @appleNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple sign-in not yet available'**
+  String get appleNotConfigured;
+
+  /// No description provided for @googleSessionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sign in with Google'**
+  String get googleSessionError;
+
+  /// No description provided for @microsoftSessionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sign in with Outlook'**
+  String get microsoftSessionError;
+
+  /// No description provided for @errorGoogleAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Error connecting with Google: {error}'**
+  String errorGoogleAuth(String error);
+
+  /// No description provided for @errorMicrosoftAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Error connecting with Outlook: {error}'**
+  String errorMicrosoftAuth(String error);
+
+  /// No description provided for @errorNoSession.
+  ///
+  /// In en, this message translates to:
+  /// **'No active session'**
+  String get errorNoSession;
+
+  /// No description provided for @errorOldEmailMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The old email does not match the registered one'**
+  String get errorOldEmailMismatch;
+
+  /// No description provided for @errorInvalidNewEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'The format of the new email is invalid'**
+  String get errorInvalidNewEmail;
+
+  /// No description provided for @errorUnlinkOnlyMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot unlink your only access method. Set up a password first.'**
+  String get errorUnlinkOnlyMethod;
+
+  /// No description provided for @errorGoogleLinkExists.
+  ///
+  /// In en, this message translates to:
+  /// **'This Google account is already linked to another user'**
+  String get errorGoogleLinkExists;
+
+  /// No description provided for @errorEmailUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Error updating email'**
+  String get errorEmailUpdate;
+
+  /// No description provided for @errorPasswordUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Error updating password'**
+  String get errorPasswordUpdate;
+
+  /// No description provided for @errorProfileUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Error updating profile'**
+  String get errorProfileUpdate;
+
+  /// No description provided for @errorLinkAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Error linking account'**
+  String get errorLinkAccount;
+
+  /// No description provided for @errorUnlinkAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Error unlinking account'**
+  String get errorUnlinkAccount;
+
+  /// No description provided for @errorDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting account'**
+  String get errorDeleteAccount;
+
+  /// No description provided for @successProfileUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated successfully'**
+  String get successProfileUpdate;
+
+  /// No description provided for @successEmailChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Email updated successfully'**
+  String get successEmailChange;
+
+  /// No description provided for @successPasswordUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated successfully'**
+  String get successPasswordUpdate;
+
+  /// No description provided for @successAccountLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Account linked successfully'**
+  String get successAccountLinked;
+
+  /// No description provided for @successAccountUnlinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Account unlinked successfully'**
+  String get successAccountUnlinked;
+
+  /// No description provided for @providerLabelEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get providerLabelEmail;
+
+  /// No description provided for @providerLabelGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Google'**
+  String get providerLabelGoogle;
+
+  /// No description provided for @providerLabelMicrosoft.
+  ///
+  /// In en, this message translates to:
+  /// **'Microsoft'**
+  String get providerLabelMicrosoft;
+
+  /// No description provided for @otpSentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code sent successfully'**
+  String get otpSentSuccess;
+
+  /// No description provided for @verificationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'VERIFICATION'**
+  String get verificationLabel;
+
+  /// No description provided for @confirmAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm your account.'**
+  String get confirmAccountTitle;
+
+  /// No description provided for @weWillSendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'We will send a security code to:'**
+  String get weWillSendCode;
+
+  /// No description provided for @sendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send code'**
+  String get sendCode;
+
+  /// No description provided for @successTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Success!'**
+  String get successTitle;
+
+  /// No description provided for @successAccountVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been successfully verified. You can now sign in.'**
+  String get successAccountVerified;
+
+  /// No description provided for @successAccountLinkedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been successfully linked. You can continue using the application.'**
+  String get successAccountLinkedMsg;
+
+  /// No description provided for @goToLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to Login'**
+  String get goToLogin;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

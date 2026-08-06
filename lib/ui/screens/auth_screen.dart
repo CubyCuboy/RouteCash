@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:routecash/services/google_auth_service.dart';
 import 'package:routecash/services/microsoft_auth_service.dart';
 import 'package:routecash/services/auth_service.dart';
+import 'package:routecash/l10n/app_localizations.dart';
 
 import 'main_navigation_screen.dart';
 import 'login_screen.dart';
@@ -23,12 +24,9 @@ class SocialIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Image.asset(
       assetPath,
-
       width: size,
       height: size,
-
       fit: BoxFit.contain,
-
       errorBuilder: (context, error, stackTrace) {
         return Icon(
           Icons.broken_image_outlined,
@@ -49,13 +47,9 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool _isGoogleLoading = false;
-
   bool _isMicrosoftLoading = false;
-
   bool _isHandlingMicrosoftCallback = false;
-
   StreamSubscription<AuthState>? _authSubscription;
-
   bool _keepMeLoggedIn = true;
 
   @override
@@ -72,7 +66,11 @@ class _AuthScreenState extends State<AuthScreen> {
         setState(() {
           _isMicrosoftLoading = false;
         });
-        _showMessage("Error Outlook: $error");
+        
+        final strings = AppLocalizations.of(context);
+        if (strings != null) {
+          _showMessage(strings.errorMicrosoftAuth(error.toString()));
+        }
       },
     );
   }
@@ -97,7 +95,10 @@ class _AuthScreenState extends State<AuthScreen> {
       await _handleSocialLogin(authState.session!.user.id);
     } catch (error) {
       if (mounted) {
-        _showMessage("Error Outlook: $error");
+        final strings = AppLocalizations.of(context);
+        if (strings != null) {
+          _showMessage(strings.errorMicrosoftAuth(error.toString()));
+        }
       }
     } finally {
       _isHandlingMicrosoftCallback = false;
@@ -133,16 +134,22 @@ class _AuthScreenState extends State<AuthScreen> {
       _isGoogleLoading = true;
     });
 
+    final strings = AppLocalizations.of(context)!;
+
     try {
       final response = await GoogleAuthService.instance.signIn();
 
       if (response.session == null) {
-        throw const AuthException("No se pudo crear la sesión con Google");
+        throw AuthException(strings.googleSessionError);
       }
 
       await _handleSocialLogin(response.user!.id);
     } catch (e) {
-      _showMessage("Error Google: $e");
+      String errorMessage = e.toString();
+      if (e is AuthException) {
+        errorMessage = e.message;
+      }
+      _showMessage(strings.errorGoogleAuth(errorMessage));
     } finally {
       if (mounted) {
         setState(() {
@@ -161,6 +168,8 @@ class _AuthScreenState extends State<AuthScreen> {
       _isMicrosoftLoading = true;
     });
 
+    final strings = AppLocalizations.of(context)!;
+
     try {
       await MicrosoftAuthService.instance.signIn();
     } catch (e) {
@@ -168,27 +177,19 @@ class _AuthScreenState extends State<AuthScreen> {
         setState(() {
           _isMicrosoftLoading = false;
         });
-        _showMessage("Error Outlook: $e");
+        String errorMessage = e.toString();
+        if (e is AuthException) {
+          errorMessage = e.message;
+        }
+        _showMessage(strings.errorMicrosoftAuth(errorMessage));
       }
     }
   }
-Future<void> debugSignOut(String origin) async {
-  debugPrint('SIGN OUT solicitado desde: $origin');
-  debugPrintStack();
 
-  await Supabase.instance.client.auth.signOut(
-    scope: SignOutScope.local,
-  );
-}
   Future<void> _handleSocialLogin(String userId) async {
     final authService = AuthService();
     final user = Supabase.instance.client.auth.currentUser;
-
-    // Intentamos obtener el perfil por el ID de usuario
     var profile = await authService.getUserProfile(userId);
-
-    // Si no existe por ID, verificamos si existe por correo electrónico
-    // Esto sucede cuando el usuario se registró antes con otro método pero con el mismo correo
     if (profile == null && user?.email != null) {
       final response = await Supabase.instance.client
           .from('users')
@@ -197,15 +198,11 @@ Future<void> debugSignOut(String origin) async {
           .maybeSingle();
       
       if (response != null) {
-        // Encontramos un perfil existente con este correo. 
-        // Lo vinculamos al nuevo userId para evitar duplicados y que el usuario mantenga su perfil.
         try {
           await Supabase.instance.client
               .from('users')
               .update({'user_id': userId})
               .eq('email', user.email!);
-          
-          // También actualizamos settings si existen
           await Supabase.instance.client
               .from('user_settings')
               .update({'user_id': userId})
@@ -217,7 +214,6 @@ Future<void> debugSignOut(String origin) async {
         }
       }
     }
-
     if (!mounted) return;
 
     if (profile == null) {
@@ -245,67 +241,49 @@ Future<void> debugSignOut(String origin) async {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
+    final strings = AppLocalizations.of(context)!;
+    final isLoading = _isGoogleLoading || _isMicrosoftLoading;
 
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 26),
-
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-
-                  child: Column(
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Colors.black,
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
                       SizedBox(height: constraints.maxHeight * 0.10),
-
                       Text(
-                        "RouteCash",
-
+                        strings.appName,
                         style: GoogleFonts.playfairDisplay(
                           color: Colors.white,
-
                           fontSize: 45,
-
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-
                       const SizedBox(height: 4),
-
                       Text(
-                        "Tu espacio financiero",
-
+                        strings.financialSpace,
                         style: GoogleFonts.playfairDisplay(
                           color: Colors.white,
-
                           fontSize: 17,
                         ),
                       ),
-
                       const SizedBox(height: 28),
-
                       Text(
-                        "El dinero\ncon sentidoaa.",
-
+                        strings.moneyWithMeaning,
                         style: GoogleFonts.playfairDisplay(
                           color: Colors.white,
-
                           fontSize: 64,
-
                           height: 0.85,
-
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-
-                      SizedBox(height: constraints.maxHeight * 0.11),
-
+                      const Spacer(),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 24),
                         child: Row(
@@ -339,7 +317,7 @@ Future<void> debugSignOut(String origin) async {
                                 });
                               },
                               child: Text(
-                                "Mantener sesión iniciada",
+                                strings.keepMeLoggedIn,
                                 style: GoogleFonts.inter(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -350,122 +328,84 @@ Future<void> debugSignOut(String origin) async {
                           ],
                         ),
                       ),
-
                       _AuthButton(
-                        text: "Iniciar Sesión",
-
+                        text: strings.signIn,
                         backgroundColor: Colors.white,
-
                         textColor: const Color(0xff333333),
-
-                        onPressed: _login,
+                        onPressed: isLoading ? null : _login,
                       ),
-
                       const SizedBox(height: 8),
-
                       _AuthButton(
-                        text: "Iniciar sesión con Outlook",
-
+                        text: strings.signInWithOutlook,
                         backgroundColor: const Color(0xff1473E6),
-
                         textColor: Colors.white,
-
                         icon: const SocialIcon(
                           assetPath: "assets/icons/microsoft-outlook-2025.png",
                         ),
-
                         isLoading: _isMicrosoftLoading,
-
-                        onPressed: _isMicrosoftLoading
-                            ? null
-                            : _signInWithMicrosoft,
+                        onPressed: isLoading ? null : _signInWithMicrosoft,
                       ),
-
                       const SizedBox(height: 8),
-
                       _AuthButton(
-                        text: "Iniciar sesión con Google",
-
+                        text: strings.signInWithGoogle,
                         backgroundColor: Colors.white,
-
                         textColor: const Color(0xff333333),
-
                         icon: const SocialIcon(
                           assetPath: "assets/icons/google-logo.jpg",
                         ),
-
                         isLoading: _isGoogleLoading,
-
-                        onPressed: _isGoogleLoading ? null : _signInWithGoogle,
+                        onPressed: isLoading ? null : _signInWithGoogle,
                       ),
-
-                      const SizedBox(height: 8),
-
-                      _AuthButton(
-                        text: "Iniciar sesión con Apple",
-
-                        backgroundColor: Colors.black,
-
-                        textColor: Colors.white,
-
-                        icon: const SocialIcon(
-                          assetPath: "assets/icons/apple.png",
-
-                          size: 23,
-                        ),
-
-                        onPressed: () {
-                          _showMessage("Apple aún no configurado");
-                        },
-                      ),
-
                       SizedBox(height: constraints.maxHeight * 0.12),
-
                       _AuthButton(
-                        text: "¿Eres nuevo? Crear cuenta",
-
+                        text: strings.newUserCreateAccount,
                         backgroundColor: Colors.white,
-
                         textColor: const Color(0xff333333),
-
-                        onPressed: _createAccount,
+                        onPressed: isLoading ? null : _createAccount,
                       ),
+                      SizedBox(height: constraints.maxHeight * 0.05),
                     ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+        if (isLoading)
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 300),
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.4 * value),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
                   ),
                 ),
               );
             },
           ),
-        ),
-      ),
+      ],
     );
   }
 }
 
 class _AuthButton extends StatelessWidget {
   final String text;
-
   final Color backgroundColor;
-
   final Color textColor;
-
   final Widget? icon;
-
   final VoidCallback? onPressed;
-
   final bool isLoading;
 
   const _AuthButton({
     required this.text,
-
     required this.backgroundColor,
-
     required this.textColor,
-
     required this.onPressed,
-
     this.icon,
-
     this.isLoading = false,
   });
 
@@ -473,40 +413,28 @@ class _AuthButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-
       height: 47,
-
       child: ElevatedButton(
         onPressed: onPressed,
-
         style: ElevatedButton.styleFrom(
           elevation: 0,
-
           backgroundColor: backgroundColor,
-
           foregroundColor: textColor,
-
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         ),
-
         child: isLoading
             ? SizedBox(
                 width: 20,
-
                 height: 20,
-
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-
                   color: textColor,
                 ),
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-
                 children: [
                   if (icon != null) ...[icon!, const SizedBox(width: 12)],
-
                   Text(text, style: GoogleFonts.inter(fontSize: 14)),
                 ],
               ),

@@ -15,14 +15,13 @@ class AuthService {
         data: data,
       );
       return response;
-    } on AuthException catch (e) {
-      throw e.message;
+    } on AuthException {
+      rethrow;
     } catch (e) {
-      throw 'Ocurrió un error inesperado al registrarse';
+      throw Exception('SIGN_UP_ERROR');
     }
   }
 
-  // Iniciar sesión
   Future<AuthResponse> signIn(String email, String password) async {
     try {
       final response = await _supabase.auth.signInWithPassword(
@@ -33,10 +32,10 @@ class AuthService {
         await updateLastLogin(response.user!.id);
       }
       return response;
-    } on AuthException catch (e) {
-      throw e.message;
+    } on AuthException {
+      rethrow;
     } catch (e) {
-      throw 'Ocurrió un error inesperado al iniciar sesión';
+      throw Exception('SIGN_IN_ERROR');
     }
   }
 
@@ -83,7 +82,7 @@ class AuthService {
     try {
       await _supabase.from('users').update(data).eq('user_id', userId);
     } catch (e) {
-      throw 'Error al actualizar perfil: $e';
+      rethrow;
     }
   }
 
@@ -103,7 +102,7 @@ class AuthService {
     try {
       await _supabase.from('user_settings').update(data).eq('user_id', userId);
     } catch (e) {
-      throw 'Error al actualizar ajustes: $e';
+      rethrow;
     }
   }
 
@@ -140,7 +139,6 @@ class AuthService {
     if (!excludeCardImages) {
       await prefs.clear();
     } else {
-      // Obtenemos todas las llaves y removemos todas excepto las de imágenes de tarjetas
       final keys = prefs.getKeys();
       for (final key in keys) {
         if (!key.startsWith('card_image_')) {
@@ -153,20 +151,17 @@ class AuthService {
   Future<void> completeEmailChange(String newEmail) async {
     try {
       final user = _supabase.auth.currentUser;
-      if (user == null) throw 'No hay sesión activa';
-
-      // Solo actualizamos en Auth si el correo es realmente diferente
+      if (user == null) throw Exception('NO_SESSION');
       if (user.email != newEmail) {
-        // Actualizar en Auth (esto disparará el correo de confirmación de Supabase si está activado)
         await _supabase.auth.updateUser(UserAttributes(email: newEmail));
       }
 
       // Actualizar en la tabla users
       await _supabase.from('users').update({'email': newEmail}).eq('user_id', user.id);
-    } on AuthException catch (e) {
-      throw e.message;
+    } on AuthException {
+      rethrow;
     } catch (e) {
-      throw 'Error al completar el cambio de email: $e';
+      rethrow;
     }
   }
 
@@ -174,7 +169,7 @@ class AuthService {
     try {
       await _supabase.auth.updateUser(UserAttributes(password: newPassword));
     } catch (e) {
-      throw 'Error al actualizar contraseña: $e';
+      rethrow;
     }
   }
 
@@ -185,7 +180,7 @@ class AuthService {
         queryParams: queryParams,
       );
     } catch (e) {
-      throw 'Error al vincular cuenta: $e';
+      rethrow;
     }
   }
 
@@ -198,9 +193,6 @@ class AuthService {
     required int currencyId,
   }) async {
     try {
-      // Intentamos un upsert basado en el email para manejar casos donde el usuario
-      // ya tiene un perfil con ese correo pero quizás con un userId distinto (ej: cambio de proveedor social no vinculado)
-      // o donde el proceso se interrumpió.
       await _supabase.from('users').upsert({
         'user_id': userId,
         'full_name': fullName,
