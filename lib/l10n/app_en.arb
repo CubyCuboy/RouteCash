@@ -132,5 +132,27 @@
         "example": "5:10 PM"
       }
     }
-  }
+  },
+  "nfcStatusIdle": "Bring the card closer to the reader...",
+  "nfcStatusDetected": "Card detected! Keep the card held...",
+  "nfcStatusReadingConfig": "Reading configuration... Do not remove the card.",
+  "nfcStatusRetrievingData": "Retrieving data... Almost done.",
+  "nfcStatusSuccess": "Reading completed successfully.",
+  "nfcErrorAvailability": "NFC is not available or is disabled.",
+  "nfcErrorSessionActive": "A reading is already in progress.",
+  "nfcErrorPpse": "Error initiating contact with the card.",
+  "nfcErrorIncompatible": "This card is not compatible with the payment standard.",
+  "nfcErrorNoAid": "No compatible payment application found.",
+  "nfcErrorAidAccess": "The card did not allow access to the data.",
+  "nfcErrorRetrieveFail": "Could not retrieve the data, please try again.",
+  "nfcTimeout": "Time out. Please bring the card closer again.",
+  "nfcCancel": "NFC reading canceled.",
+  "selectBank": "Select your bank",
+  "selectAccountType": "Select account type",
+  "cardNumberLabel": "Card Number",
+  "expiryDateLabel": "Expiry Date",
+  "saveCard": "Save Card",
+  "invalidCardNumber": "The card number is invalid.",
+  "invalidExpiryDate": "The expiry date is invalid.",
+  "errorRequiredFields": "You must complete all fields to continue."
 }
