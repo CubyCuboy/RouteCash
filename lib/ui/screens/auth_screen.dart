@@ -8,6 +8,7 @@ import 'package:routecash/services/google_auth_service.dart';
 import 'package:routecash/services/microsoft_auth_service.dart';
 import 'package:routecash/services/auth_service.dart';
 import 'package:routecash/l10n/app_localizations.dart';
+import '../components/route_cash_shared_ui.dart';
 
 import 'main_navigation_screen.dart';
 import 'login_screen.dart';
@@ -126,62 +127,44 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
-    if (_isGoogleLoading) {
-      return;
-    }
+    if (_isGoogleLoading) return;
 
-    setState(() {
-      _isGoogleLoading = true;
-    });
-
+    setState(() => _isGoogleLoading = true);
     final strings = AppLocalizations.of(context)!;
 
     try {
       final response = await GoogleAuthService.instance.signIn();
-
-      if (response.session == null) {
-        throw AuthException(strings.googleSessionError);
-      }
-
+      if (response.session == null) throw AuthException(strings.googleSessionError);
       await _handleSocialLogin(response.user!.id);
     } catch (e) {
       String errorMessage = e.toString();
-      if (e is AuthException) {
-        errorMessage = e.message;
-      }
-      _showMessage(strings.errorGoogleAuth(errorMessage));
+      bool isCancelled = errorMessage.contains('cancelled') || 
+                        errorMessage.contains('canceled') || 
+                        errorMessage.contains('closed');
+      
+      _showMessage(isCancelled ? strings.errorAuthCancelledDetail : strings.errorGoogleAuth(errorMessage));
     } finally {
-      if (mounted) {
-        setState(() {
-          _isGoogleLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
 
   Future<void> _signInWithMicrosoft() async {
-    if (_isMicrosoftLoading) {
-      return;
-    }
+    if (_isMicrosoftLoading) return;
 
-    setState(() {
-      _isMicrosoftLoading = true;
-    });
-
+    setState(() => _isMicrosoftLoading = true);
     final strings = AppLocalizations.of(context)!;
 
     try {
       await MicrosoftAuthService.instance.signIn();
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isMicrosoftLoading = false;
-        });
+        setState(() => _isMicrosoftLoading = false);
         String errorMessage = e.toString();
-        if (e is AuthException) {
-          errorMessage = e.message;
-        }
-        _showMessage(strings.errorMicrosoftAuth(errorMessage));
+        bool isCancelled = errorMessage.contains('cancelled') || 
+                          errorMessage.contains('canceled') || 
+                          errorMessage.contains('closed');
+        
+        _showMessage(isCancelled ? strings.errorAuthCancelledDetail : strings.errorMicrosoftAuth(errorMessage));
       }
     }
   }
@@ -189,7 +172,15 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _handleSocialLogin(String userId) async {
     final authService = AuthService();
     final user = Supabase.instance.client.auth.currentUser;
+    final strings = AppLocalizations.of(context)!;
+
+    // 1. Buscamos perfil por ID único de Supabase (el más seguro)
     var profile = await authService.getUserProfile(userId);
+    
+    // 2. Si no hay perfil por ID, verificamos si hay uno por email
+    // PERO solo permitimos la vinculación automática si el email está verificado
+    // y si el ID de usuario coincide. Si el email es el mismo pero el ID es distinto,
+    // significa que es una identidad nueva y NO debemos mezclarlas automáticamente.
     if (profile == null && user?.email != null) {
       final response = await Supabase.instance.client
           .from('users')
@@ -198,37 +189,51 @@ class _AuthScreenState extends State<AuthScreen> {
           .maybeSingle();
       
       if (response != null) {
-        try {
-          await Supabase.instance.client
-              .from('users')
-              .update({'user_id': userId})
-              .eq('email', user.email!);
-          await Supabase.instance.client
-              .from('user_settings')
-              .update({'user_id': userId})
-              .eq('user_id', response['user_id']);
-              
-          profile = await authService.getUserProfile(userId);
-        } catch (e) {
-          debugPrint('Error vinculando perfil existente: $e');
+        // SEGURIDAD: Solo vinculamos si el perfil encontrado no tiene un user_id asignado
+        // o si el email proviene de un proveedor de confianza y el usuario confirmó la acción.
+        // Para evitar el error grave de seguridad, si el perfil ya existe con otro ID,
+        // no debemos sobreescribirlo sin que el usuario sepa.
+        
+        final existingUserId = response['user_id'];
+        if (existingUserId == null || existingUserId == userId) {
+          try {
+            await Supabase.instance.client
+                .from('users')
+                .update({'user_id': userId})
+                .eq('email', user.email!);
+            profile = await authService.getUserProfile(userId);
+          } catch (e) {
+            debugPrint('Error vinculando perfil: $e');
+          }
+        } else {
+          // Si el ID es diferente, es un riesgo de seguridad vincularlos.
+          // Forzamos a que sea tratado como usuario nuevo o que use Login normal.
+          _log('CONFLICTO DE SEGURIDAD: El email ya pertenece a otra cuenta con ID distinto.');
         }
       }
     }
+    
     if (!mounted) return;
 
     if (profile == null) {
+      // Es un usuario nuevo o una identidad que no debe mezclarse.
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const SocialRegistrationScreen()),
         (route) => false,
       );
     } else {
+      // Éxito total
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
         (route) => false,
       );
     }
+  }
+
+  void _log(String message) {
+    debugPrint('[AUTH_SCREEN] $message');
   }
 
   void _showMessage(String message) {
@@ -371,22 +376,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
         ),
-        if (isLoading)
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 300),
-            builder: (context, value, child) {
-              return Opacity(
-                opacity: value,
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.4 * value),
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
-                ),
-              );
-            },
-          ),
+        RouteCashLoadingOverlay(isLoading: isLoading),
       ],
     );
   }

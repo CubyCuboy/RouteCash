@@ -580,6 +580,18 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get errorAuthCancelled => 'Operación cancelada';
+
+  @override
+  String get errorAuthCancelledDetail => 'Has cancelado el inicio de sesión. Inténtalo de nuevo cuando estés listo.';
+
+  @override
+  String get optionalLabel => 'OPCIONAL';
+
+  @override
+  String get errorCompleteRegistration => 'Por favor, completa tu perfil para continuar.';
+
+  @override
   String get errorNoSession => 'No hay sesión activa';
 
   @override

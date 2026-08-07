@@ -24,6 +24,7 @@ class GoogleAuthService {
     await _initialize();
     try {
       await _googleSignIn.signOut();
+      await Supabase.instance.client.auth.signOut();
     } catch (_) {}
 
     final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
@@ -46,8 +47,19 @@ class GoogleAuthService {
       accessToken: authorization.accessToken,
     );
 
+    // SEGURIDAD: Si el usuario acaba de iniciar sesión, verificamos si su perfil existe.
+    // Si no existe, Supabase lo crea automáticamente en Auth, pero nosotros debemos
+    // asegurar que no se vincule a datos de otra cuenta por error de sesión.
     if (response.user != null) {
-      await AuthService().updateLastLogin(response.user!.id);
+      final authService = AuthService();
+      await authService.updateLastLogin(response.user!.id);
+      
+      // Verificamos si existe el perfil en nuestra tabla de base de datos
+      final profile = await authService.getUserProfile(response.user!.id);
+      if (profile == null) {
+        // Es un usuario nuevo para nuestra App, aunque Supabase lo haya autenticado.
+        // El flujo debe llevarlo a SocialRegistrationScreen.
+      }
     }
 
     return response;

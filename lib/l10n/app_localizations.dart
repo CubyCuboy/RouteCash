@@ -1195,6 +1195,30 @@ abstract class AppLocalizations {
   /// **'Error connecting with Outlook: {error}'**
   String errorMicrosoftAuth(String error);
 
+  /// No description provided for @errorAuthCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Operation cancelled'**
+  String get errorAuthCancelled;
+
+  /// No description provided for @errorAuthCancelledDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'You cancelled the sign-in. Try again when you are ready.'**
+  String get errorAuthCancelledDetail;
+
+  /// No description provided for @optionalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OPTIONAL'**
+  String get optionalLabel;
+
+  /// No description provided for @errorCompleteRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Please complete your profile to continue.'**
+  String get errorCompleteRegistration;
+
   /// No description provided for @errorNoSession.
   ///
   /// In en, this message translates to:

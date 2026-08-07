@@ -206,6 +206,9 @@ class RegisterViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Aseguramos que no haya una sesión previa (limpiar rastro de intentos anteriores)
+      await _authService.signOut();
+
       final response = await _authService.signUp(
         cleanEmail,
         password,

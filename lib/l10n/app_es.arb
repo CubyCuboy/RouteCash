@@ -188,6 +188,10 @@
   "microsoftSessionError": "No se pudo iniciar sesión con Outlook",
   "errorGoogleAuth": "Error al conectar con Google: {error}",
   "errorMicrosoftAuth": "Error al conectar con Outlook: {error}",
+  "errorAuthCancelled": "Operación cancelada",
+  "errorAuthCancelledDetail": "Has cancelado el inicio de sesión. Inténtalo de nuevo cuando estés listo.",
+  "optionalLabel": "OPCIONAL",
+  "errorCompleteRegistration": "Por favor, completa tu perfil para continuar.",
   "@errorGoogleAuth": {
     "placeholders": {
       "error": {

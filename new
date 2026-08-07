@@ -1,0 +1,71 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const translations = {
+  es: {
+    verify: { subject: 'Verifica tu correo electrónico', tagline: 'Gestión financiera simplificada', title: 'Verificación de correo', subtitle: 'Gracias por registrarte. Verifica tu correo usando este código:', code_label: 'TU CÓDIGO DE VERIFICACIÓN', expiration_text: 'Expira en 30 min.', security_label: 'Seguridad:', security_text: 'Si no lo solicitaste, ignora este correo.', footer_text: 'Mensaje automático.', rights_reserved: 'Todos los derechos reservados.', app_name: 'RouteCash', legal_text: 'No compartas este código.' },
+    reset: { subject: 'Restablece tu contraseña', tagline: 'Gestión financiera simplificada', title: 'Recuperación de contraseña', subtitle: 'Usa el siguiente código para restablecer tu contraseña:', code_label: 'TU CÓDIGO DE RECUPERACIÓN', expiration_text: 'Expira en 5 min.', security_label: 'Seguridad:', security_text: 'Si no lo solicitaste, ignora este correo.', footer_text: 'Mensaje automático.', rights_reserved: 'Todos los derechos reservados.', app_name: 'RouteCash', legal_text: 'No compartas este código.' },
+    change: { subject: 'Confirma tu nuevo correo', tagline: 'Gestión financiera simplificada', title: 'Cambio de correo electrónico', subtitle: 'Usa el código para confirmar tu nueva dirección:', code_label: 'CÓDIGO DE CONFIRMACIÓN', expiration_text: 'Expira en 10 min.', security_label: 'Seguridad:', security_text: 'Si no solicitaste este cambio, ignora este correo.', footer_text: 'Mensaje automático.', rights_reserved: 'Todos los derechos reservados.', app_name: 'RouteCash', legal_text: 'No compartas este código.' }
+  },
+  en: {
+    verify: { subject: 'Verify your email address', tagline: 'Simplified financial management', title: 'Email Verification', subtitle: 'Please verify your email using the following code:', code_label: 'YOUR VERIFICATION CODE', expiration_text: 'Expires in 30 min.', security_label: 'Security:', security_text: 'If you did not request this, ignore this email.', footer_text: 'Automated message.', rights_reserved: 'All rights reserved.', app_name: 'RouteCash', legal_text: 'Never share this code.' },
+    reset: { subject: 'Reset your password', tagline: 'Simplified financial management', title: 'Password Recovery', subtitle: 'Use the following code to reset your password:', code_label: 'YOUR RECOVERY CODE', expiration_text: 'Expires in 5 min.', security_label: 'Security:', security_text: 'If you did not request this, ignore this email.', footer_text: 'Automated message.', rights_reserved: 'All rights reserved.', app_name: 'RouteCash', legal_text: 'Never share this code.' },
+    change: { subject: 'Confirm your new email', tagline: 'Simplified financial management', title: 'Email Address Change', subtitle: 'Use the following code to confirm your new address:', code_label: 'CONFIRMATION CODE', expiration_text: 'Expires in 10 min.', security_label: 'Security:', security_text: 'If you did not request this, ignore this email.', footer_text: 'Automated message.', rights_reserved: 'All rights reserved.', app_name: 'RouteCash', legal_text: 'Never share this code.' }
+  },
+  pt: {
+    verify: { subject: 'Verifique seu e-mail', tagline: 'Gestão financeira simplificada', title: 'Verificação de e-mail', subtitle: 'Por favor, verifique seu e-mail usando o seguinte código:', code_label: 'SEU CÓDIGO DE VERIFICAÇÃO', expiration_text: 'Expira em 30 min.', security_label: 'Segurança:', security_text: 'Se você não solicitou, ignore este e-mail.', footer_text: 'Mensagem automática.', rights_reserved: 'Todos os direitos reservados.', app_name: 'RouteCash', legal_text: 'Não compartilhe este código.' },
+    reset: { subject: 'Redefina sua senha', tagline: 'Gestão financiera simplificada', title: 'Recuperação de senha', subtitle: 'Use o código abaixo para redefinir sua senha:', code_label: 'SEU CÓDIGO DE RECUPERAÇÃO', expiration_text: 'Expira em 5 min.', security_label: 'Segurança:', security_text: 'Se você não solicitou, ignore este e-mail.', footer_text: 'Mensagem automática.', rights_reserved: 'Todos os direitos reservados.', app_name: 'RouteCash', legal_text: 'Não compartilhe este código.' },
+    change: { subject: 'Confirme seu novo e-mail', tagline: 'Gestão financeira simplificada', title: 'Alteração de e-mail', subtitle: 'Use o código abaixo para confirmar seu novo endereço:', code_label: 'CÓDIGO DE CONFIRMACIÓN', expiration_text: 'Expira em 10 min.', security_label: 'Segurança:', security_text: 'Se você não solicitou, ignore este e-mail.', footer_text: 'Mensagem automática.', rights_reserved: 'Todos os direitos reservados.', app_name: 'RouteCash', legal_text: 'Não compartilhe este código.' }
+  }
+};
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  try {
+    const { user_id, email, purpose, lang = 'es' } = await req.json();
+    if (!user_id || !purpose) throw new Error('user_id y purpose son obligatorios');
+
+    const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+
+    let targetEmail = email?.toString().trim().toLowerCase();
+    if (!targetEmail) {
+      const { data } = await supabase.from('users').select('email').eq('user_id', user_id).single();
+      targetEmail = data?.email;
+    }
+
+    if (!targetEmail) throw new Error('Correo no encontrado');
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const minutes = purpose === 'reset_password' ? 5 : (purpose === 'change_email' ? 10 : 30);
+    const expiresAt = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+
+    await supabase.from('user_otps').update({ is_used: true }).eq('user_id', user_id).eq('purpose', purpose).eq('is_used', false);
+    await supabase.from('user_otps').insert({ user_id, code, purpose, is_used: false, expires_at: expiresAt });
+
+    const langData = translations[lang] || translations['es'];
+    const pKey = purpose === 'reset_password' ? 'reset' : (purpose === 'change_email' ? 'change' : 'verify');
+    const msg = langData[pKey];
+
+    const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: Deno.env.get('EMAILJS_SERVICE_ID'),
+        template_id: Deno.env.get('EMAILJS_TEMPLATE_ID'),
+        user_id: Deno.env.get('EMAILJS_PUBLIC_KEY'),
+        accessToken: Deno.env.get('EMAILJS_PRIVATE_KEY'),
+        template_params: { to_email: targetEmail, code, ...msg }
+      }),
+    });
+
+    return new Response(JSON.stringify({ success: res.ok }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  } catch (e) {
+    return new Response(JSON.stringify({ success: false, error: e.message }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+});

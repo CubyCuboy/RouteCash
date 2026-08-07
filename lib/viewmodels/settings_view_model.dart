@@ -131,36 +131,35 @@ class SettingsViewModel extends ChangeNotifier {
   String get currentEmail => primaryEmailInfo['email'] ?? '';
   String get currentProviderLabel => primaryEmailInfo['label'] ?? '';
 
-  /// Returns information about the oldest linked identity (email and provider)
+  /// Returns information about the current primary identity
   Map<String, String> get primaryEmailInfo {
     final user = _authService.currentUser;
     if (user == null) return {'email': '', 'provider': '', 'label': ''};
 
     final identities = user.identities ?? [];
-    if (identities.isEmpty) {
-      return {
-        'email': user.email ?? '',
-        'provider': 'email',
-        'label': 'Email',
-      };
+    final currentEmail = user.email ?? '';
+
+    // Buscamos la identidad que coincida con el email actual de la sesión
+    UserIdentity? primaryIdentity;
+    try {
+      primaryIdentity = identities.firstWhere(
+        (id) => id.identityData?['email']?.toString().toLowerCase() == currentEmail.toLowerCase(),
+      );
+    } catch (_) {
+      // Si no hay coincidencia exacta, tomamos la primera disponible
+      if (identities.isNotEmpty) {
+        primaryIdentity = identities.first;
+      }
     }
 
-    final sorted = List<UserIdentity>.from(identities);
-    sorted.sort((a, b) {
-      final dateA = DateTime.tryParse(a.createdAt ?? '') ?? DateTime.now();
-      final dateB = DateTime.tryParse(b.createdAt ?? '') ?? DateTime.now();
-      return dateA.compareTo(dateB);
-    });
-
-    final oldest = sorted.first;
-    String providerLabel = oldest.provider;
+    String providerLabel = primaryIdentity?.provider ?? 'email';
     if (providerLabel == 'azure') providerLabel = 'Microsoft';
     if (providerLabel == 'google') providerLabel = 'Google';
     if (providerLabel == 'email') providerLabel = 'Email';
 
     return {
-      'email': oldest.identityData?['email']?.toString() ?? user.email ?? '',
-      'provider': oldest.provider,
+      'email': currentEmail,
+      'provider': primaryIdentity?.provider ?? 'email',
       'label': providerLabel,
     };
   }
@@ -231,6 +230,10 @@ class SettingsViewModel extends ChangeNotifier {
         return l10n.errorInvalidNewEmail;
       }
 
+      // IMPORTANTE: Actualizamos la tabla 'users' con el nuevo email ANTES de pedir el OTP.
+      // Esto asegura que la Edge Function (que consulta esta tabla) vea el destinatario correcto.
+      await _authService.updateUserProfile(user.id, {'email': cleanNew});
+
       final result = await _verificationService.sendOtp(
         userId: user.id,
         email: cleanNew,
@@ -243,6 +246,8 @@ class SettingsViewModel extends ChangeNotifier {
         return null;
       } else {
         _log('INITIATE_EMAIL_CHANGE_OTP_ERROR', details: result['error']);
+        // Si falla el envío, restauramos el email anterior en la tabla users
+        await _authService.updateUserProfile(user.id, {'email': cleanOld});
         return result['error'] ?? l10n.errorUnexpected;
       }
     } catch (e) {
@@ -293,46 +298,44 @@ class SettingsViewModel extends ChangeNotifier {
       final user = _authService.currentUser;
       if (user == null) throw Exception('No session');
 
-      // 1. Link provider
+      // 1. Cerrar sesión del proveedor antes de intentar vincular
+      // para forzar al usuario a elegir la cuenta correcta (evita login automático)
       if (provider == OAuthProvider.google) {
+        await GoogleAuthService.instance.signOutGoogle();
         await GoogleAuthService.instance.linkAccount();
       } else {
         await _authService.linkProvider(
           provider,
-          queryParams: {'prompt': 'login'},
+          queryParams: {'prompt': 'select_account'}, // Forzamos selección de cuenta en Microsoft
         );
       }
       
-      // 2. Refresh session to get new identities
+      // 2. Refrescar sesión para obtener las nuevas identidades
       await Supabase.instance.client.auth.refreshSession();
       final freshUser = _authService.currentUser;
 
       if (freshUser != null) {
-        // 3. Strict cleanup: ensure only the new identity for this provider exists
+        // 3. Limpieza de identidades duplicadas
         final providerIdentities = freshUser.identities?.where((id) => id.provider == providerStr).toList() ?? [];
         
         if (providerIdentities.length > 1) {
-          _log('LINK_ACCOUNT_CLEANUP', details: 'found ${providerIdentities.length} identities');
-          // Sort by createdAt descending (newest first)
           providerIdentities.sort((a, b) {
             final dA = DateTime.tryParse(a.createdAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
             final dB = DateTime.tryParse(b.createdAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
             return dB.compareTo(dA);
           });
 
-          // Keep the first (newest), unlink others
           for (var i = 1; i < providerIdentities.length; i++) {
             await Supabase.instance.client.auth.unlinkIdentity(providerIdentities[i]);
-            _log('LINK_ACCOUNT_UNLINKED_OLD', details: 'id: ${providerIdentities[i].id}');
           }
         }
 
-        // 4. Update DB email from the primary identity
+        // 4. Actualizar el email en la DB solo si la identidad vinculada coincide con el usuario actual
+        // Esto evita que al cambiar la cuenta de Google se mantenga el email viejo "pegado"
         final info = primaryEmailInfo;
         final newEmail = info['email'] ?? '';
         if (newEmail.isNotEmpty) {
           await _authService.updateUserProfile(freshUser.id, {'email': newEmail});
-          _log('LINK_ACCOUNT_DB_UPDATED', details: 'email: $newEmail');
         }
       }
       

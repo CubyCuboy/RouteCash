@@ -38,6 +38,10 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Limpiar sesión previa para evitar que el ID de un usuario no verificado 
+      // se quede "pegado" en el cliente de Supabase
+      await _authService.signOut();
+
       await _authService.signIn(cleanEmail, password);
       
       final user = _authService.currentUser;

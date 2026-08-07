@@ -200,7 +200,7 @@ class AuthService {
         'phone': phone,
         'state_id': stateId,
         'default_currency_id': currencyId,
-      }, onConflict: 'email');
+      }, onConflict: 'user_id');
 
       await _supabase.from('user_settings').upsert({
         'user_id': userId,

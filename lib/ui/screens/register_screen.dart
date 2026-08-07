@@ -6,6 +6,7 @@ import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
 import '../components/route_cash_dropdown.dart';
 import '../components/password_requirements.dart';
+import '../components/route_cash_shared_ui.dart';
 import 'confirm_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -46,7 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _onNext() {
     if (_viewModel.currentStep < 2) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 600),
+        duration: const Duration(milliseconds: 700),
         curve: Curves.easeOutQuart,
       );
       _viewModel.setStep(_viewModel.currentStep + 1);
@@ -58,7 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _onBack() {
     if (_viewModel.currentStep > 0) {
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 600),
+        duration: const Duration(milliseconds: 700),
         curve: Curves.easeOutQuart,
       );
       _viewModel.setStep(_viewModel.currentStep - 1);
@@ -89,33 +90,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
         return;
       }
 
-      // Localización de errores
       final strings = AppLocalizations.of(context)!;
       String message = result;
 
       switch (result) {
-        case 'errorUserExists':
-          message = strings.errorUserExists;
-          break;
-        case 'errorInvalidEmail':
-          message = strings.errorInvalidEmail;
-          break;
-        case 'errorPasswordTooShort':
-          message = strings.errorPasswordTooShort;
-          break;
-        case 'errorNetwork':
-          message = strings.errorNetwork;
-          break;
-        case 'errorUnexpected':
-          message = strings.errorUnexpected;
-          break;
+        case 'errorUserExists': message = strings.errorUserExists; break;
+        case 'errorInvalidEmail': message = strings.errorInvalidEmail; break;
+        case 'errorPasswordTooShort': message = strings.errorPasswordTooShort; break;
+        case 'errorNetwork': message = strings.errorNetwork; break;
+        case 'errorUnexpected': message = strings.errorUnexpected; break;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
       );
     }
   }
@@ -130,36 +117,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
           backgroundColor: const Color(0xFFFAFAFA),
           body: Stack(
             children: [
-              // Fondo de diseño sutil y elegante
-              Positioned(
-                top: -100,
-                right: -50,
-                child: _DesignCircle(size: 300, opacity: 0.03),
-              ),
-              Positioned(
-                bottom: -50,
-                left: -100,
-                child: _DesignCircle(size: 400, opacity: 0.02),
-              ),
-              Positioned(
-                top: 250,
-                left: -30,
-                child: _DesignCircle(size: 150, opacity: 0.01),
-              ),
-              
-              // Gradiente muy sutil
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFFFAFAFA),
-                      const Color(0xFFF5F5F5).withValues(alpha: 0.5),
-                      const Color(0xFFFAFAFA),
-                    ],
-                  ),
-                ),
+              // Fondo animado
+              const Positioned.fill(
+                child: RouteCashAnimatedBackground(),
               ),
               
               SafeArea(
@@ -169,7 +129,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header con Progreso
                         Padding(
                           padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
                           child: Column(
@@ -196,23 +155,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ],
                               ),
                               const SizedBox(height: 32),
-                              _ProgressBar(progress: (_viewModel.currentStep + 1) / 3),
+                              RouteCashProgressBar(progress: (_viewModel.currentStep + 1) / 3),
                               const SizedBox(height: 32),
-                              AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 500),
-                                switchInCurve: Curves.easeOutQuart,
-                                switchOutCurve: Curves.easeInQuart,
-                                transitionBuilder: (child, animation) => FadeTransition(
-                                  opacity: animation,
-                                  child: SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(0.05, 0),
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: child,
-                                  ),
-                                ),
-                                child: _buildStepTitle(_viewModel.currentStep, strings),
+                              RouteCashStepTitle(
+                                title: _getStepTitle(_viewModel.currentStep, strings),
+                                subtitle: _getStepSubtitle(_viewModel.currentStep, strings),
+                                animationKey: _viewModel.currentStep,
                               ),
                             ],
                           ),
@@ -232,7 +180,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                         Padding(
                           padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
-                          child: _buildFooterButtons(strings),
+                          child: RouteCashPrimaryButton(
+                            text: _viewModel.currentStep == 2 ? strings.createAccount : strings.nextStep,
+                            onPressed: _viewModel.canContinue ? _onNext : null,
+                            isLoading: _viewModel.isLoading,
+                            showArrow: _viewModel.currentStep < 2,
+                          ),
                         ),
                       ],
                     );
@@ -242,75 +195,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
           ),
         ),
-        // Overlay de carga premium
         ListenableBuilder(
           listenable: _viewModel,
-          builder: (context, _) {
-            if (!_viewModel.isLoading) return const SizedBox.shrink();
-            return TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 300),
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Container(
-                    color: Colors.white.withValues(alpha: 0.8 * value),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.black),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
+          builder: (context, _) => RouteCashLoadingOverlay(isLoading: _viewModel.isLoading),
         ),
       ],
     );
   }
 
-  Widget _buildStepTitle(int step, AppLocalizations strings) {
-    String title = '';
-    String subtitle = '';
-    switch (step) {
-      case 0:
-        title = strings.step1Title;
-        subtitle = strings.step1Subtitle;
-        break;
-      case 1:
-        title = strings.step2Title;
-        subtitle = strings.step2Subtitle;
-        break;
-      case 2:
-        title = strings.step3Title;
-        subtitle = strings.step3Subtitle;
-        break;
-    }
+  String _getStepTitle(int step, AppLocalizations strings) {
+    if (step == 0) return strings.step1Title;
+    if (step == 1) return strings.step2Title;
+    return strings.step3Title;
+  }
 
-    return Column(
-      key: ValueKey('title_$step'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.playfairDisplay(
-            color: Colors.black,
-            fontSize: 42,
-            height: 1,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -1.8,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          subtitle,
-          style: GoogleFonts.inter(
-            color: const Color(0xFF888888),
-            fontSize: 14,
-            height: 1.4,
-          ),
-        ),
-      ],
-    );
+  String _getStepSubtitle(int step, AppLocalizations strings) {
+    if (step == 0) return strings.step1Subtitle;
+    if (step == 1) return strings.step2Subtitle;
+    return strings.step3Subtitle;
   }
 
   Widget _buildStep1(AppLocalizations strings) {
@@ -342,17 +244,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: RouteCashDropdown<String>(
                   label: strings.phoneCodeLabel,
                   value: _viewModel.selectedPhoneCode,
-                  items: _viewModel.countries
-                      .map((c) => c['phone_code'] as String)
-                      .toSet()
-                      .toList(),
+                  items: _viewModel.countries.map((c) => c['phone_code'] as String).toSet().toList(),
                   onChanged: _viewModel.updatePhoneCode,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: RouteCashTextField(
-                  label: '${strings.phoneLabel} (${strings.notVerified.toUpperCase()})',
+                  label: '${strings.phoneLabel} (${strings.optionalLabel})',
                   hintText: strings.phonePlaceholder,
                   controller: _phoneController,
                   keyboardType: TextInputType.number,
@@ -445,102 +344,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFooterButtons(AppLocalizations strings) {
-    final isLastStep = _viewModel.currentStep == 2;
-    final canContinue = _viewModel.canContinue;
-    
-    return Column(
-      children: [
-        RouteCashPrimaryButton(
-          text: isLastStep ? strings.createAccount : strings.nextStep,
-          onPressed: canContinue ? _onNext : null,
-          isLoading: _viewModel.isLoading,
-          backgroundColor: Colors.black,
-          showArrow: !isLastStep,
-        ),
-        if (!isLastStep) ...[
-          const SizedBox(height: 20),
-          Center(
-            child: Text(
-              strings.termsAndPrivacy,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                color: const Color(0xFFB0B0B0),
-                fontSize: 11,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  final double progress;
-  const _ProgressBar({required this.progress});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 6,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFFEEEEEE),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Stack(
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.easeOutQuart,
-                width: constraints.maxWidth * progress,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DesignCircle extends StatelessWidget {
-  final double size;
-  final double opacity;
-  const _DesignCircle({required this.size, required this.opacity});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            Colors.black.withValues(alpha: opacity),
-            Colors.black.withValues(alpha: 0),
-          ],
-        ),
       ),
     );
   }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/app_localizations.dart';
 import '../../viewmodels/social_register_view_model.dart';
 import '../components/route_cash_buttons.dart';
 import '../components/route_cash_inputs.dart';
 import '../components/route_cash_dropdown.dart';
+import '../components/route_cash_shared_ui.dart';
+import 'auth_screen.dart';
 import 'main_navigation_screen.dart';
 
 class SocialRegistrationScreen extends StatefulWidget {
@@ -33,9 +36,6 @@ class _SocialRegistrationScreenState extends State<SocialRegistrationScreen> {
     if (_nameController.text.isEmpty && _viewModel.name.isNotEmpty) {
       _nameController.text = _viewModel.name;
     }
-    if (_phoneController.text.isEmpty && _viewModel.phone.isNotEmpty) {
-      _phoneController.text = _viewModel.phone;
-    }
   }
 
   @override
@@ -51,8 +51,8 @@ class _SocialRegistrationScreenState extends State<SocialRegistrationScreen> {
   void _onNext() {
     if (_currentStep < 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeOutQuart,
       );
       setState(() => _currentStep++);
     } else {
@@ -60,15 +60,22 @@ class _SocialRegistrationScreenState extends State<SocialRegistrationScreen> {
     }
   }
 
-  void _onBack() {
+  void _onBack() async {
     if (_currentStep > 0) {
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 700),
+        curve: Curves.easeOutQuart,
       );
       setState(() => _currentStep--);
     } else {
-      Navigator.pop(context);
+      // Caso especial: El usuario quiere cancelar su registro social
+      await Supabase.instance.client.auth.signOut();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+        (route) => false,
+      );
     }
   }
 
@@ -84,189 +91,146 @@ class _SocialRegistrationScreenState extends State<SocialRegistrationScreen> {
       );
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+      final strings = AppLocalizations.of(context)!;
+      String message = result;
+      switch (result) {
+        case 'errorNoSession': message = strings.errorNoSession; break;
+        case 'errorNetwork': message = strings.errorNetwork; break;
+        case 'errorProfileUpdate': message = strings.errorProfileUpdate; break;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
+    
     return Stack(
       children: [
         Scaffold(
           backgroundColor: const Color(0xFFFAFAFA),
-          body: SafeArea(
-            child: ListenableBuilder(
-              listenable: _viewModel,
-              builder: (context, _) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          body: Stack(
+            children: [
+              const Positioned.fill(
+                child: RouteCashAnimatedBackground(),
+              ),
+              
+              SafeArea(
+                child: ListenableBuilder(
+                  listenable: _viewModel,
+                  builder: (context, _) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              CircleIconButton(
-                                icon: Icons.arrow_back,
-                                onPressed: _onBack,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  CircleIconButton(
+                                    icon: Icons.arrow_back,
+                                    onPressed: _onBack,
+                                    backgroundColor: Colors.white,
+                                    borderColor: Colors.grey.withValues(alpha: 0.1),
+                                  ),
+                                  Text(
+                                    strings.stepLabel(_currentStep + 1, 2),
+                                    style: GoogleFonts.inter(
+                                      color: Colors.black,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                'PASO ${_currentStep + 1} DE 2',
-                                style: GoogleFonts.inter(
-                                  color: const Color(0xFF999999),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                              const SizedBox(height: 32),
+                              RouteCashProgressBar(progress: (_currentStep + 1) / 2),
+                              const SizedBox(height: 32),
+                              RouteCashStepTitle(
+                                title: _currentStep == 0 ? strings.step1Title : strings.step2Title,
+                                subtitle: _currentStep == 0 ? strings.step1Subtitle : strings.step2Subtitle,
+                                animationKey: 'social_$_currentStep',
                               ),
                             ],
                           ),
-                          const SizedBox(height: 32),
-                          Row(
-                            children: List.generate(2, (index) {
-                              return Expanded(
-                                child: Container(
-                                  height: 4,
-                                  margin: EdgeInsets.only(right: index < 1 ? 8 : 0),
-                                  decoration: BoxDecoration(
-                                    color: index <= _currentStep ? Colors.black : const Color(0xFFE0E0E0),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              );
-                            }),
+                        ),
+
+                        Expanded(
+                          child: PageView(
+                            controller: _pageController,
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: [
+                              _buildStep1(strings),
+                              _buildStep2(strings),
+                            ],
                           ),
-                          const SizedBox(height: 12),
-                          _buildStepTitle(),
-                        ],
-                      ),
-                    ),
+                        ),
 
-                    Expanded(
-                      child: _viewModel.countries.isEmpty && _viewModel.isLoading
-                          ? const Center(child: CircularProgressIndicator(color: Colors.black))
-                          : PageView(
-                        controller: _pageController,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          _buildStep1(),
-                          _buildStep2(),
-                        ],
-                      ),
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
-                      child: _buildFooterButtons(),
-                    ),
-                  ],
-                );
-              },
-            ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
+                          child: RouteCashPrimaryButton(
+                            text: _currentStep == 1 ? strings.createAccount : strings.nextStep,
+                            onPressed: (_currentStep == 0 ? _viewModel.name.isNotEmpty : _viewModel.canContinue) 
+                                ? _onNext : null,
+                            isLoading: _viewModel.isLoading,
+                            showArrow: _currentStep == 0,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
         ListenableBuilder(
           listenable: _viewModel,
-          builder: (context, _) {
-            if (!_viewModel.isLoading || _viewModel.countries.isEmpty) return const SizedBox.shrink();
-            return TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 300),
-              builder: (context, value, child) {
-                return Opacity(
-                  opacity: value,
-                  child: Container(
-                    color: Colors.white.withValues(alpha: 0.6 * value),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.black),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
+          builder: (context, _) => RouteCashLoadingOverlay(isLoading: _viewModel.isLoading),
         ),
       ],
     );
   }
 
-  Widget _buildStepTitle() {
-    String title = '';
-    String subtitle = '';
-    switch (_currentStep) {
-      case 0:
-        title = 'Completa tu\nperfil.';
-        subtitle = 'Solo unos detalles más para empezar.';
-        break;
-      case 1:
-        title = 'Preferencias\ny región.';
-        subtitle = 'Personalizaremos tu experiencia.';
-        break;
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.playfairDisplay(
-            color: Colors.black,
-            fontSize: 40,
-            height: 1,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -1.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          subtitle,
-          style: GoogleFonts.inter(
-            color: const Color(0xFF999999),
-            fontSize: 14,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStep1() {
+  Widget _buildStep1(AppLocalizations strings) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
       child: Column(
         children: [
           RouteCashTextField(
-            label: 'NOMBRE COMPLETO',
-            hintText: 'Tu nombre',
+            label: strings.fullNameLabel,
+            hintText: strings.fullNamePlaceholder,
             controller: _nameController,
             textCapitalization: TextCapitalization.words,
             onChanged: _viewModel.updateName,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               SizedBox(
                 width: 100,
                 child: RouteCashDropdown<String>(
-                  label: 'CÓDIGO',
+                  label: strings.phoneCodeLabel,
                   value: _viewModel.selectedPhoneCode,
-                  items: _viewModel.countries
-                      .map((c) => c['phone_code'] as String)
-                      .toSet()
-                      .toList(),
+                  items: _viewModel.countries.map((c) => c['phone_code'] as String).toSet().toList(),
                   onChanged: _viewModel.updatePhoneCode,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: RouteCashTextField(
-                  label: 'TELÉFONO (OPCIONAL)',
-                  hintText: '1234567890',
+                  label: '${strings.phoneLabel} (${strings.optionalLabel})',
+                  hintText: strings.phonePlaceholder,
                   controller: _phoneController,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.number,
                   onChanged: _viewModel.updatePhone,
                 ),
               ),
@@ -277,30 +241,30 @@ class _SocialRegistrationScreenState extends State<SocialRegistrationScreen> {
     );
   }
 
-  Widget _buildStep2() {
+  Widget _buildStep2(AppLocalizations strings) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
       child: Column(
         children: [
           RouteCashDropdown<Map<String, dynamic>>(
-            label: 'PAÍS',
+            label: strings.countryLabel,
             value: _viewModel.selectedCountry,
             items: _viewModel.countries,
             displayMember: 'name',
             onChanged: _viewModel.updateCountry,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           RouteCashDropdown<Map<String, dynamic>>(
-            label: 'ESTADO / REGIÓN',
+            label: strings.stateLabel,
             value: _viewModel.selectedState,
             items: _viewModel.states,
             displayMember: 'name',
             enabled: _viewModel.selectedCountry != null,
             onChanged: _viewModel.updateState,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           RouteCashDropdown<Map<String, dynamic>>(
-            label: 'MONEDA POR DEFECTO',
+            label: strings.mainCurrencyLabel,
             value: _viewModel.selectedCurrency,
             items: _viewModel.currencies,
             displayMember: 'code',
@@ -308,24 +272,6 @@ class _SocialRegistrationScreenState extends State<SocialRegistrationScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFooterButtons() {
-    final isLastStep = _currentStep == 1;
-    final bool canProceed = _currentStep == 0 
-      ? _viewModel.name.isNotEmpty 
-      : _viewModel.canContinue;
-
-    return Column(
-      children: [
-        RouteCashPrimaryButton(
-          text: isLastStep ? 'COMENZAR' : 'CONTINUAR',
-          onPressed: canProceed ? _onNext : () {},
-          isLoading: _viewModel.isLoading,
-          backgroundColor: canProceed ? Colors.black : Colors.grey.shade400,
-        ),
-      ],
     );
   }
 }

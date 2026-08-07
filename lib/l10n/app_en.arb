@@ -188,6 +188,10 @@
   "microsoftSessionError": "Could not sign in with Outlook",
   "errorGoogleAuth": "Error connecting with Google: {error}",
   "errorMicrosoftAuth": "Error connecting with Outlook: {error}",
+  "errorAuthCancelled": "Operation cancelled",
+  "errorAuthCancelledDetail": "You cancelled the sign-in. Try again when you are ready.",
+  "optionalLabel": "OPTIONAL",
+  "errorCompleteRegistration": "Please complete your profile to continue.",
   "@errorGoogleAuth": {
     "placeholders": {
       "error": {

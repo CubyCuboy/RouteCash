@@ -640,6 +640,18 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get errorAuthCancelled => 'Operação cancelada';
+
+  @override
+  String get errorAuthCancelledDetail => 'Você cancelou o login. Tente novamente quando estiver pronto.';
+
+  @override
+  String get optionalLabel => 'OPCIONAL';
+
+  @override
+  String get errorCompleteRegistration => 'Por favor, complete seu perfil para continuar.';
+
+  @override
   String get verificationLabel => 'VERIFICAÇÃO';
 
   @override

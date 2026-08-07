@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../l10n/app_localizations.dart';
+import '../../services/auth_service.dart';
 import 'home_screen.dart';
 import 'report_screen.dart';
 import 'cards_screen.dart';
 import 'settings_screen.dart';
+import 'social_registration_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -22,11 +25,34 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   late int _selectedIndex;
   final List<int> _navigationHistory = [];
+  bool _isCheckingProfile = true;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    _checkProfileIntegrity();
+  }
+
+  Future<void> _checkProfileIntegrity() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final authService = AuthService();
+    final profile = await authService.getUserProfile(user.id);
+
+    if (!mounted) return;
+
+    if (profile == null) {
+      // Perfil incompleto detectado. Redirigir a completar registro.
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const SocialRegistrationScreen()),
+        (route) => false,
+      );
+    } else {
+      setState(() => _isCheckingProfile = false);
+    }
   }
 
   final List<Widget> _screens = [
@@ -57,6 +83,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingProfile) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
+    }
+
     return PopScope(
       canPop: _navigationHistory.isEmpty,
       onPopInvokedWithResult: (didPop, result) {

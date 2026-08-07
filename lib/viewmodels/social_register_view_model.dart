@@ -37,12 +37,7 @@ class SocialRegisterViewModel extends ChangeNotifier {
       
       final user = _authService.currentUser;
       if (user != null) {
-        // Pre-fill name from metadata
         name = user.userMetadata?['full_name'] ?? '';
-        // Pre-fill phone if available (though usually not provided by Google/Microsoft by default)
-        phone = user.userMetadata?['phone'] ?? '';
-        
-        // Attempt to guess country/region if metadata has it (unlikely but good to have)
       }
 
       if (currencies.isNotEmpty) {
@@ -119,7 +114,7 @@ class SocialRegisterViewModel extends ChangeNotifier {
 
   Future<String?> completeRegistration() async {
     final user = _authService.currentUser;
-    if (user == null) return 'No hay sesión activa';
+    if (user == null) return 'errorNoSession';
 
     final formattedName = formatName(name.trim());
     final fullPhone = '${selectedPhoneCode ?? ""}${phone.trim()}';
@@ -138,11 +133,12 @@ class SocialRegisterViewModel extends ChangeNotifier {
       );
 
       await _authService.saveWelcomeMessage(formattedName);
-      
       return null;
     } catch (e) {
       debugPrint('Error en registro social: $e');
-      return e.toString();
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('network') || msg.contains('connection')) return 'errorNetwork';
+      return 'errorProfileUpdate';
     } finally {
       _isLoading = false;
       notifyListeners();
