@@ -5,17 +5,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/card_model.dart';
 import '../../services/bank_card_nfc.dart';
 import '../../utils/card_utils.dart';
+import '../../utils/bank_utils.dart';
 import '../../l10n/app_localizations.dart';
 import '../components/route_cash_buttons.dart';
 import 'main_navigation_screen.dart';
 import 'dart:math';
-
-class _BankProductOption {
-  const _BankProductOption({required this.label, required this.type});
-
-  final String label;
-  final RouteCashCardType type;
-}
 
 class CardsScreen extends StatefulWidget {
   const CardsScreen({super.key});
@@ -62,7 +56,7 @@ class _CardsScreenState extends State<CardsScreen> {
     RouteCashCardModel(
       id: '4',
       bankName: 'Banco Falabella',
-      productName: 'Tarjeta CMR Mastercard',
+      productName: 'CMR Debito Falabella',
       lastFourDigits: '5521',
       availableAmount: 1240000,
       type: RouteCashCardType.credit,
@@ -115,21 +109,23 @@ class _CardsScreenState extends State<CardsScreen> {
   }
 
   void _showAddCardSheet() {
-    _openAddCardForm();
+    // Conserva el flujo del usuario: el botón abre directamente el formulario.
+    // El tipo se puede cambiar dentro del formulario mediante los chips.
+    _openAddCardForm(RouteCashCardType.debit);
   }
 
-  void _openAddCardForm() {
+  void _openAddCardForm(RouteCashCardType defaultType) {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
         return _AddCardFormBottomSheet(
+          initialType: defaultType,
           onCardAdded: (newCard) {
             setState(() {
               _cards.add(newCard);
             });
-
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -381,42 +377,14 @@ class RouteCashStoredCard extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.circle,
-                          size: 5,
-                          color: Color(0xFF999999),
-                        ),
-                        const SizedBox(width: 3),
-                        const Icon(
-                          Icons.circle,
-                          size: 5,
-                          color: Color(0xFF999999),
-                        ),
-                        const SizedBox(width: 3),
-                        const Icon(
-                          Icons.circle,
-                          size: 5,
-                          color: Color(0xFF999999),
-                        ),
-                        const SizedBox(width: 3),
-                        const Icon(
-                          Icons.circle,
-                          size: 5,
-                          color: Color(0xFF999999),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          card.lastFourDigits,
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF999999),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 6),
+                    Text(
+                      '•••• ${card.lastFourDigits}',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF999999),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
@@ -558,7 +526,7 @@ class _FallbackCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '•••• •••• •••• ${card.lastFourDigits}',
+                      '•••• ${card.lastFourDigits}',
                       style: const TextStyle(
                         fontSize: 8,
                         fontWeight: FontWeight.w500,
@@ -718,7 +686,7 @@ class CardDetailScreen extends StatelessWidget {
             _CardInformationRow(label: 'Producto', value: card.productName),
             _CardInformationRow(
               label: 'Terminación',
-              value: '•••• •••• •••• ${card.lastFourDigits}',
+              value: '•••• ${card.lastFourDigits}',
             ),
             _CardInformationRow(
               label: card.type == RouteCashCardType.credit
@@ -787,6 +755,156 @@ class _CardInformationRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AddCardBottomSheet extends StatelessWidget {
+  const _AddCardBottomSheet({
+    required this.onDebitPressed,
+    required this.onCreditPressed,
+  });
+
+  final VoidCallback onDebitPressed;
+  final VoidCallback onCreditPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        28,
+        14,
+        28,
+        28 + MediaQuery.of(context).padding.bottom,
+      ),
+      decoration: const BoxDecoration(
+        color: Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD0D0D0),
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'Agregar tarjeta',
+            style: GoogleFonts.playfairDisplay(
+              color: Colors.black,
+              fontSize: 34,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Selecciona el tipo de producto que quieres registrar.',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF999999),
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 26),
+          _AddCardOption(
+            icon: Icons.account_balance_outlined,
+            title: 'Cuenta de débito',
+            subtitle: 'Cuenta corriente o cuenta vista',
+            onPressed: onDebitPressed,
+          ),
+          const SizedBox(height: 12),
+          _AddCardOption(
+            icon: Icons.credit_card_outlined,
+            title: 'Tarjeta de crédito',
+            subtitle: 'Cupo, deuda y fecha de pago',
+            onPressed: onCreditPressed,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddCardOption extends StatelessWidget {
+  const _AddCardOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFE5E5E5)),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: const BoxDecoration(
+                  color: Colors.black,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: Colors.white, size: 21),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF999999),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward,
+                color: Color(0xFFAAAAAA),
+                size: 19,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -991,8 +1109,12 @@ class _CardImageWidgetState extends State<CardImageWidget> {
 }
 
 class _AddCardFormBottomSheet extends StatefulWidget {
-  const _AddCardFormBottomSheet({required this.onCardAdded});
+  const _AddCardFormBottomSheet({
+    required this.initialType,
+    required this.onCardAdded,
+  });
 
+  final RouteCashCardType initialType;
   final ValueChanged<RouteCashCardModel> onCardAdded;
 
   @override
@@ -1009,28 +1131,27 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
 
   final Random _random = Random();
 
-  RouteCashCardType _cardType = RouteCashCardType.debit;
+  late RouteCashCardType _cardType;
   late String _selectedBank;
   late String _selectedProduct;
 
-  final TextEditingController _lastFourController = TextEditingController();
+  late final MaskedCardNumberController _cardNumberController = MaskedCardNumberController();
   final TextEditingController _expiryDateController = TextEditingController();
 
   final BankCardNfcService _nfcService = BankCardNfcService();
 
   bool _isScanningNfc = false;
+  bool _formInitialized = false;
   String? _nfcStatusKey;
+  String? _detectedBrand;
 
   String? _bankError;
   String? _productError;
-  String? _lastFourError;
+  String? _cardNumberError;
   String? _expiryDateError;
 
-  static const String _selectBankLabel = 'Selecciona un banco';
-  static const String _selectProductLabel = 'Selecciona un tipo de cuenta';
-
-  static const List<String> _chileanBanks = [
-    _selectBankLabel,
+  late final List<String> _chileanBanks = [
+    AppLocalizations.of(context)!.selectBank,
     'BancoEstado',
     'Banco Santander',
     'Banco de Chile',
@@ -1038,250 +1159,208 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     'Banco Falabella / CMR',
   ];
 
-  static const Map<String, List<_BankProductOption>> _productsByBank = {
-    'BancoEstado': [
-      _BankProductOption(label: 'CuentaRUT', type: RouteCashCardType.debit),
-      _BankProductOption(label: 'Cuenta Vista', type: RouteCashCardType.debit),
-      _BankProductOption(
-        label: 'Cuenta Corriente Digital',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Cuenta de Ahorro',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Tarjeta de Crédito BancoEstado',
-        type: RouteCashCardType.credit,
-      ),
-    ],
-    'Banco Santander': [
-      _BankProductOption(
-        label: 'Cuenta Corriente Digital',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Cuenta Vista Más Lucas',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Cuenta de Ahorro',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Tarjeta de Crédito Santander',
-        type: RouteCashCardType.credit,
-      ),
-    ],
-    'Banco de Chile': [
-      _BankProductOption(label: 'Cuenta FAN', type: RouteCashCardType.debit),
-      _BankProductOption(label: 'Cuenta Vista', type: RouteCashCardType.debit),
-      _BankProductOption(
-        label: 'Cuenta Corriente',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Cuenta de Ahorro',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Tarjeta de Crédito Banco de Chile',
-        type: RouteCashCardType.credit,
-      ),
-    ],
-    'BCI': [
-      _BankProductOption(
-        label: 'Cuenta Digital BCI',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(label: 'Cuenta Vista', type: RouteCashCardType.debit),
-      _BankProductOption(
-        label: 'Cuenta Corriente',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Tarjeta de Crédito BCI',
-        type: RouteCashCardType.credit,
-      ),
-    ],
-    'Banco Falabella / CMR': [
-      _BankProductOption(
-        label: 'Cuenta Corriente Banco Falabella',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Cuenta Vista Banco Falabella',
-        type: RouteCashCardType.debit,
-      ),
-      _BankProductOption(
-        label: 'Tarjeta CMR Mastercard',
-        type: RouteCashCardType.credit,
-      ),
-    ],
+  static const Map<String, Map<RouteCashCardType, List<String>>>
+      _productsByBank = {
+    'BancoEstado': {
+      RouteCashCardType.debit: [
+        'CuentaRUT',
+        'Cuenta Vista',
+        'Cuenta Corriente Digital',
+        'Cuenta de Ahorro',
+      ],
+      RouteCashCardType.credit: [
+        'Tarjeta de Crédito BancoEstado',
+      ],
+    },
+    'Banco Santander': {
+      RouteCashCardType.debit: [
+        'Cuenta Corriente Digital',
+        'Cuenta Vista Más Lucas',
+        'Cuenta de Ahorro',
+      ],
+      RouteCashCardType.credit: [
+        'Tarjeta de Crédito Santander',
+      ],
+    },
+    'Banco de Chile': {
+      RouteCashCardType.debit: [
+        'Cuenta FAN',
+        'Cuenta Vista',
+        'Cuenta Corriente',
+        'Cuenta de Ahorro',
+      ],
+      RouteCashCardType.credit: [
+        'Tarjeta de Crédito Banco de Chile',
+      ],
+    },
+    'BCI': {
+      RouteCashCardType.debit: [
+        'Cuenta Digital BCI',
+        'Cuenta Vista',
+        'Cuenta Corriente',
+      ],
+      RouteCashCardType.credit: [
+        'Tarjeta de Crédito BCI',
+      ],
+    },
+    'Banco Falabella / CMR': {
+      RouteCashCardType.debit: [
+        'Cuenta Corriente Banco Falabella',
+        'Cuenta Vista Banco Falabella',
+      ],
+      RouteCashCardType.credit: [
+        'Tarjeta CMR Mastercard',
+      ],
+    },
   };
 
-  List<_BankProductOption> get _availableProductOptions {
-    return _productsByBank[_selectedBank] ?? const [];
-  }
+  List<String> get _debitProducts => [
+        AppLocalizations.of(context)!.selectAccountType,
+        ...?_productsByBank[_selectedBank]?[RouteCashCardType.debit],
+      ];
 
-  List<String> get _availableProductLabels {
-    return [
-      _selectProductLabel,
-      ..._availableProductOptions.map((product) => product.label),
-    ];
-  }
-
-  RouteCashCardType _typeForSelectedProduct() {
-    for (final product in _availableProductOptions) {
-      if (product.label == _selectedProduct) {
-        return product.type;
-      }
-    }
-
-    return RouteCashCardType.debit;
-  }
-
-  bool _didInitializeDependencies = false;
+  List<String> get _creditProducts => [
+        AppLocalizations.of(context)!.selectAccountType,
+        ...?_productsByBank[_selectedBank]?[RouteCashCardType.credit],
+      ];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    if (_didInitializeDependencies) return;
+    // didChangeDependencies puede ejecutarse más de una vez. Evitamos que
+    // un cambio de idioma o un rebuild borre lo que el usuario ya ingresó.
+    if (_formInitialized) return;
 
-    _selectedBank = _selectBankLabel;
-    _selectedProduct = _selectProductLabel;
-    _didInitializeDependencies = true;
+    _selectedBank = _chileanBanks.first;
+    _selectedProduct = _cardType == RouteCashCardType.debit
+        ? _debitProducts.first
+        : _creditProducts.first;
+    _formInitialized = true;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _cardType = widget.initialType;
+    // La inicialización real se hace en didChangeDependencies para tener acceso al context/l10n
   }
 
   @override
   void dispose() {
     _nfcService.stopReading();
-    _lastFourController.dispose();
+    _cardNumberController.dispose();
     _expiryDateController.dispose();
     super.dispose();
   }
 
   String _translateNfcStatus(String key) {
     final l10n = AppLocalizations.of(context)!;
-
     switch (key) {
-      case 'nfcStatusIdle':
-        return l10n.nfcStatusIdle;
-      case 'nfcStatusDetected':
-        return l10n.nfcStatusDetected;
-      case 'nfcStatusReadingConfig':
-        return l10n.nfcStatusReadingConfig;
-      case 'nfcStatusRetrievingData':
-        return l10n.nfcStatusRetrievingData;
-      case 'nfcStatusSuccess':
-        return l10n.nfcStatusSuccess;
-      case 'nfcErrorAvailability':
-        return l10n.nfcErrorAvailability;
-      case 'nfcErrorSessionActive':
-        return l10n.nfcErrorSessionActive;
-      case 'nfcErrorPpse':
-        return l10n.nfcErrorPpse;
-      case 'nfcErrorIncompatible':
-        return l10n.nfcErrorIncompatible;
-      case 'nfcErrorNoAid':
-        return l10n.nfcErrorNoAid;
-      case 'nfcErrorAidAccess':
-        return l10n.nfcErrorAidAccess;
-      case 'nfcErrorRetrieveFail':
-        return l10n.nfcErrorRetrieveFail;
-      case 'nfcTimeout':
-        return l10n.nfcTimeout;
-      case 'nfcCancel':
-        return l10n.nfcCancel;
-      default:
-        return key;
+      case 'nfcStatusIdle': return l10n.nfcStatusIdle;
+      case 'nfcStatusDetected': return l10n.nfcStatusDetected;
+      case 'nfcStatusReadingConfig': return l10n.nfcStatusReadingConfig;
+      case 'nfcStatusRetrievingData': return l10n.nfcStatusRetrievingData;
+      case 'nfcStatusSuccess': return l10n.nfcStatusSuccess;
+      case 'nfcErrorAvailability': return l10n.nfcErrorAvailability;
+      case 'nfcErrorSessionActive': return l10n.nfcErrorSessionActive;
+      case 'nfcErrorPpse': return l10n.nfcErrorPpse;
+      case 'nfcErrorIncompatible': return l10n.nfcErrorIncompatible;
+      case 'nfcErrorNoAid': return l10n.nfcErrorNoAid;
+      case 'nfcErrorAidAccess': return l10n.nfcErrorAidAccess;
+      case 'nfcErrorRetrieveFail': return l10n.nfcErrorRetrieveFail;
+      case 'nfcTimeout': return l10n.nfcTimeout;
+      case 'nfcCancel': return l10n.nfcCancel;
+      default: return key;
     }
   }
 
   Future<void> _scanCardWithNfc() async {
-    if (_isScanningNfc) return;
+  if (_isScanningNfc) return;
+
+  setState(() {
+    _isScanningNfc = true;
+    _nfcStatusKey = 'nfcStatusIdle';
+  });
+
+  try {
+    final result = await _nfcService.readPaymentCard();
+
+    if (!mounted) return;
 
     setState(() {
-      _isScanningNfc = true;
-      _nfcStatusKey = 'nfcStatusIdle';
+      _nfcStatusKey = result.message;
+      _applyNfcResult(result);
     });
 
-    try {
-      final result = await _nfcService.readPaymentCard();
-
-      if (!mounted) return;
-
-      setState(() {
-        _nfcStatusKey = result.message;
-        _applyNfcResult(result);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _translateNfcStatus(result.message),
-            style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _translateNfcStatus(result.message),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
           ),
-          backgroundColor: Colors.black,
-          behavior: SnackBarBehavior.floating,
         ),
-      );
-    } catch (error) {
-      if (!mounted) return;
+        backgroundColor: Colors.black,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  } catch (error) {
+    if (!mounted) return;
 
-      final key = error.toString();
+    final key = error.toString();
 
-      setState(() {
-        _nfcStatusKey = key;
-      });
+    setState(() {
+      _nfcStatusKey = key;
+    });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _translateNfcStatus(key),
-            style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _translateNfcStatus(key),
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
           ),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
         ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isScanningNfc = false;
-        });
-      }
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isScanningNfc = false;
+      });
     }
   }
-
+}
   void _applyNfcResult(BankCardNfcResult result) {
+    if (result.cardNumber != null && result.cardNumber!.trim().isNotEmpty) {
+      _formatCardNumber(result.cardNumber!);
+    }
+
+    if (result.expiryDate != null && result.expiryDate!.trim().isNotEmpty) {
+      _formatExpiryDate(result.expiryDate!);
+    }
+
+    // Si el servicio NFC ya identificó banco/tipo, lo usamos como respaldo.
     if (result.bankName != null && result.bankName != 'Banco Emisor') {
-      final matchedBank = _chileanBanks.firstWhere(
-        (bank) => bank.toLowerCase().contains(result.bankName!.toLowerCase()),
-        orElse: () => _chileanBanks.first,
-      );
-      _selectedBank = matchedBank;
-      _bankError = null;
+      _selectedBank = _matchBankOption(result.bankName!);
     }
 
-    final lastFour =
-        (result.cardNumber != null && result.cardNumber!.length >= 4)
-            ? result.cardNumber!.substring(result.cardNumber!.length - 4)
-            : null;
-    if (lastFour != null && RegExp(r'^\d{4}$').hasMatch(lastFour)) {
-      _lastFourController.value = TextEditingValue(
-        text: lastFour,
-        selection: TextSelection.collapsed(offset: lastFour.length),
-      );
-      _lastFourError = null;
+    if (result.type != null) {
+      _cardType = result.type!;
     }
 
-    if (result.expiryDate != null) {
-      _formatExpiryDate(
-        CardUtils.formatExpiryDate(result.expiryDate!.replaceAll('/', '')),
-      );
-      _expiryDateError = null;
+    if (result.brand != null) {
+      _detectedBrand = result.brand;
+    }
+
+    final number = result.cardNumber ?? _cardNumberController.text;
+    if (CardUtils.getCleanNumber(number).length >= 6) {
+      _applyDetectedDetails(BankUtils.identifyCard(number));
+    } else {
+      _ensureSelectedProductIsValid();
     }
   }
 
@@ -1296,24 +1375,96 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
     });
   }
 
-  void _formatLastFour(String value) {
-    var digits = value.replaceAll(RegExp(r'\D'), '');
+  void _onTypeChanged(RouteCashCardType newType) {
+    setState(() {
+      _cardType = newType;
+      _selectedProduct = _cardType == RouteCashCardType.debit
+          ? _debitProducts.first
+          : _creditProducts.first;
+    });
+  }
 
-    if (digits.length > 4) {
-      digits = digits.substring(0, 4);
-    }
+  void _formatCardNumber(String value) {
+    final formatted = CardUtils.formatCardNumber(value);
 
-    if (_lastFourController.text != digits) {
-      _lastFourController.value = TextEditingValue(
-        text: digits,
-        selection: TextSelection.collapsed(offset: digits.length),
+    if (_cardNumberController.text != formatted) {
+      _cardNumberController.value = TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
       );
     }
 
-    if (_lastFourError != null && RegExp(r'^\d{4}$').hasMatch(digits)) {
-      setState(() {
-        _lastFourError = null;
-      });
+    final cleanNumber = CardUtils.getCleanNumber(formatted);
+    if (cleanNumber.length < 6) {
+      if (_detectedBrand != null) {
+        setState(() => _detectedBrand = null);
+      }
+      return;
+    }
+
+    final details = BankUtils.identifyCard(cleanNumber);
+    setState(() {
+      _applyDetectedDetails(details);
+    });
+  }
+
+  void _applyDetectedDetails(BankCardDetails details) {
+    _detectedBrand = details.brand;
+    _cardType = details.type;
+
+    if (details.bankName != 'Banco Emisor') {
+      _selectedBank = _matchBankOption(details.bankName);
+    }
+
+    final products = _cardType == RouteCashCardType.debit
+        ? _debitProducts
+        : _creditProducts;
+
+    if (details.productName != null) {
+      final matchingProduct = products.cast<String?>().firstWhere(
+        (product) => product!.toLowerCase().contains(
+              details.productName!.toLowerCase(),
+            ),
+        orElse: () => null,
+      );
+
+      if (matchingProduct != null) {
+        _selectedProduct = matchingProduct;
+        return;
+      }
+    }
+
+    // Si no conocemos el producto exacto, proponemos uno según la marca.
+    final brandProduct = products.cast<String?>().firstWhere(
+      (product) => product!.toLowerCase().contains(details.brand.toLowerCase()),
+      orElse: () => null,
+    );
+
+    _selectedProduct = brandProduct ?? products.first;
+  }
+
+  String _matchBankOption(String detectedBank) {
+    final detected = detectedBank.toLowerCase();
+
+    return _chileanBanks.firstWhere(
+      (bank) {
+        final option = bank.toLowerCase();
+        return option.contains(detected) || detected.contains(option) ||
+            (detected == 'bci' && option.contains('banco de crédito')) ||
+            (detected.contains('scotiabank') && option.contains('scotiabank')) ||
+            (detected.contains('itaú') && option.contains('itaú'));
+      },
+      orElse: () => _selectedBank,
+    );
+  }
+
+  void _ensureSelectedProductIsValid() {
+    final products = _cardType == RouteCashCardType.debit
+        ? _debitProducts
+        : _creditProducts;
+
+    if (!products.contains(_selectedProduct)) {
+      _selectedProduct = products.first;
     }
   }
 
@@ -1325,13 +1476,6 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
         selection: TextSelection.collapsed(offset: formatted.length),
       );
     }
-
-    if (_expiryDateError != null &&
-        (formatted.isEmpty || CardUtils.validateExpiryDate(formatted))) {
-      setState(() {
-        _expiryDateError = null;
-      });
-    }
   }
 
   String _getSelectedCardImagePath() {
@@ -1341,94 +1485,112 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
       return _bancoEstadoCardImages[randomIndex];
     }
     if (bankName.contains('falabella')) return 'cards/cmr.png';
-    if (bankName.contains('scotiabank') || bankName.contains('scotia'))
-      return 'cards/skotia.png';
-    if (bankName.contains('santander') &&
-        _selectedProduct.toLowerCase().contains('santander'))
-      return 'cards/worldmember.png';
+    if (bankName.contains('scotiabank') || bankName.contains('scotia')) return 'cards/skotia.png';
+    if (bankName.contains('santander') && _selectedProduct.toLowerCase().contains('worldmember')) return 'cards/worldmember.png';
     return '';
   }
 
   void _submit() {
     final l10n = AppLocalizations.of(context)!;
-    final lastFour = _lastFourController.text.trim();
+    final cardNumber = CardUtils.getCleanNumber(_cardNumberController.text);
     final expiryDate = _expiryDateController.text.trim();
 
-    final bankError = _selectedBank == _selectBankLabel
-        ? 'Selecciona un banco.'
-        : null;
+    String? bankError;
+    String? productError;
+    String? cardNumberError;
+    String? expiryDateError;
 
-    final productError = _selectedProduct == _selectProductLabel
-        ? 'Selecciona un tipo de cuenta o tarjeta.'
-        : null;
+    if (_selectedBank == l10n.selectBank ||
+        _selectedBank == _chileanBanks.first) {
+      bankError = 'Selecciona un banco.';
+    }
 
-    final lastFourError = RegExp(r'^\d{4}$').hasMatch(lastFour)
-        ? null
-        : 'Ingresa exactamente los últimos 4 dígitos.';
+    final currentProducts = _cardType == RouteCashCardType.debit
+        ? _debitProducts
+        : _creditProducts;
 
-    final expiryError =
-        expiryDate.isNotEmpty && !CardUtils.validateExpiryDate(expiryDate)
-        ? 'Ingresa una fecha de vencimiento válida.'
-        : null;
+    if (_selectedProduct == l10n.selectAccountType ||
+        _selectedProduct == currentProducts.first) {
+      productError = 'Selecciona el tipo de cuenta o producto.';
+    }
+
+    if (cardNumber.isEmpty) {
+      cardNumberError = 'Ingresa el número de la tarjeta.';
+    } else if (cardNumber.length < 13 || cardNumber.length > 16) {
+      cardNumberError = 'El número debe tener entre 13 y 16 dígitos.';
+    } else if (!CardUtils.validateCardNumber(cardNumber)) {
+      cardNumberError = l10n.invalidCardNumber;
+    }
+
+    if (expiryDate.isEmpty) {
+      expiryDateError = 'Ingresa la fecha de vencimiento.';
+    } else if (!CardUtils.validateExpiryDate(expiryDate)) {
+      expiryDateError = l10n.invalidExpiryDate;
+    }
 
     setState(() {
       _bankError = bankError;
       _productError = productError;
-      _lastFourError = lastFourError;
-      _expiryDateError = expiryError;
+      _cardNumberError = cardNumberError;
+      _expiryDateError = expiryDateError;
     });
 
-    if (bankError != null ||
+    final hasErrors =
+        bankError != null ||
         productError != null ||
-        lastFourError != null ||
-        expiryError != null) {
-      return;
-    }
+        cardNumberError != null ||
+        expiryDateError != null;
 
-    _cardType = _typeForSelectedProduct();
+    if (hasErrors) return;
+
+    // Se vuelve a identificar la tarjeta al guardar para asegurar que
+    // el banco, la marca y el tipo estén sincronizados con el BIN.
+    final details = BankUtils.identifyCard(cardNumber);
+    _applyDetectedDetails(details);
 
     final newCard = RouteCashCardModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       bankName: _selectedBank,
       productName: _selectedProduct,
-      lastFourDigits: lastFour,
+      lastFourDigits: CardUtils.getLastFourDigits(cardNumber),
       availableAmount: 0.0,
       type: _cardType,
       assetPath: _getSelectedCardImagePath(),
-      expiryDate: expiryDate.isEmpty ? null : expiryDate,
+      expiryDate: expiryDate,
+      // Por seguridad no se persiste el PAN completo ni el CVV.
     );
 
     widget.onCardAdded(newCard);
     Navigator.pop(context);
   }
 
+  Future<void> _closeAddCardForm() async {
+    if (_isScanningNfc) {
+      await _nfcService.stopReading();
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final bottomInset = mediaQuery.viewInsets.bottom;
-    final modalHeight = mediaQuery.size.height * 0.92;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final currentProducts = _cardType == RouteCashCardType.debit
+        ? _debitProducts
+        : _creditProducts;
 
-    return AnimatedPadding(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOut,
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: SizedBox(
-        height: modalHeight,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFFAFAFA),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-          ),
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: const EdgeInsets.fromLTRB(28, 14, 28, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+    return Container(
+      padding: EdgeInsets.fromLTRB(28, 14, 28, 28 + bottomInset),
+      decoration: const BoxDecoration(
+        color: Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Center(
               child: Container(
                 width: 44,
@@ -1440,30 +1602,48 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
               ),
             ),
             const SizedBox(height: 14),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: CircleIconButton(
-                icon: Icons.arrow_back,
-                onPressed: () => Navigator.pop(context),
-                backgroundColor: Colors.transparent,
-                borderColor: const Color(0xFFE2E2E2),
-                size: 42,
-                iconSize: 20,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Ingresar tarjeta',
-              style: GoogleFonts.playfairDisplay(
-                color: Colors.black,
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.8,
-              ),
+            Row(
+              children: [
+                Material(
+                  color: Colors.white,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: _closeAddCardForm,
+                    customBorder: const CircleBorder(),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFFE2E2E2),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.black,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    'Ingresar tarjeta',
+                    style: GoogleFonts.playfairDisplay(
+                      color: Colors.black,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             Text(
-              'Selecciona tu banco, el tipo de cuenta y los últimos 4 dígitos.',
+              'Selecciona tu banco y datos de tarjeta.',
               style: GoogleFonts.inter(
                 color: const Color(0xFF999999),
                 fontSize: 13,
@@ -1476,7 +1656,9 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFE2E2E2)),
+                border: Border.all(
+                  color: const Color(0xFFE2E2E2),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1537,9 +1719,8 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: _isScanningNfc
-                          ? _cancelNfcScan
-                          : _scanCardWithNfc,
+                      onPressed:
+                          _isScanningNfc ? _cancelNfcScan : _scanCardWithNfc,
                       icon: _isScanningNfc
                           ? const SizedBox(
                               width: 17,
@@ -1559,7 +1740,7 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Por seguridad, RouteCash conserva únicamente los últimos 4 dígitos. No guarda PAN completo, CVV, PIN, saldo ni movimientos.',
+                    'Por seguridad, RouteCash no obtiene ni guarda CVV, PIN, saldo ni movimientos mediante NFC.',
                     style: GoogleFonts.inter(
                       color: const Color(0xFF999999),
                       fontSize: 10,
@@ -1570,88 +1751,117 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
               ),
             ),
             const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _TypeChip(
+                    label: 'Débito',
+                    isSelected: _cardType == RouteCashCardType.debit,
+                    onTap: () => _onTypeChanged(RouteCashCardType.debit),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _TypeChip(
+                    label: 'Crédito',
+                    isSelected: _cardType == RouteCashCardType.credit,
+                    onTap: () => _onTypeChanged(RouteCashCardType.credit),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
             _buildLabel('Banco'),
             _buildDropdownField(
               value: _selectedBank,
               items: _chileanBanks,
               onChanged: (val) {
                 if (val == null) return;
-
                 setState(() {
                   _selectedBank = val;
-                  _selectedProduct = _selectProductLabel;
-                  _cardType = RouteCashCardType.debit;
                   _bankError = null;
-                  _productError = null;
+
+                  final products = _cardType == RouteCashCardType.debit
+                      ? _debitProducts
+                      : _creditProducts;
+
+                  if (!products.contains(_selectedProduct)) {
+                    _selectedProduct = products.first;
+                  }
                 });
               },
               icon: Icons.account_balance_outlined,
               errorText: _bankError,
             ),
             const SizedBox(height: 14),
-            _buildLabel('Tipo de cuenta o tarjeta'),
+            _buildLabel('Nombre del Producto / Tipo de Cuenta'),
             _buildDropdownField(
               value: _selectedProduct,
-              items: _availableProductLabels,
+              items: currentProducts,
               onChanged: (val) {
-                if (val != null) {
-                  setState(() {
-                    _selectedProduct = val;
-                    _cardType = _typeForSelectedProduct();
-                    _productError = null;
-                  });
-                }
+                if (val == null) return;
+                setState(() {
+                  _selectedProduct = val;
+                  _productError = null;
+                });
               },
               icon: Icons.subtitles_outlined,
               errorText: _productError,
             ),
             const SizedBox(height: 14),
-            _buildLabel('Ingresa los últimos 4 dígitos de tu tarjeta'),
+            _buildLabel(AppLocalizations.of(context)!.cardNumberLabel),
             _buildTextField(
-              controller: _lastFourController,
-              hint: '1234',
+              controller: _cardNumberController,
+              hint: '1234 5678 9012 3456',
               icon: Icons.credit_card_outlined,
               keyboardType: TextInputType.number,
-              onChanged: _formatLastFour,
-              maxLength: 4,
-              errorText: _lastFourError,
+              onChanged: (val) {
+                _formatCardNumber(val);
+                if (_cardNumberError != null) {
+                  setState(() => _cardNumberError = null);
+                }
+              },
+              maxLength: 23,
+              errorText: _cardNumberError,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _cardNumberController.isVisible ? Icons.visibility : Icons.visibility_off,
+                  color: const Color(0xFF888888),
+                  size: 20,
+                ),
+                onPressed: () => setState(() => _cardNumberController.isVisible = !_cardNumberController.isVisible),
+              ),
             ),
+            if (_detectedBrand != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Detectada: $_detectedBrand · $_selectedBank · ${_cardType == RouteCashCardType.credit ? 'Crédito' : 'Débito'}',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF666666),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
-            _buildLabel('Fecha de vencimiento (opcional)'),
+            _buildLabel(AppLocalizations.of(context)!.expiryDateLabel),
             _buildTextField(
               controller: _expiryDateController,
               hint: 'MM/AA (ej: 12/28)',
               icon: Icons.calendar_today_outlined,
               keyboardType: TextInputType.number,
-              onChanged: (val) => _formatExpiryDate(val),
+              onChanged: (val) {
+                _formatExpiryDate(val);
+                if (_expiryDateError != null) {
+                  setState(() => _expiryDateError = null);
+                }
+              },
               maxLength: 5,
               errorText: _expiryDateError,
-            ),                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-              ),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.fromLTRB(
-                  28,
-                  14,
-                  28,
-                  18 + mediaQuery.padding.bottom,
-                ),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFAFAFA),
-                  border: Border(
-                    top: BorderSide(color: Color(0xFFE5E5E5)),
-                  ),
-                ),
-                child: RouteCashPrimaryButton(
-                  text: AppLocalizations.of(context)!.saveCard,
-                  onPressed: _submit,
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 24),
+            RouteCashPrimaryButton(text: AppLocalizations.of(context)!.saveCard, onPressed: _submit),
+          ],
         ),
       ),
     );
@@ -1682,25 +1892,20 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
       initialValue: items.contains(value) ? value : items.first,
       onChanged: onChanged,
       isExpanded: true,
-      icon: const Icon(
-        Icons.keyboard_arrow_down_rounded,
-        color: Color(0xFF888888),
-      ),
-      style: GoogleFonts.inter(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
-      ),
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF888888)),
+      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: const Color(0xFF888888), size: 19),
         errorText: errorText,
-        errorMaxLines: 2,
+        errorStyle: GoogleFonts.inter(
+          color: Colors.redAccent.shade700,
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          height: 1.2,
+        ),
+        prefixIcon: Icon(icon, color: const Color(0xFF888888), size: 19),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFE2E2E2)),
@@ -1711,23 +1916,19 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.redAccent),
+          borderSide: BorderSide(color: Colors.redAccent.shade700),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+          borderSide: BorderSide(
+            color: Colors.redAccent.shade700,
+            width: 1.5,
+          ),
         ),
       ),
       dropdownColor: Colors.white,
       borderRadius: BorderRadius.circular(14),
-      items: items
-          .map(
-            (item) => DropdownMenuItem<String>(
-              value: item,
-              child: Text(item, overflow: TextOverflow.ellipsis),
-            ),
-          )
-          .toList(),
+      items: items.map((item) => DropdownMenuItem<String>(value: item, child: Text(item, overflow: TextOverflow.ellipsis))).toList(),
     );
   }
 
@@ -1756,7 +1957,12 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
       decoration: InputDecoration(
         counterText: '',
         errorText: errorText,
-        errorMaxLines: 2,
+        errorStyle: GoogleFonts.inter(
+          color: Colors.redAccent.shade700,
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          height: 1.2,
+        ),
         hintText: hint,
         hintStyle: GoogleFonts.inter(
           color: const Color(0xFFB0B0B0),
@@ -1767,10 +1973,8 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 14,
-        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFE2E2E2)),
@@ -1781,13 +1985,93 @@ class _AddCardFormBottomSheetState extends State<_AddCardFormBottomSheet> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.redAccent),
+          borderSide: BorderSide(color: Colors.redAccent.shade700),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+          borderSide: BorderSide(
+            color: Colors.redAccent.shade700,
+            width: 1.5,
+          ),
         ),
       ),
     );
+  }
+}
+
+class _TypeChip extends StatelessWidget {
+  const _TypeChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.black : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? Colors.black : const Color(0xFFE2E2E2),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              color: isSelected ? Colors.white : Colors.black,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MaskedCardNumberController extends TextEditingController {
+  bool _isVisible = false;
+  bool get isVisible => _isVisible;
+  set isVisible(bool value) {
+    _isVisible = value;
+    notifyListeners();
+  }
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    if (_isVisible || text.isEmpty) {
+      return super.buildTextSpan(
+        context: context,
+        style: style,
+        withComposing: withComposing,
+      );
+    }
+
+    final textValue = text;
+    final masked = StringBuffer();
+    for (int i = 0; i < textValue.length; i++) {
+      if (textValue[i] == ' ') {
+        masked.write(' ');
+      } else if (i < textValue.length - 4) {
+        masked.write('•');
+      } else {
+        masked.write(textValue[i]);
+      }
+    }
+    return TextSpan(text: masked.toString(), style: style);
   }
 }
